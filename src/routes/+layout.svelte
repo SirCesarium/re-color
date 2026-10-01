@@ -9,4 +9,15 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+<div class="shell">
+	{@render children()}
+</div>
+
+<style>
+	.shell {
+		min-height: 100svh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+</style>
