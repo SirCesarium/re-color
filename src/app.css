@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import '@fontsource/silkscreen/latin-400.css';
+@import '@fontsource/silkscreen/latin-700.css';
 
 :root {
 	--bg: #f2e5bc;
@@ -84,6 +86,7 @@
 
 	body {
 		margin: 0;
+		font-family: 'Silkscreen', ui-monospace, SFMono-Regular, Menlo, monospace;
 		-webkit-font-smoothing: none;
 		-moz-osx-font-smoothing: grayscale;
 		background-color: var(--bg);
