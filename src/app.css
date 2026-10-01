@@ -1,1 +1,103 @@
 @import 'tailwindcss';
+
+:root {
+	--bg: #f2e5bc;
+	--panel: #fbf1c7;
+	--panel-sunken: #ebdbb2;
+	--panel-hover: #ebdbb2;
+	--border: #bdae93;
+	--border-dash: #7c6f64;
+	--text: #3c3836;
+	--text-dim: #7c6f64;
+	--accent: #458588;
+	--shadow: #d5c4a1;
+	--pop: #af3a03;
+	--ref: #076678;
+	--base: #8f3f71;
+	--ok: #79740e;
+	--btn-bg: #79740e;
+	--btn-fg: #fbf1c7;
+	--btn-edge: #3c3836;
+	--btn-shadow: #bdae93;
+	--sw-red: #9d0006;
+	--sw-orange: #af3a03;
+	--sw-yellow: #b57614;
+	--sw-green: #79740e;
+	--sw-aqua: #427b58;
+	--sw-blue: #076678;
+	--sw-purple: #8f3f71;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #282828;
+		--panel: #32302c;
+		--panel-sunken: #282828;
+		--panel-hover: #3c3836;
+		--border: #504945;
+		--border-dash: #7c6f64;
+		--text: #ebdbb2;
+		--text-dim: #a89984;
+		--accent: #83a598;
+		--shadow: #1d2021;
+		--pop: #fe8019;
+		--ref: #83a598;
+		--base: #d3869b;
+		--ok: #b8bb26;
+		--btn-bg: #b8bb26;
+		--btn-fg: #282828;
+		--btn-edge: #1d2021;
+		--btn-shadow: #1d2021;
+		--sw-red: #fb4934;
+		--sw-orange: #fe8019;
+		--sw-yellow: #fabd2f;
+		--sw-green: #b8bb26;
+		--sw-aqua: #8ec07c;
+		--sw-blue: #83a598;
+		--sw-purple: #d3869b;
+		color-scheme: dark;
+	}
+}
+
+@keyframes rise {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 1ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+	}
+}
+
+@layer base {
+	html {
+		-webkit-text-size-adjust: 100%;
+	}
+
+	body {
+		margin: 0;
+		-webkit-font-smoothing: none;
+		-moz-osx-font-smoothing: grayscale;
+		background-color: var(--bg);
+		background-image:
+			linear-gradient(
+				color-mix(in srgb, var(--text) 5%, transparent) 1px,
+				transparent 1px
+			),
+			linear-gradient(
+				90deg,
+				color-mix(in srgb, var(--text) 5%, transparent) 1px,
+				transparent 1px
+			);
+		background-size: 16px 16px;
+		color: var(--text);
+	}
+}
