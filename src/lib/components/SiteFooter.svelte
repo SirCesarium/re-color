@@ -1,5 +1,9 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+</script>
+
 <footer class="footer">
-	<a href="/privacy/">Privacy</a>
+	<a href={resolve('/privacy')}>Privacy</a>
 	<a href="https://github.com/SirCesarium/re-color" target="_blank" rel="noreferrer"
 		>Source on GitHub</a
 	>
