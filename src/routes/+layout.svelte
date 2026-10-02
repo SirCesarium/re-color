@@ -3,7 +3,11 @@
 	import SiteFooter from '#lib/components/SiteFooter.svelte';
 
 	let { children } = $props();
+
+	const swallowFile = (event: DragEvent) => event.preventDefault();
 </script>
+
+<svelte:window ondragover={swallowFile} ondrop={swallowFile} />
 
 <div class="shell">
 	{@render children()}

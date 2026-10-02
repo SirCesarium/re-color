@@ -1,4 +1,8 @@
-<button class="run" type="button">recolor!</button>
+<script lang="ts">
+	let { disabled = false }: { disabled?: boolean } = $props();
+</script>
+
+<button class="run" type="button" {disabled}>recolor!</button>
 
 <style>
 	.run {
@@ -34,6 +38,25 @@
 	.run:focus-visible {
 		outline: 2px solid var(--accent);
 		outline-offset: 3px;
+	}
+
+	.run:disabled {
+		color: var(--text-dim);
+		background: var(--panel-sunken);
+		border-color: var(--border);
+		box-shadow: 4px 4px 0 var(--border);
+		cursor: not-allowed;
+	}
+
+	.run:disabled:hover {
+		background: var(--panel-sunken);
+		transform: none;
+		box-shadow: 4px 4px 0 var(--border);
+	}
+
+	.run:disabled:active {
+		transform: none;
+		box-shadow: 4px 4px 0 var(--border);
 	}
 
 	@media (min-width: 900px) {
