@@ -180,7 +180,7 @@
 				transparent 0 50%,
 				var(--panel) 0 75%,
 				transparent 0
-			) 0 0 / 8px 8px;
+			) 0 0 / var(--checker-size) var(--checker-size);
 		opacity: 0.5;
 		pointer-events: none;
 	}
@@ -241,7 +241,7 @@
 				transparent 0 50%,
 				var(--zone-accent) 0 75%,
 				transparent 0
-			) 0 0 / 32px 32px;
+			) 0 0 / var(--checker-size) var(--checker-size);
 		opacity: 0.3;
 		animation: hint-drift 1.1s linear infinite;
 	}

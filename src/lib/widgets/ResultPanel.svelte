@@ -25,7 +25,7 @@
 <style>
 	@keyframes drift {
 		to {
-			background-position: 16px 16px;
+			background-position: var(--checker-size) var(--checker-size);
 		}
 	}
 
@@ -64,7 +64,7 @@
 				transparent 0 50%,
 				var(--panel) 0 75%,
 				transparent 0
-			) 0 0 / 16px 16px;
+			) 0 0 / var(--checker-size) var(--checker-size);
 		opacity: 0.35;
 	}
 
