@@ -5,37 +5,105 @@ export type PaletteColor = {
 	active: boolean;
 };
 
-const ALPHA_CUTOFF = 128;
-
-export function extractColors(image: HTMLImageElement, maxColors = 64): PaletteColor[] {
-	const canvas = document.createElement('canvas');
-	canvas.width = image.naturalWidth;
-	canvas.height = image.naturalHeight;
-
-	const ctx = canvas.getContext('2d', { willReadFrequently: true });
-	if (!ctx) return [];
-
-	ctx.drawImage(image, 0, 0);
-
-	const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-	const counts = new Map<number, number>();
-
-	for (let i = 0; i < data.length; i += 4) {
-		if (data[i + 3] < ALPHA_CUTOFF) continue;
-
-		const key = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
-		counts.set(key, (counts.get(key) ?? 0) + 1);
-	}
-
-	return [...counts.entries()]
-		.sort((a, b) => b[1] - a[1])
-		.slice(0, maxColors)
-		.map(([key]) => ({
-			r: (key >> 16) & 0xff,
-			g: (key >> 8) & 0xff,
-			b: key & 0xff,
-			active: true
-		}));
-}
+export type MappingMode = 'nearest' | 'luminance' | 'dominant';
 
 export const cssRgb = (color: PaletteColor) => `rgb(${color.r} ${color.g} ${color.b})`;
+
+const luminance = (r: number, g: number, b: number) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+const keyLuminance = (key: number) =>
+	luminance((key >> 16) & 0xff, (key >> 8) & 0xff, key & 0xff);
+
+const colorLuminance = (color: PaletteColor) => luminance(color.r, color.g, color.b);
+
+const distance = (key: number, color: PaletteColor) => {
+	const dr = ((key >> 16) & 0xff) - color.r;
+	const dg = ((key >> 8) & 0xff) - color.g;
+	const db = (key & 0xff) - color.b;
+	return 2 * dr * dr + 4 * dg * dg + 3 * db * db;
+};
+
+function pairByRank(
+	keys: number[],
+	colors: PaletteColor[],
+	lut: Map<number, PaletteColor>
+): void {
+	const count = keys.length;
+	const size = colors.length;
+	if (count === 0 || size === 0) return;
+
+	for (let i = 0; i < count; i++) {
+		const index = count === 1 ? 0 : Math.round((i * (size - 1)) / (count - 1));
+		lut.set(keys[i], colors[index]);
+	}
+}
+
+export function buildLut(
+	keys: number[],
+	palette: PaletteColor[],
+	mode: MappingMode,
+	counts: Map<number, number>
+): Map<number, PaletteColor> {
+	const active = palette.filter((color) => color.active);
+	const lut = new Map<number, PaletteColor>();
+	if (active.length === 0) return lut;
+
+	if (mode === 'nearest') {
+		for (const key of keys) {
+			let best = active[0];
+			let bestDistance = distance(key, best);
+
+			for (let i = 1; i < active.length; i++) {
+				const candidate = distance(key, active[i]);
+				if (candidate < bestDistance) {
+					bestDistance = candidate;
+					best = active[i];
+				}
+			}
+
+			lut.set(key, best);
+		}
+
+		return lut;
+	}
+
+	if (mode === 'dominant') {
+		const first = [...keys].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0))[0];
+		lut.set(first, active[0]);
+
+		const rest = keys.filter((key) => key !== first).sort((a, b) => keyLuminance(a) - keyLuminance(b));
+		const restPalette = active.slice(1).sort((a, b) => colorLuminance(a) - colorLuminance(b));
+		pairByRank(rest, restPalette, lut);
+		fill(lut, keys, active[0]);
+
+		return lut;
+	}
+
+	const sortedKeys = [...keys].sort((a, b) => keyLuminance(a) - keyLuminance(b));
+	const sortedPalette = active.slice().sort((a, b) => colorLuminance(a) - colorLuminance(b));
+
+	if (sortedKeys.length === 1 && sortedPalette.length > 1) {
+		const key = sortedKeys[0];
+		lut.set(
+			key,
+			sortedPalette.reduce((best, color) =>
+				Math.abs(colorLuminance(color) - keyLuminance(key)) <
+				Math.abs(colorLuminance(best) - keyLuminance(key))
+					? color
+					: best
+			)
+		);
+		return lut;
+	}
+
+	pairByRank(sortedKeys, sortedPalette, lut);
+	fill(lut, keys, active[0]);
+
+	return lut;
+}
+
+function fill(lut: Map<number, PaletteColor>, keys: number[], fallback: PaletteColor): void {
+	for (const key of keys) {
+		if (!lut.has(key)) lut.set(key, fallback);
+	}
+}

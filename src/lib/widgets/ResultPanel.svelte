@@ -1,23 +1,27 @@
 <script lang="ts">
 	let {
-		ready = false,
+		imageUrl = null,
 		onDownload
-	}: { ready?: boolean; onDownload?: () => void } = $props();
+	}: { imageUrl?: string | null; onDownload?: () => void } = $props();
 </script>
 
 <section class="result-wrap" aria-label="Result">
 	<span class="result-title">Result</span>
 	<div class="result">
 		<div class="checker"></div>
-		{#if !ready}
-			<span class="result-hint">No result yet</span>
-		{:else}
+		{#if imageUrl}
+			<img class="out" src={imageUrl} alt="Recolored sprite" />
 			<button class="save" type="button" aria-label="Download result" onclick={onDownload}>
-				<svg class="save-icon" viewBox="0 0 16 16" aria-hidden="true">
-					<rect x="1" y="1" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" />
-					<path d="M4 1h8v5H4z" fill="currentColor" />
+				<svg class="save-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+					<rect x="6" y="1" width="4" height="6" />
+					<rect x="1" y="7" width="14" height="2" />
+					<rect x="3" y="9" width="10" height="2" />
+					<rect x="5" y="11" width="6" height="2" />
+					<rect x="7" y="13" width="2" height="2" />
 				</svg>
 			</button>
+		{:else}
+			<span class="result-hint">No result yet</span>
 		{/if}
 	</div>
 </section>
@@ -70,6 +74,16 @@
 
 	.result:hover .checker {
 		animation: drift 4s linear infinite;
+	}
+
+	.out {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		image-rendering: pixelated;
+		pointer-events: none;
 	}
 
 	.result-hint {
@@ -129,14 +143,5 @@
 		width: 16px;
 		height: 16px;
 		shape-rendering: crispEdges;
-	}
-
-	@media (min-width: 900px) {
-		.result-wrap {
-			grid-column: 2;
-			grid-row: 1 / span 3;
-			align-self: center;
-			justify-self: stretch;
-		}
 	}
 </style>
