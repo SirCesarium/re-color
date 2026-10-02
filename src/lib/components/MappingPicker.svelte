@@ -32,7 +32,7 @@
 	<span class="map-title">Mapping</span>
 
 	<div class="group">
-		<span class="pill" style:left="{index * (100 / OPTIONS.length)}%"></span>
+		<span class="pill" style:--i={index}></span>
 
 		{#each OPTIONS as option (option.id)}
 			<button
@@ -78,9 +78,12 @@
 		position: absolute;
 		top: 0;
 		bottom: 0;
+		left: calc(var(--i, 0) * 100% / 3);
 		width: calc(100% / 3);
 		background: var(--btn-bg);
-		transition: left 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+		transition:
+			left 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+			top 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
 	.seg {
@@ -102,7 +105,7 @@
 			color 120ms linear;
 	}
 
-	.seg:first-child {
+	.seg:first-of-type {
 		border-left: 0;
 	}
 
@@ -126,10 +129,11 @@
 	}
 
 	.label {
+		min-width: 0;
 		font-size: 16px;
-		line-height: 1;
+		line-height: 1.2;
 		text-align: center;
-		overflow-wrap: anywhere;
+		overflow-wrap: break-word;
 		transition: transform 120ms ease-out;
 	}
 
@@ -144,6 +148,31 @@
 	@keyframes pop {
 		from {
 			transform: scale(0.7);
+		}
+	}
+
+	@media (max-width: 420px) {
+		.group {
+			grid-template-columns: 1fr;
+		}
+
+		.pill {
+			left: 0;
+			right: 0;
+			width: auto;
+			bottom: auto;
+			top: calc(var(--i, 0) * 100% / 3);
+			height: calc(100% / 3);
+		}
+
+		.seg {
+			border-left: 0;
+			border-top: 2px solid var(--btn-edge);
+			padding: 12px 8px;
+		}
+
+		.seg:first-of-type {
+			border-top: 0;
 		}
 	}
 </style>
