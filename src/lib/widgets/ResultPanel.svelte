@@ -110,16 +110,26 @@
 		border: 2px solid var(--btn-edge);
 		box-shadow: 3px 3px 0 var(--btn-shadow);
 		cursor: pointer;
-		opacity: 0;
-		pointer-events: none;
-		transform: translateY(6px);
 		transition:
 			opacity 150ms linear,
 			transform 150ms ease-out,
 			background-color 120ms linear;
 	}
 
-	.result:hover .save,
+	@media (hover: hover) and (pointer: fine) {
+		.save {
+			opacity: 0;
+			pointer-events: none;
+			transform: translateY(6px);
+		}
+
+		.result:hover .save {
+			opacity: 1;
+			transform: translateY(0);
+			pointer-events: auto;
+		}
+	}
+
 	.save:focus-visible {
 		opacity: 1;
 		transform: translateY(0);
