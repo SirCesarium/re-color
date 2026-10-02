@@ -1,12 +1,15 @@
 <script lang="ts">
 	import Wordmark from '#lib/components/Wordmark.svelte';
 	import PaletteStrip from '#lib/components/PaletteStrip.svelte';
+	import type { PaletteColor } from '#lib/color.ts';
+
+	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 </script>
 
 <header class="hero">
 	<Wordmark />
 	<p class="tagline">Recolor a sprite<br />with any image's palette.</p>
-	<PaletteStrip />
+	<PaletteStrip bind:colors />
 </header>
 
 <style>
@@ -26,6 +29,10 @@
 		.hero {
 			grid-column: 1;
 			text-align: left;
+		}
+
+		.hero :global(.wrap) {
+			justify-content: flex-start;
 		}
 	}
 </style>

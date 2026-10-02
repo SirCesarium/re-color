@@ -3,11 +3,41 @@
 	import ImageInputs from '#lib/widgets/ImageInputs.svelte';
 	import ResultPanel from '#lib/widgets/ResultPanel.svelte';
 	import RecolorButton from '#lib/components/RecolorButton.svelte';
+import { extractColors, type PaletteColor } from '#lib/color.ts';
 
 	let palette = $state<File | null>(null);
 	let sprite = $state<File | null>(null);
+	let colors = $state<PaletteColor[]>([]);
 
 	let ready = $derived(palette !== null && sprite !== null);
+	let hasResult = $state(false);
+
+	function downloadResult() {
+		// placeholder: wired up when the recolor engine lands
+	}
+
+	$effect(() => {
+		const file = palette;
+		if (!file) {
+			colors = [];
+			return;
+		}
+
+		let cancelled = false;
+		const url = URL.createObjectURL(file);
+		const image = new Image();
+
+		image.onload = () => {
+			if (!cancelled) colors = extractColors(image);
+		};
+
+		image.src = url;
+
+		return () => {
+			cancelled = true;
+			URL.revokeObjectURL(url);
+		};
+	});
 </script>
 
 <svelte:head>
@@ -25,10 +55,10 @@
 </svelte:head>
 
 <main class="home">
-	<Hero />
+	<Hero bind:colors />
 	<ImageInputs bind:palette bind:sprite />
 	<RecolorButton disabled={!ready} />
-	<ResultPanel />
+	<ResultPanel ready={hasResult} onDownload={downloadResult} />
 </main>
 
 <style>

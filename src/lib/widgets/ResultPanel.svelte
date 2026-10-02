@@ -1,8 +1,24 @@
+<script lang="ts">
+	let {
+		ready = false,
+		onDownload
+	}: { ready?: boolean; onDownload?: () => void } = $props();
+</script>
+
 <section class="result-wrap" aria-label="Result">
 	<span class="result-title">Result</span>
 	<div class="result">
 		<div class="checker"></div>
-		<span class="result-hint">No result yet</span>
+		{#if !ready}
+			<span class="result-hint">No result yet</span>
+		{:else}
+			<button class="save" type="button" aria-label="Download result" onclick={onDownload}>
+				<svg class="save-icon" viewBox="0 0 16 16" aria-hidden="true">
+					<rect x="1" y="1" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" />
+					<path d="M4 1h8v5H4z" fill="currentColor" />
+				</svg>
+			</button>
+		{/if}
 	</div>
 </section>
 
@@ -64,6 +80,55 @@
 		background: var(--panel-sunken);
 		border: 1px solid var(--border);
 		padding: 8px 16px;
+	}
+
+	.save {
+		position: absolute;
+		right: 8px;
+		bottom: 8px;
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		color: var(--btn-fg);
+		background: var(--btn-bg);
+		border: 2px solid var(--btn-edge);
+		box-shadow: 3px 3px 0 var(--btn-shadow);
+		cursor: pointer;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateY(6px);
+		transition:
+			opacity 150ms linear,
+			transform 150ms ease-out,
+			background-color 120ms linear;
+	}
+
+	.result:hover .save,
+	.save:focus-visible {
+		opacity: 1;
+		transform: translateY(0);
+		pointer-events: auto;
+	}
+
+	.save:hover {
+		background: color-mix(in srgb, var(--btn-bg) 85%, white);
+	}
+
+	.save:active {
+		background: color-mix(in srgb, var(--btn-bg) 75%, black);
+	}
+
+	.save:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 3px;
+	}
+
+	.save-icon {
+		width: 16px;
+		height: 16px;
+		shape-rendering: crispEdges;
 	}
 
 	@media (min-width: 900px) {
