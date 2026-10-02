@@ -1,10 +1,18 @@
 <script lang="ts">
 	import DropZone from '#lib/components/DropZone.svelte';
+
+	let {
+		palette = $bindable(null),
+		sprite = $bindable(null)
+	}: {
+		palette: File | null;
+		sprite: File | null;
+	} = $props();
 </script>
 
 <section class="inputs" aria-label="Images">
-	<DropZone label="Palette" hint="Color source" variant="ref" />
-	<DropZone label="Sprite" hint="Recolor this sprite" variant="base" />
+	<DropZone label="Palette" hint="Color source" variant="ref" bind:file={palette} />
+	<DropZone label="Sprite" hint="Recolor this sprite" variant="base" bind:file={sprite} />
 </section>
 
 <style>

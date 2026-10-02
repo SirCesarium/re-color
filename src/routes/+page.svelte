@@ -3,6 +3,11 @@
 	import ImageInputs from '#lib/widgets/ImageInputs.svelte';
 	import ResultPanel from '#lib/widgets/ResultPanel.svelte';
 	import RecolorButton from '#lib/components/RecolorButton.svelte';
+
+	let palette = $state<File | null>(null);
+	let sprite = $state<File | null>(null);
+
+	let ready = $derived(palette !== null && sprite !== null);
 </script>
 
 <svelte:head>
@@ -21,8 +26,8 @@
 
 <main class="home">
 	<Hero />
-	<ImageInputs />
-	<RecolorButton />
+	<ImageInputs bind:palette bind:sprite />
+	<RecolorButton disabled={!ready} />
 	<ResultPanel />
 </main>
 
