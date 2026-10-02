@@ -10,6 +10,8 @@ import { extractColors, type PaletteColor } from '#lib/color.ts';
 	let colors = $state<PaletteColor[]>([]);
 
 	let ready = $derived(palette !== null && sprite !== null);
+	let activeColors = $derived(colors.filter((color) => color.active).length);
+	let noActiveColors = $derived(activeColors === 0);
 	let hasResult = $state(false);
 
 	function downloadResult() {
@@ -57,7 +59,10 @@ import { extractColors, type PaletteColor } from '#lib/color.ts';
 <main class="home">
 	<Hero bind:colors />
 	<ImageInputs bind:palette bind:sprite />
-	<RecolorButton disabled={!ready} />
+	<RecolorButton
+		disabled={!ready || noActiveColors}
+		hint={ready && noActiveColors ? 'Select at least 1 color' : null}
+	/>
 	<ResultPanel ready={hasResult} onDownload={downloadResult} />
 </main>
 

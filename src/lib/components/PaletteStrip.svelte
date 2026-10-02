@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
+	import Hint from '#lib/components/Hint.svelte';
 	import { cssRgb, type PaletteColor } from '#lib/color.ts';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
@@ -81,12 +81,7 @@
 			{/each}
 		</div>
 
-		{#if hintVisible}
-			<div class="balloon" role="status" transition:fade={{ duration: 250 }}
-				>Click to enable/disable<span class="tail"></span
-				></div
-			>
-		{/if}
+		<Hint placement="above" text={hintVisible ? 'Click to enable/disable' : null} />
 	{:else}
 		<div class="palette" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}
@@ -180,39 +175,5 @@
 			var(--pop) calc(50% + 1px),
 			transparent calc(50% + 1px)
 		);
-	}
-
-	.balloon {
-		position: absolute;
-		bottom: calc(100% + 12px);
-		left: 50%;
-		transform: translateX(-50%);
-		padding: 8px 12px;
-		background: var(--panel);
-		border: 2px solid var(--btn-edge);
-		box-shadow: 3px 3px 0 var(--shadow);
-		color: var(--text);
-		font-size: 16px;
-		line-height: 1;
-		white-space: nowrap;
-		pointer-events: none;
-		animation: balloon-in 200ms ease-out;
-		transition: opacity 250ms linear;
-	}
-
-	.tail {
-		position: absolute;
-		top: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-		border: 6px solid transparent;
-		border-top-color: var(--btn-edge);
-	}
-
-	@keyframes balloon-in {
-		from {
-			opacity: 0;
-			transform: translate(-50%, 6px);
-		}
 	}
 </style>
