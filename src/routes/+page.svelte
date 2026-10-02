@@ -134,11 +134,35 @@
 		name="description"
 		content="Recolor a sprite with any image's palette. Runs entirely on your device, no image is ever uploaded."
 	/>
+	<link rel="canonical" href="https://recolor.pages.dev/" />
+
 	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="re::color" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:url" content="https://recolor.pages.dev/" />
 	<meta property="og:title" content="re::color" />
 	<meta
 		property="og:description"
 		content="Recolor a sprite with any image's palette. Runs entirely on your device."
+	/>
+	<meta property="og:image" content="https://recolor.pages.dev/og.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta
+		property="og:image:alt"
+		content="re::color wordmark above the tagline Recolor a sprite with any image's palette, over a row of seven palette colors."
+	/>
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="re::color" />
+	<meta
+		name="twitter:description"
+		content="Recolor a sprite with any image's palette. Runs entirely on your device."
+	/>
+	<meta name="twitter:image" content="https://recolor.pages.dev/og.png" />
+	<meta
+		name="twitter:image:alt"
+		content="re::color wordmark above the tagline Recolor a sprite with any image's palette, over a row of seven palette colors."
 	/>
 </svelte:head>
 
