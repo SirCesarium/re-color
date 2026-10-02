@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" shape-rendering="crispEdges">
+  <title>re::color: recolor a sprite with any image's palette</title>
+  <defs>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M16 0V16H0" fill="none" stroke="#ebdbb2" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#282828"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect x="56" y="56" width="1096" height="520" fill="#1d2021"/>
+  <rect x="48" y="48" width="1096" height="520" fill="#32302c" stroke="#504945" stroke-width="2"/>
+  <g>
+    <path fill="#ebdbb2" transform="translate(104 240) scale(0.128 -0.128)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#ebdbb2" transform="translate(200 240) scale(0.128 -0.128)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#fe8019" transform="translate(280 240) scale(0.128 -0.128)" d="M125 375V500H250V375ZM125 125V250H250V125Z"/>
+    <path fill="#fe8019" transform="translate(328 240) scale(0.128 -0.128)" d="M125 375V500H250V375ZM125 125V250H250V125Z"/>
+    <path fill="#ebdbb2" transform="translate(376 240) scale(0.128 -0.128)" d="M500 375V500H250V625H500V500H625V375ZM250 0V125H125V500H250V125H500V0ZM500 125V250H625V125Z"/>
+    <path fill="#ebdbb2" transform="translate(472 240) scale(0.128 -0.128)" d="M250 0V125H125V500H250V625H500V500H625V125H500V0ZM250 130H500V495H250Z"/>
+    <path fill="#ebdbb2" transform="translate(568 240) scale(0.128 -0.128)" d="M125 0V625H250V125H500V0Z"/>
+    <path fill="#ebdbb2" transform="translate(648 240) scale(0.128 -0.128)" d="M250 0V125H125V500H250V625H500V500H625V125H500V0ZM250 130H500V495H250Z"/>
+    <path fill="#ebdbb2" transform="translate(744 240) scale(0.128 -0.128)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+  </g>
+  <g>
+    <path fill="#a89984" transform="translate(104 310) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(128 310) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(148 310) scale(0.032 -0.032)" d="M500 375V500H250V625H500V500H625V375ZM250 0V125H125V500H250V125H500V0ZM500 125V250H625V125Z"/>
+    <path fill="#a89984" transform="translate(172 310) scale(0.032 -0.032)" d="M250 0V125H125V500H250V625H500V500H625V125H500V0ZM250 130H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(196 310) scale(0.032 -0.032)" d="M125 0V625H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(216 310) scale(0.032 -0.032)" d="M250 0V125H125V500H250V625H500V500H625V125H500V0ZM250 130H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(240 310) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(280 310) scale(0.032 -0.032)" d="M125 0V500H250V625H500V500H625V0H500V250H250V0ZM250 375H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(320 310) scale(0.032 -0.032)" d="M250 500V625H625V500ZM500 125V250H250V375H125V500H250V375H500V250H625V125ZM125 0V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(344 310) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(368 310) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(392 310) scale(0.032 -0.032)" d="M125 0V625H250V0Z"/>
+    <path fill="#a89984" transform="translate(404 310) scale(0.032 -0.032)" d="M250 0V500H125V625H500V500H375V0Z"/>
+    <path fill="#a89984" transform="translate(424 310) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(460 310) scale(0.032 -0.032)" d="M250 0V125H125V625H250V125H375V0ZM625 125V625H750V125ZM500 0V125H375V500H500V125H625V0Z"/>
+    <path fill="#a89984" transform="translate(488 310) scale(0.032 -0.032)" d="M125 0V625H250V0Z"/>
+    <path fill="#a89984" transform="translate(500 310) scale(0.032 -0.032)" d="M250 0V500H125V625H500V500H375V0Z"/>
+    <path fill="#a89984" transform="translate(520 310) scale(0.032 -0.032)" d="M125 0V625H250V375H500V625H625V0H500V250H250V0Z"/>
+    <path fill="#a89984" transform="translate(560 310) scale(0.032 -0.032)" d="M125 0V500H250V625H500V500H625V0H500V250H250V0ZM250 375H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(584 310) scale(0.032 -0.032)" d="M125 0V625H250V500H375V375H500V250H625V625H750V0H625V125H500V250H375V375H250V0Z"/>
+    <path fill="#a89984" transform="translate(612 310) scale(0.032 -0.032)" d="M375 0V375H250V500H125V625H250V500H375V375H500V0ZM625 500V625H750V500ZM500 375V500H625V375Z"/>
+    <path fill="#a89984" transform="translate(656 310) scale(0.032 -0.032)" d="M125 0V625H250V0Z"/>
+    <path fill="#a89984" transform="translate(668 310) scale(0.032 -0.032)" d="M125 0V625H250V500H375V375H500V250H375V375H250V0ZM625 0V375H500V500H625V625H750V0Z"/>
+    <path fill="#a89984" transform="translate(696 310) scale(0.032 -0.032)" d="M125 0V500H250V625H500V500H625V0H500V250H250V0ZM250 375H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(720 310) scale(0.032 -0.032)" d="M250 500V625H625V500ZM125 125V500H250V125ZM500 125V250H375V375H625V125ZM250 0V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(744 310) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(764 310) scale(0.032 -0.032)" d="M125 375V625H250V375Z"/>
+    <path fill="#a89984" transform="translate(776 310) scale(0.032 -0.032)" d="M250 500V625H625V500ZM500 125V250H250V375H125V500H250V375H500V250H625V125ZM125 0V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(816 310) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(840 310) scale(0.032 -0.032)" d="M125 0V500H250V625H500V500H625V0H500V250H250V0ZM250 375H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(864 310) scale(0.032 -0.032)" d="M125 0V625H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(884 310) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(904 310) scale(0.032 -0.032)" d="M250 0V500H125V625H500V500H375V0Z"/>
+    <path fill="#a89984" transform="translate(924 310) scale(0.032 -0.032)" d="M250 0V500H125V625H500V500H375V0Z"/>
+    <path fill="#a89984" transform="translate(944 310) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(964 310) scale(0.032 -0.032)" d="M125 0V125H250V0Z"/>
+  </g>
+  <g>
+    <rect x="104" y="410" width="48" height="48" fill="#fb4934"/>
+    <rect x="168" y="410" width="48" height="48" fill="#fe8019"/>
+    <rect x="232" y="410" width="48" height="48" fill="#fabd2f"/>
+    <rect x="296" y="410" width="48" height="48" fill="#b8bb26"/>
+    <rect x="360" y="410" width="48" height="48" fill="#8ec07c"/>
+    <rect x="424" y="410" width="48" height="48" fill="#83a598"/>
+    <rect x="488" y="410" width="48" height="48" fill="#d3869b"/>
+  </g>
+  <g>
+    <path fill="#a89984" transform="translate(716 446) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(740 446) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(760 446) scale(0.032 -0.032)" d="M500 375V500H250V625H500V500H625V375ZM250 0V125H125V500H250V125H500V0ZM500 125V250H625V125Z"/>
+    <path fill="#a89984" transform="translate(784 446) scale(0.032 -0.032)" d="M250 0V125H125V500H250V625H500V500H625V125H500V0ZM250 130H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(808 446) scale(0.032 -0.032)" d="M125 0V625H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(828 446) scale(0.032 -0.032)" d="M250 0V125H125V500H250V625H500V500H625V125H500V0ZM250 130H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(852 446) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V125H625V0H500V125H375V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(876 446) scale(0.032 -0.032)" d="M125 0V125H250V0Z"/>
+    <path fill="#a89984" transform="translate(888 446) scale(0.032 -0.032)" d="M125 0V625H500V500H625V375H500V250H250V0ZM250 375H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(912 446) scale(0.032 -0.032)" d="M125 0V500H250V625H500V500H625V0H500V250H250V0ZM250 375H500V495H250Z"/>
+    <path fill="#a89984" transform="translate(936 446) scale(0.032 -0.032)" d="M250 500V625H625V500ZM125 125V500H250V125ZM500 125V250H375V375H625V125ZM250 0V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(960 446) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(980 446) scale(0.032 -0.032)" d="M250 500V625H625V500ZM500 125V250H250V375H125V500H250V375H500V250H625V125ZM125 0V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(1004 446) scale(0.032 -0.032)" d="M125 0V125H250V0Z"/>
+    <path fill="#a89984" transform="translate(1016 446) scale(0.032 -0.032)" d="M125 0V625H500V500H625V125H500V0ZM250 125H495V500H250Z"/>
+    <path fill="#a89984" transform="translate(1040 446) scale(0.032 -0.032)" d="M125 0V625H500V500H250V375H500V250H250V125H500V0Z"/>
+    <path fill="#a89984" transform="translate(1060 446) scale(0.032 -0.032)" d="M375 0V125H250V375H125V625H250V375H375V125H500V0ZM625 375V625H750V375ZM500 125V375H625V125Z"/>
+  </g>
+</svg>
