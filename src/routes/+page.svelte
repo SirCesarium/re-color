@@ -166,7 +166,9 @@
 	/>
 </svelte:head>
 
-<main class="home">
+<main
+	class="box-border flex w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12 min-[900px]:mx-auto min-[900px]:grid min-[900px]:max-w-[1040px] min-[900px]:grid-cols-[1fr_1fr] min-[900px]:content-center min-[900px]:justify-items-start min-[900px]:gap-x-16 min-[900px]:gap-y-8"
+>
 	<Hero bind:colors />
 	<ImageInputs bind:palette bind:sprite />
 	<RecolorButton
@@ -176,49 +178,10 @@
 		hint={buttonHint}
 		onclick={handleRecolor}
 	/>
-	<div class="output">
+	<div
+		class="flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
+	>
 		<MappingPicker bind:mapping />
 		<ResultPanel imageUrl={result?.url ?? null} onDownload={downloadResult} />
 	</div>
 </main>
-
-<style>
-	main {
-		flex: 1;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 32px;
-		padding: 48px 16px;
-		box-sizing: border-box;
-	}
-
-	.output {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		width: 100%;
-		max-width: 480px;
-	}
-
-	@media (min-width: 900px) {
-		main {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			align-content: center;
-			justify-items: start;
-			gap: 32px 64px;
-			max-width: 1040px;
-			margin: 0 auto;
-		}
-
-		.output {
-			grid-column: 2;
-			grid-row: 1 / span 3;
-			align-self: center;
-			justify-self: stretch;
-		}
-	}
-</style>

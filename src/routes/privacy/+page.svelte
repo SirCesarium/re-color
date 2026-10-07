@@ -40,89 +40,38 @@
 	/>
 </svelte:head>
 
-<main class="privacy">
-	<h1 class="page-title">Privacy</h1>
+<main class="box-border flex w-full max-w-[560px] flex-1 flex-col items-center gap-6 px-4 py-12 text-center">
+	<h1
+		class="m-0 text-[32px] font-normal leading-none text-text [text-shadow:4px_4px_0_var(--shadow)]"
+	>
+		Privacy
+	</h1>
 
-	<p class="lead">
+	<p class="m-0 max-w-[44ch] text-base leading-6 text-text">
 		Everything in re::color runs in your browser.
 	</p>
 
-	<p>
+	<p class="m-0 max-w-[44ch] text-base leading-6 text-text-dim">
 		The images you drop are read and processed on your device. No image is
 		ever sent to a server.
 	</p>
 
-	<p>
+	<p class="m-0 max-w-[44ch] text-base leading-6 text-text-dim">
 		There are no accounts and no uploads. Closing the tab clears them.
 	</p>
 
-	<p>
+	<p class="m-0 max-w-[44ch] text-base leading-6 text-text-dim">
 		The full source code is free on GitHub:
 		<a
+			class="text-accent underline hover:text-text focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
 			href="https://github.com/SirCesarium/re-color"
 			target="_blank"
 			rel="noreferrer">github.com/SirCesarium/re-color</a
 		>
 	</p>
 
-	<a class="back" href={resolve('/')}>Back to recolor</a>
+	<a
+		class="mt-2 text-text-dim underline hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
+		href={resolve('/')}>Back to recolor</a
+	>
 </main>
-
-<style>
-	main {
-		flex: 1;
-		width: 100%;
-		max-width: 560px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 24px;
-		padding: 48px 16px;
-		box-sizing: border-box;
-		text-align: center;
-	}
-
-	.page-title {
-		margin: 0;
-		font-size: 32px;
-		font-weight: 400;
-		line-height: 1;
-		color: var(--text);
-		text-shadow: 4px 4px 0 var(--shadow);
-	}
-
-	p {
-		margin: 0;
-		font-size: 16px;
-		line-height: 1.5;
-		color: var(--text-dim);
-		max-width: 44ch;
-	}
-
-	.lead {
-		color: var(--text);
-	}
-
-	a {
-		color: var(--accent);
-		text-decoration: underline;
-	}
-
-	a:hover {
-		color: var(--text);
-	}
-
-	a:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 3px;
-	}
-
-	.back {
-		margin-top: 8px;
-		color: var(--text-dim);
-	}
-
-	.back:hover {
-		color: var(--accent);
-	}
-</style>

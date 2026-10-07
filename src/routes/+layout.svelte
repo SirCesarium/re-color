@@ -9,17 +9,8 @@
 
 <svelte:window ondragover={swallowFile} ondrop={swallowFile} />
 
-<div class="shell">
+<div class="flex min-h-svh flex-col items-center font-pixel">
 	{@render children()}
 
 	<SiteFooter />
 </div>
-
-<style>
-	.shell {
-		min-height: 100svh;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-</style>
