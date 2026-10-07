@@ -28,52 +28,36 @@
 	});
 </script>
 
-<section class="map-wrap" aria-label="Color mapping">
-	<span class="map-title">Mapping</span>
+<section
+	class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
+	aria-label="Color mapping"
+>
+	<span class="text-base text-ok">Mapping</span>
 
-	<div class="group">
+	<div
+		class="relative grid grid-cols-3 overflow-hidden border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)] max-[420px]:grid-cols-1"
+	>
 		<span class="pill" style:--i={index}></span>
 
 		{#each OPTIONS as option (option.id)}
 			<button
-				class="seg"
+				class="seg relative z-[1] flex min-w-0 items-center justify-center gap-1.5 border-0 border-l-2 border-solid border-btn-edge bg-transparent px-1 py-3 text-text-dim transition-[background-color,color] duration-[120ms] ease-linear first-of-type:border-l-0 hover:bg-panel-hover hover:text-text focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-accent max-[420px]:border-l-0 max-[420px]:border-t-2 max-[420px]:px-2 max-[420px]:py-3 max-[420px]:first-of-type:border-t-0"
 				class:on={mapping === option.id}
 				type="button"
 				aria-pressed={mapping === option.id}
 				title={option.label}
 				onclick={() => (mapping = option.id)}
 			>
-				<span class="label">{option.label}</span>
+				<span
+					class="label min-w-0 text-center text-base leading-[1.2] [overflow-wrap:break-word] transition-transform duration-[120ms] ease-out"
+					>{option.label}</span
+				>
 			</button>
 		{/each}
 	</div>
 </section>
 
 <style>
-	.map-wrap {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		width: 100%;
-		max-width: 480px;
-		animation: rise 380ms ease-out 200ms backwards;
-	}
-
-	.map-title {
-		font-size: 16px;
-		color: var(--ok);
-	}
-
-	.group {
-		position: relative;
-		overflow: hidden;
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		background: var(--panel);
-		border: 2px solid var(--btn-edge);
-		box-shadow: 4px 4px 0 var(--btn-shadow);
-	}
-
 	.pill {
 		position: absolute;
 		top: 0;
@@ -86,34 +70,6 @@
 			top 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
-	.seg {
-		position: relative;
-		z-index: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		min-width: 0;
-		padding: 12px 4px;
-		background: transparent;
-		border: 0;
-		border-left: 2px solid var(--btn-edge);
-		color: var(--text-dim);
-		cursor: pointer;
-		transition:
-			background-color 120ms linear,
-			color 120ms linear;
-	}
-
-	.seg:first-of-type {
-		border-left: 0;
-	}
-
-	.seg:hover {
-		background: var(--panel-hover);
-		color: var(--text);
-	}
-
 	.seg.on {
 		color: var(--btn-fg);
 	}
@@ -121,20 +77,6 @@
 	.seg.on:hover {
 		background: transparent;
 		color: var(--btn-fg);
-	}
-
-	.seg:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: -4px;
-	}
-
-	.label {
-		min-width: 0;
-		font-size: 16px;
-		line-height: 1.2;
-		text-align: center;
-		overflow-wrap: break-word;
-		transition: transform 120ms ease-out;
 	}
 
 	.seg.on .label {
@@ -152,10 +94,6 @@
 	}
 
 	@media (max-width: 420px) {
-		.group {
-			grid-template-columns: 1fr;
-		}
-
 		.pill {
 			left: 0;
 			right: 0;
@@ -165,14 +103,5 @@
 			height: calc(100% / 3);
 		}
 
-		.seg {
-			border-left: 0;
-			border-top: 2px solid var(--btn-edge);
-			padding: 12px 8px;
-		}
-
-		.seg:first-of-type {
-			border-top: 0;
-		}
 	}
 </style>
