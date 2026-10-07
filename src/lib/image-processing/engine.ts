@@ -50,6 +50,7 @@ export async function recolorSprite(
 		const { data, width, height } = imageData;
 
 		if (width === 0 || height === 0) return null;
+		validateExcludedPixels(config.excludedPixels, width * height);
 
 		onProgress(progress.pixelsRead);
 
@@ -86,7 +87,7 @@ export async function recolorSprite(
 			const start = performance.now();
 
 			while (row < height && performance.now() - start < chunkDurationMs) {
-				applyRow(data, row, width, lookup, config.transparency);
+				applyRow(data, row, width, lookup, config.transparency, config.excludedPixels);
 				row++;
 			}
 
@@ -140,12 +141,14 @@ function applyRow(
 	row: number,
 	width: number,
 	lookup: ReadonlyMap<number, Rgb>,
-	transparency: RecolorConfig['transparency']
+	transparency: RecolorConfig['transparency'],
+	excludedPixels?: ReadonlySet<number>
 ): void {
 	let index = row * width * 4;
 	const end = index + width * 4;
 
 	for (; index < end; index += 4) {
+		if (excludedPixels?.has(index / 4)) continue;
 		if (data[index + 3] < transparency.minAlpha) continue;
 
 		const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
@@ -158,6 +161,20 @@ function applyRow(
 		data[index + 2] = target.b;
 
 		if (!transparency.preserveAlpha) data[index + 3] = transparency.opaqueAlpha;
+	}
+}
+
+/** Rejects mask indexes that cannot refer to a pixel in the source image. */
+function validateExcludedPixels(
+	excludedPixels: ReadonlySet<number> | undefined,
+	pixelCount: number
+): void {
+	if (!excludedPixels) return;
+
+	for (const index of excludedPixels) {
+		if (!Number.isInteger(index) || index < 0 || index >= pixelCount) {
+			throw new RangeError(`excludedPixels contains an invalid pixel index: ${index}`);
+		}
 	}
 }
 

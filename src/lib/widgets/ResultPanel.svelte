@@ -1,11 +1,44 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Button from '#lib/components/Button.svelte';
+	import Hint from '#lib/components/Hint.svelte';
 	import Typography from '#lib/components/Typography.svelte';
+	import PixelCanvas from '#lib/widgets/PixelCanvas.svelte';
 
 	let {
 		imageUrl = null,
+		excludedPixels = [],
+		onTogglePixel,
 		onDownload
-	}: { imageUrl?: string | null; onDownload?: () => void } = $props();
+	}: {
+		imageUrl?: string | null;
+		excludedPixels?: readonly number[];
+		onTogglePixel?: (pixelIndex: number) => void;
+		onDownload?: () => void;
+	} = $props();
+
+	let helpReady = $state(false);
+	let helpSeen = $state(false);
+	let helpVisible = $state(false);
+
+	const HELP_STORAGE_KEY = 'recolor.resultPixelHelpSeen';
+
+	onMount(() => {
+		helpSeen = localStorage.getItem(HELP_STORAGE_KEY) === 'true';
+		helpReady = true;
+	});
+
+	$effect(() => {
+		if (!imageUrl || !helpReady || helpSeen) return;
+
+		helpSeen = true;
+		helpVisible = true;
+		localStorage.setItem(HELP_STORAGE_KEY, 'true');
+	});
+
+	function dismissHelp() {
+		helpVisible = false;
+	}
 </script>
 
 <section
@@ -17,15 +50,23 @@
 		class="result reveal-on-hover relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
 		<div class="checker"></div>
+		<PixelCanvas {imageUrl} {excludedPixels} {onTogglePixel} onInteract={dismissHelp} />
+
 		{#if imageUrl}
-			<img
-				class="pointer-events-none absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]"
-				src={imageUrl}
-				alt="Recolored sprite"
-			/>
+			{#if helpVisible}
+				<div class="help-anchor absolute top-2 left-2 right-2 z-10">
+					<Hint
+						class="pixel-help"
+						arrow="down"
+						text="Click or tap a pixel to toggle recoloring. Excluded pixels keep their original color. Keyboard: arrows move, Space toggles."
+						onDismiss={dismissHelp}
+					/>
+				</div>
+			{/if}
+
 			<Button
 				variant="icon"
-				class="absolute right-2 bottom-2 grid h-8 w-8 place-items-center p-0 focus-visible:outline-offset-[3px]"
+				class="absolute right-2 bottom-2 z-10 grid h-8 w-8 place-items-center p-0 focus-visible:outline-offset-[3px]"
 				ariaLabel="Download result"
 				revealOnHover
 				onclick={onDownload}
@@ -43,13 +84,6 @@
 					<rect x="7" y="13" width="2" height="2" />
 				</svg>
 			</Button>
-		{:else}
-			<Typography
-				as="span"
-				variant="body"
-				class="relative border border-border bg-panel-sunken px-4 py-2"
-				>No result yet</Typography
-			>
 		{/if}
 	</div>
 </section>
@@ -78,4 +112,15 @@
 		animation: drift 4s linear infinite;
 	}
 
+	.help-anchor :global(.pixel-help) {
+		max-width: 100%;
+		white-space: normal;
+		text-align: left;
+		font-size: 12px;
+		line-height: 1.35;
+	}
+
+	.help-anchor :global(.pixel-help .tail) {
+		left: 18px;
+	}
 </style>

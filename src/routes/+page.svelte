@@ -87,6 +87,8 @@
 		</section>
 		<ResultPanel
 			imageUrl={workflow.state.result?.url ?? null}
+			excludedPixels={workflow.state.excludedPixels}
+			onTogglePixel={workflow.toggleExcludedPixel}
 			onDownload={workflow.downloadResult}
 		/>
 	</div>

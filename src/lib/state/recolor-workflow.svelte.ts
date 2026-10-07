@@ -19,6 +19,7 @@ type WorkflowState = {
 	colors: PaletteColor[];
 	mapping: MappingMode;
 	result: { url: string } | null;
+	excludedPixels: number[];
 	busy: boolean;
 	progress: number;
 	hint: string | null;
@@ -33,6 +34,7 @@ export function createRecolorWorkflow() {
 		colors: [],
 		mapping: 'luminance',
 		result: null,
+		excludedPixels: [],
 		busy: false,
 		progress: 0,
 		hint: null,
@@ -43,7 +45,7 @@ export function createRecolorWorkflow() {
 	const activeColors = $derived(state.colors.filter((color) => color.active).length);
 	const noActiveColors = $derived(activeColors === 0);
 	const mappingSig = $derived(
-		`${state.mapping}:${state.colors.map((color) => (color.active ? '1' : '0')).join('')}`
+		`${state.mapping}:${state.colors.map((color) => (color.active ? '1' : '0')).join('')}:${state.excludedPixels.join(',')}`
 	);
 	const buttonHint = $derived(
 		ready && noActiveColors ? 'Select at least 1 color' : state.hint
@@ -109,6 +111,7 @@ export function createRecolorWorkflow() {
 					},
 					isCancelled: () => id !== runId
 				},
+				excludedPixels: new Set(state.excludedPixels),
 				output: OUTPUT_CONFIG
 			};
 
@@ -136,6 +139,14 @@ export function createRecolorWorkflow() {
 		void startRecolor();
 	}
 
+	function toggleExcludedPixel(index: number) {
+		if (!Number.isInteger(index) || index < 0) return;
+
+		state.excludedPixels = state.excludedPixels.includes(index)
+			? state.excludedPixels.filter((pixel) => pixel !== index)
+			: [...state.excludedPixels, index];
+	}
+
 	$effect(() => {
 		void state.palette;
 		void state.sprite;
@@ -146,6 +157,14 @@ export function createRecolorWorkflow() {
 			state.busy = false;
 			state.progress = 0;
 			state.hint = null;
+		});
+	});
+
+	$effect(() => {
+		void state.sprite;
+
+		untrack(() => {
+			state.excludedPixels = [];
 		});
 	});
 
@@ -201,6 +220,7 @@ export function createRecolorWorkflow() {
 			return buttonHint;
 		},
 		handleRecolor,
+		toggleExcludedPixel,
 		downloadResult
 	};
 }

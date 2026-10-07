@@ -117,6 +117,8 @@ export type RecolorConfig = {
 	mapping: ColorMappingConfig;
 	/** Alpha handling for sprite pixels. */
 	transparency: TransparencyConfig;
+	/** Linear source-pixel indexes to leave unchanged instead of applying the palette. */
+	excludedPixels?: ReadonlySet<number>;
 	/** Scheduling, progress, and cancellation settings for pixel processing. */
 	processing: {
 		/** Maximum time spent processing rows before yielding to the browser. */
