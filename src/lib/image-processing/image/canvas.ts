@@ -25,7 +25,7 @@ export type CanvasConfig = {
  * @returns The decoded image dimensions and a callback that releases its resources.
  * @throws If both bitmap and image-element decoding fail.
  */
-export async function loadImage(file: File): Promise<LoadedImage> {
+export async function loadImage(file: Blob): Promise<LoadedImage> {
 	if (typeof createImageBitmap === 'function') {
 		try {
 			const bitmap = await createImageBitmap(file);
@@ -63,6 +63,68 @@ export async function loadImage(file: File): Promise<LoadedImage> {
 }
 
 /**
+ * Rebuilds an output image by copying excluded pixels from the original sprite.
+ *
+ * This does not run color mapping; it only composes the already-recolored image
+ * with the original pixels selected by the mask.
+ */
+export async function composeExcludedPixels(
+	baseUrl: string,
+	originalFile: Blob,
+	excludedPixels: ReadonlySet<number>,
+	canvasConfig: CanvasConfig,
+	outputConfig: { mimeType: string; quality?: number }
+): Promise<string> {
+	const response = await fetch(baseUrl);
+
+	if (!response.ok) throw new Error(`Could not read the recolored image: ${response.status}`);
+
+	const [base, original] = await Promise.all([
+		loadImage(await response.blob()),
+		loadImage(originalFile)
+	]);
+
+	try {
+		if (base.width !== original.width || base.height !== original.height) {
+			throw new Error('Original and recolored image dimensions do not match');
+		}
+
+		const surface = createCanvas(base.width, base.height);
+		const context = context2d(surface, canvasConfig);
+		const originalSurface = createCanvas(original.width, original.height);
+		const originalContext = context2d(originalSurface, canvasConfig);
+
+		context.imageSmoothingEnabled = false;
+		originalContext.imageSmoothingEnabled = false;
+		context.drawImage(base.source, 0, 0);
+		originalContext.drawImage(original.source, 0, 0);
+
+		const outputPixels = context.getImageData(0, 0, base.width, base.height);
+		const originalPixels = originalContext.getImageData(0, 0, original.width, original.height);
+		const pixelCount = base.width * base.height;
+
+		for (const pixelIndex of excludedPixels) {
+			if (!Number.isInteger(pixelIndex) || pixelIndex < 0 || pixelIndex >= pixelCount) {
+				throw new RangeError(`excludedPixels contains an invalid pixel index: ${pixelIndex}`);
+			}
+
+			const channelIndex = pixelIndex * 4;
+			outputPixels.data.set(
+				originalPixels.data.subarray(channelIndex, channelIndex + 4),
+				channelIndex
+			);
+		}
+
+		context.putImageData(outputPixels, 0, 0);
+
+		return await toBlobUrl(surface, outputConfig);
+	} finally {
+		base.close();
+		original.close();
+	}
+}
+
+/**
  * Creates an HTML canvas with the requested pixel dimensions.
  *
  * @param width Canvas width in pixels.
@@ -96,6 +158,9 @@ export function context2d(
 	});
 
 	if (!context) throw new Error('Canvas 2D context is not available');
+
+	context.imageSmoothingEnabled = false;
+	context.filter = 'none';
 
 	return context;
 }

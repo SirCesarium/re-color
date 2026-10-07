@@ -1,23 +1,69 @@
 <script lang="ts">
 	let {
 		imageUrl = null,
+		spriteFile = null,
 		excludedPixels = [],
 		onTogglePixel,
+		onSetPixelExclusion,
 		onInteract
 	}: {
 		imageUrl?: string | null;
+		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
 		onTogglePixel?: (pixelIndex: number) => void;
+		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
 		onInteract?: () => void;
 	} = $props();
 
 	let viewport = $state<HTMLButtonElement | null>(null);
 	let canvas = $state<HTMLCanvasElement | null>(null);
 	let sourceImage = $state<HTMLImageElement | null>(null);
+	let originalSprite = $state<HTMLImageElement | null>(null);
 	let dimensions = $state<{ width: number; height: number } | null>(null);
 	let previewError = $state(false);
 	let hoverPixel = $state<{ x: number; y: number } | null>(null);
 	let keyboardPixel = $state<{ x: number; y: number } | null>(null);
+	let pointerStroke: {
+		pointerId: number;
+		lastPixel: { x: number; y: number };
+		indexes: Set<number>;
+		dragging: boolean;
+		excluded: boolean;
+	} | null = null;
+
+	$effect(() => {
+		const file = spriteFile;
+
+		if (!file) {
+			originalSprite = null;
+
+			return;
+		}
+
+		let cancelled = false;
+		const url = URL.createObjectURL(file);
+		const image = new Image();
+
+		image.onload = () => {
+			if (!cancelled) originalSprite = image;
+		};
+
+		image.onerror = () => {
+			if (!cancelled) {
+				console.error('Could not load the original sprite for live pixel exclusion');
+				previewError = true;
+			}
+		};
+
+		image.src = url;
+
+		return () => {
+			cancelled = true;
+			image.onload = null;
+			image.onerror = null;
+			URL.revokeObjectURL(url);
+		};
+	});
 
 	$effect(() => {
 		const url = imageUrl;
@@ -59,7 +105,9 @@
 	$effect(() => {
 		const surface = canvas;
 		const image = sourceImage;
+		const original = originalSprite;
 		const size = dimensions;
+		const mask = excludedPixels;
 
 		if (!surface || !image || !size) return;
 
@@ -75,8 +123,11 @@
 		}
 
 		context.imageSmoothingEnabled = false;
+		context.filter = 'none';
 		context.clearRect(0, 0, size.width, size.height);
 		context.drawImage(image, 0, 0);
+
+		if (original && mask.length > 0) paintPixels(mask, original);
 	});
 
 	function getImageRect() {
@@ -130,21 +181,141 @@
 	}
 
 	function onPointerUp(event: PointerEvent) {
-		if (event.button > 0) return;
+		if (pointerStroke?.pointerId !== event.pointerId) return;
 
-		toggleAt(event.clientX, event.clientY);
+		const lastPixel = getPixelAt(event.clientX, event.clientY);
+		const size = dimensions;
+
+		if (lastPixel && size) {
+			const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
+
+			if (lastPixel.index !== lastIndex) {
+				pointerStroke.dragging = true;
+			}
+			addStrokeSegment(lastPixel);
+		}
+
+		const stroke = pointerStroke;
+		const indexes = [...stroke.indexes];
+		pointerStroke = null;
+
+		if (stroke.dragging) {
+			onInteract?.();
+			onSetPixelExclusion?.(indexes, stroke.excluded);
+		} else {
+			toggleAt(event.clientX, event.clientY);
+		}
 	}
 
-	function onPointerMove(event: PointerEvent) {
-		if (event.pointerType !== 'mouse') return;
+	function onPointerDown(event: PointerEvent) {
+		if (!event.isPrimary || event.button !== 0 || !viewport) return;
 
 		const pixel = getPixelAt(event.clientX, event.clientY);
 
-		hoverPixel = pixel ? { x: pixel.x, y: pixel.y } : null;
+		if (!pixel) return;
+
+		event.preventDefault();
+		const excluded = excludedPixels.includes(pixel.index);
+		pointerStroke = {
+			pointerId: event.pointerId,
+			lastPixel: { x: pixel.x, y: pixel.y },
+			indexes: new Set([pixel.index]),
+			dragging: false,
+			excluded: !excluded
+		};
+		viewport.setPointerCapture(event.pointerId);
+	}
+
+	function onPointerMove(event: PointerEvent) {
+		const pixel = getPixelAt(event.clientX, event.clientY);
+		const size = dimensions;
+
+		if (event.pointerType === 'mouse') {
+			hoverPixel = pixel ? { x: pixel.x, y: pixel.y } : null;
+		}
+
+		if (!pixel || !size || pointerStroke?.pointerId !== event.pointerId) return;
+
+		const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
+
+		if (!pointerStroke.dragging && pixel.index !== lastIndex) {
+			pointerStroke.dragging = true;
+		}
+
+		if (pointerStroke.dragging) addStrokeSegment(pixel);
+	}
+
+	function addStrokeSegment(pixel: { x: number; y: number; index: number }) {
+		if (!pointerStroke || !dimensions) return;
+
+		let x0 = pointerStroke.lastPixel.x;
+		let y0 = pointerStroke.lastPixel.y;
+		const x1 = pixel.x;
+		const y1 = pixel.y;
+		const dx = Math.abs(x1 - x0);
+		const sx = x0 < x1 ? 1 : -1;
+		const dy = -Math.abs(y1 - y0);
+		const sy = y0 < y1 ? 1 : -1;
+		let error = dx + dy;
+		const segment: number[] = [];
+
+		while (true) {
+			const index = y0 * dimensions.width + x0;
+			pointerStroke.indexes.add(index);
+			segment.push(index);
+
+			if (x0 === x1 && y0 === y1) break;
+
+			const doubledError = 2 * error;
+
+			if (doubledError >= dy) {
+				error += dy;
+				x0 += sx;
+			}
+
+			if (doubledError <= dx) {
+				error += dx;
+				y0 += sy;
+			}
+		}
+
+		pointerStroke.lastPixel = { x: x1, y: y1 };
+
+		if (pointerStroke.dragging) {
+			const image = pointerStroke.excluded ? originalSprite : sourceImage;
+			paintPixels(segment, image);
+		}
+	}
+
+	function paintPixels(indexes: readonly number[], image: HTMLImageElement | null) {
+		if (!canvas || !image || !dimensions || indexes.length === 0) return;
+
+		const context = canvas.getContext('2d');
+		if (!context) return;
+
+		context.save();
+		context.beginPath();
+
+		for (const index of indexes) {
+			const x = index % dimensions.width;
+			const y = Math.floor(index / dimensions.width);
+			context.rect(x, y, 1, 1);
+		}
+
+		context.clip();
+		context.clearRect(0, 0, dimensions.width, dimensions.height);
+		context.imageSmoothingEnabled = false;
+		context.filter = 'none';
+		context.drawImage(image, 0, 0);
+		context.restore();
 	}
 
 	function onPointerLeave() {
-		hoverPixel = null;
+		if (!pointerStroke) hoverPixel = null;
+	}
+
+	function onPointerCancel() {
+		pointerStroke = null;
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
@@ -187,8 +358,10 @@
 		type="button"
 		aria-label="Interactive sprite preview. Tap or click a pixel to toggle recoloring. Use arrow keys to select and Space to toggle."
 		onpointerup={onPointerUp}
+		onpointerdown={onPointerDown}
 		onpointermove={onPointerMove}
 		onpointerleave={onPointerLeave}
+		onpointercancel={onPointerCancel}
 		onkeydown={onKeyDown}
 	>
 		<canvas
@@ -213,7 +386,7 @@
 
 <style>
 	.viewport {
-		touch-action: manipulation;
+		touch-action: none;
 		cursor: crosshair;
 		outline-offset: -3px;
 		padding: 0;

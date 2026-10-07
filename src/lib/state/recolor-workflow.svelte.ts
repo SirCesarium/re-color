@@ -1,5 +1,5 @@
 import { onDestroy, onMount, untrack } from 'svelte';
-import { extractColors, recolorSprite } from '../image-processing/index.ts';
+import { composeExcludedPixels, extractColors, recolorSprite } from '../image-processing/index.ts';
 import type { MappingMode, PaletteColor, RecolorConfig } from '../image-processing/types.ts';
 import {
 	CANVAS_CONFIG,
@@ -18,7 +18,12 @@ type WorkflowState = {
 	sprite: File | null;
 	colors: PaletteColor[];
 	mapping: MappingMode;
-	result: { url: string } | null;
+	result: {
+		url: string;
+		previewUrl: string;
+		mappingSignature: string;
+		exclusionSignature: string;
+	} | null;
 	excludedPixels: number[];
 	busy: boolean;
 	progress: number;
@@ -45,13 +50,15 @@ export function createRecolorWorkflow() {
 	const activeColors = $derived(state.colors.filter((color) => color.active).length);
 	const noActiveColors = $derived(activeColors === 0);
 	const mappingSig = $derived(
-		`${state.mapping}:${state.colors.map((color) => (color.active ? '1' : '0')).join('')}:${state.excludedPixels.join(',')}`
+		`${state.mapping}:${state.colors.map((color) => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`).join(';')}`
 	);
+	const exclusionSig = $derived([...state.excludedPixels].sort((a, b) => a - b).join(','));
 	const buttonHint = $derived(
 		ready && noActiveColors ? 'Select at least 1 color' : state.hint
 	);
 
 	let runId = 0;
+	let compositionId = 0;
 
 	onMount(() => {
 		const stored = localStorage.getItem(MAPPING_STORAGE_KEY);
@@ -69,9 +76,69 @@ export function createRecolorWorkflow() {
 	});
 
 	function clearResult() {
-		if (state.result) URL.revokeObjectURL(state.result.url);
+		if (state.result) {
+			for (const url of new Set([state.result.url, state.result.previewUrl])) {
+				URL.revokeObjectURL(url);
+			}
+		}
 
 		state.result = null;
+	}
+
+	function createConfig(id: number): RecolorConfig {
+		return {
+			canvas: CANVAS_CONFIG,
+			mapping: {
+				...MAPPING_CONFIG,
+				mode: state.mapping
+			},
+			transparency: TRANSPARENCY_CONFIG,
+			processing: {
+				...PROCESSING_CONFIG,
+				onProgress: (fraction: number) => {
+					if (id === runId) state.progress = fraction;
+				},
+				isCancelled: () => id !== runId
+			},
+			output: OUTPUT_CONFIG
+		};
+	}
+
+	function releaseResult(url: string | null, retainedUrls: ReadonlySet<string> = new Set()) {
+		if (url && !retainedUrls.has(url)) URL.revokeObjectURL(url);
+	}
+
+	async function composeForCurrentExclusions(
+		previewUrl: string,
+		file: File,
+		isStale: () => boolean
+	): Promise<{ url: string; exclusionSignature: string } | null> {
+		while (!isStale()) {
+			const signature = exclusionSig;
+			const pixels = [...state.excludedPixels];
+			let url = previewUrl;
+
+			if (pixels.length > 0) {
+				url = await composeExcludedPixels(
+					previewUrl,
+					file,
+					new Set(pixels),
+					CANVAS_CONFIG,
+					OUTPUT_CONFIG
+				);
+			}
+
+			if (isStale()) {
+				releaseResult(url, new Set([previewUrl]));
+				return null;
+			}
+
+			if (signature === exclusionSig) return { url, exclusionSignature: signature };
+
+			releaseResult(url, new Set([previewUrl]));
+		}
+
+		return null;
 	}
 
 	function downloadResult() {
@@ -91,37 +158,61 @@ export function createRecolorWorkflow() {
 		if (!file) return;
 
 		const id = ++runId;
+		compositionId++;
+		const signature = mappingSig;
+		const previous = state.result;
+		let previewUrl =
+			previous?.mappingSignature === signature ? previous.previewUrl : null;
+		let createdPreviewUrl: string | null = null;
+		let createdResultUrl: string | null = null;
 
 		state.busy = true;
 		state.progress = 0;
 		state.hint = null;
 
 		try {
-			const config: RecolorConfig = {
-				canvas: CANVAS_CONFIG,
-				mapping: {
-					...MAPPING_CONFIG,
-					mode: state.mapping
-				},
-				transparency: TRANSPARENCY_CONFIG,
-				processing: {
-					...PROCESSING_CONFIG,
-					onProgress: (fraction: number) => {
-						if (id === runId) state.progress = fraction;
-					},
-					isCancelled: () => id !== runId
-				},
-				excludedPixels: new Set(state.excludedPixels),
-				output: OUTPUT_CONFIG
+			if (!previewUrl) {
+				previewUrl = await recolorSprite(file, state.colors, createConfig(id));
+
+				if (id !== runId || previewUrl === null) {
+					releaseResult(previewUrl);
+					return;
+				}
+
+				createdPreviewUrl = previewUrl;
+			}
+
+			const composition = await composeForCurrentExclusions(
+				previewUrl,
+				file,
+				() => id !== runId
+			);
+
+			if (!composition) {
+				releaseResult(createdPreviewUrl);
+				return;
+			}
+
+			const { url, exclusionSignature } = composition;
+			createdResultUrl = url === previewUrl ? null : url;
+			const nextResult = {
+				url,
+				previewUrl,
+				mappingSignature: signature,
+				exclusionSignature
 			};
+			const retainedUrls = new Set([nextResult.url, nextResult.previewUrl]);
 
-			const url = await recolorSprite(file, state.colors, config);
+			if (previous) {
+				for (const oldUrl of new Set([previous.url, previous.previewUrl])) {
+					releaseResult(oldUrl, retainedUrls);
+				}
+			}
 
-			if (id !== runId || url === null) return;
-
-			clearResult();
-			state.result = { url };
+			state.result = nextResult;
 		} catch (error) {
+			releaseResult(createdPreviewUrl);
+			releaseResult(createdResultUrl);
 			console.error(error);
 
 			if (id === runId) state.hint = 'Recolor failed';
@@ -145,6 +236,66 @@ export function createRecolorWorkflow() {
 		state.excludedPixels = state.excludedPixels.includes(index)
 			? state.excludedPixels.filter((pixel) => pixel !== index)
 			: [...state.excludedPixels, index];
+	}
+
+	function setPixelExclusion(indexes: readonly number[], excluded: boolean) {
+		const next = new Set(state.excludedPixels);
+
+		for (const index of indexes) {
+			if (!Number.isInteger(index) || index < 0) continue;
+
+			if (excluded) next.add(index);
+			else next.delete(index);
+		}
+
+		state.excludedPixels = [...next];
+	}
+
+	async function updateResultExclusions(
+		result: NonNullable<WorkflowState['result']>,
+		id: number
+	) {
+		const file = state.sprite;
+		if (!file) return;
+
+		try {
+			const composition = await composeForCurrentExclusions(
+				result.previewUrl,
+				file,
+				() =>
+					id !== compositionId ||
+					state.result?.previewUrl !== result.previewUrl ||
+					state.result.mappingSignature !== mappingSig
+			);
+
+			if (!composition || id !== compositionId) return;
+
+			const currentResult = state.result;
+			if (
+				!currentResult ||
+				currentResult.previewUrl !== result.previewUrl ||
+				currentResult.mappingSignature !== mappingSig
+			) {
+				releaseResult(composition.url, new Set([result.previewUrl]));
+				return;
+			}
+
+			const updatedResult = {
+				...currentResult,
+				url: composition.url,
+				exclusionSignature: composition.exclusionSignature
+			};
+
+			state.result = updatedResult;
+			releaseResult(
+				currentResult.url,
+				new Set([updatedResult.url, updatedResult.previewUrl])
+			);
+		} catch (error) {
+			console.error(error);
+
+			if (id === compositionId) state.hint = 'Could not update excluded pixels';
+		}
 	}
 
 	$effect(() => {
@@ -173,6 +324,25 @@ export function createRecolorWorkflow() {
 
 		untrack(() => {
 			if (signature && state.result !== null) void startRecolor();
+		});
+	});
+
+	$effect(() => {
+		const signature = exclusionSig;
+		const result = state.result;
+		const mapping = mappingSig;
+
+		untrack(() => {
+			if (
+				!result ||
+				result.mappingSignature !== mapping ||
+				result.exclusionSignature === signature
+			) {
+				return;
+			}
+
+			const id = ++compositionId;
+			void updateResultExclusions(result, id);
 		});
 	});
 
@@ -221,6 +391,7 @@ export function createRecolorWorkflow() {
 		},
 		handleRecolor,
 		toggleExcludedPixel,
+		setPixelExclusion,
 		downloadResult
 	};
 }

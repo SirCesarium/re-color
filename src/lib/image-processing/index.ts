@@ -1,5 +1,7 @@
 /** Yields between processing chunks using the browser Scheduler API when available. */
 export { yieldToBrowser } from './image/scheduler.ts';
+/** Composes excluded source pixels into an already-recolored image without remapping colors. */
+export { composeExcludedPixels } from './image/canvas.ts';
 /** Converts RGB channel values to a CSS `rgb()` color string. */
 export { cssRgb } from './color/format.ts';
 /** Samples the most frequent colors from a decoded image. */

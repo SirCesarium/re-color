@@ -86,9 +86,11 @@
 			/>
 		</section>
 		<ResultPanel
-			imageUrl={workflow.state.result?.url ?? null}
+			imageUrl={workflow.state.result?.previewUrl ?? null}
+			spriteFile={workflow.state.sprite}
 			excludedPixels={workflow.state.excludedPixels}
 			onTogglePixel={workflow.toggleExcludedPixel}
+			onSetPixelExclusion={workflow.setPixelExclusion}
 			onDownload={workflow.downloadResult}
 		/>
 	</div>

@@ -7,13 +7,17 @@
 
 	let {
 		imageUrl = null,
+		spriteFile = null,
 		excludedPixels = [],
 		onTogglePixel,
+		onSetPixelExclusion,
 		onDownload
 	}: {
 		imageUrl?: string | null;
+		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
 		onTogglePixel?: (pixelIndex: number) => void;
+		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
 		onDownload?: () => void;
 	} = $props();
 
@@ -50,7 +54,14 @@
 		class="result reveal-on-hover relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
 		<div class="checker"></div>
-		<PixelCanvas {imageUrl} {excludedPixels} {onTogglePixel} onInteract={dismissHelp} />
+		<PixelCanvas
+			{imageUrl}
+			{spriteFile}
+			{excludedPixels}
+			{onTogglePixel}
+			{onSetPixelExclusion}
+			onInteract={dismissHelp}
+		/>
 
 		{#if imageUrl}
 			{#if helpVisible}
@@ -58,7 +69,7 @@
 					<Hint
 						class="pixel-help"
 						arrow="down"
-						text="Click or tap a pixel to toggle recoloring. Excluded pixels keep their original color. Keyboard: arrows move, Space toggles."
+						text="Click or tap to toggle a pixel. Hold and drag to paint: start on a recolored pixel to exclude, or on an excluded pixel to restore its colors. Changes appear while you drag."
 						onDismiss={dismissHelp}
 					/>
 				</div>
