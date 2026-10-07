@@ -65,12 +65,17 @@
 	}
 </script>
 
-<div class="wrap" role="presentation" bind:this={root} onpointermove={onPointerMove}>
+<div
+	class="wrap relative mt-4 inline-flex max-w-full justify-center"
+	role="presentation"
+	bind:this={root}
+	onpointermove={onPointerMove}
+>
 	{#if colors.length > 0}
-		<div class="palette">
+		<div class="flex flex-wrap justify-center gap-1">
 			{#each colors as color, index (index)}
 				<button
-					class="sw"
+					class="sw relative h-4 w-4 cursor-pointer border border-border bg-[var(--c)] p-0 hover:shadow-[0_0_0_2px_var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
 					class:off={!color.active}
 					style:--c={cssRgb(color)}
 					type="button"
@@ -83,43 +88,15 @@
 
 		<Hint placement="above" text={hintVisible ? 'Click to enable/disable' : null} />
 	{:else}
-		<div class="palette" aria-hidden="true">
+		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}
-				<span class="sw sw-{key}"></span>
+				<span class="sw sw-{key} relative h-4 w-4 border border-border p-0"></span>
 			{/each}
 		</div>
 	{/if}
 </div>
 
 <style>
-	.wrap {
-		position: relative;
-		display: inline-flex;
-		justify-content: center;
-		margin-top: 16px;
-		max-width: 100%;
-	}
-
-	.palette {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 4px;
-	}
-
-	.sw {
-		position: relative;
-		width: 16px;
-		height: 16px;
-		padding: 0;
-		border: 1px solid var(--border);
-		background: var(--c);
-		cursor: pointer;
-		transition:
-			box-shadow 100ms ease-out,
-			opacity 200ms ease-out;
-	}
-
 	.sw-red {
 		background: var(--sw-red);
 	}
@@ -142,21 +119,18 @@
 		background: var(--sw-purple);
 	}
 
+	.sw {
+		transition:
+			box-shadow 100ms ease-out,
+			opacity 200ms ease-out;
+	}
+
 	span.sw {
 		cursor: default;
 	}
 
 	span.sw:hover {
 		box-shadow: none;
-	}
-
-	.sw:hover {
-		box-shadow: 0 0 0 2px var(--accent);
-	}
-
-	.sw:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
 	}
 
 	.sw.off {
