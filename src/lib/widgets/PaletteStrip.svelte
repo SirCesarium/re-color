@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Hint from '#lib/components/Hint.svelte';
-	import { cssRgb, type PaletteColor } from '#lib/color.ts';
+	import { cssRgb, type PaletteColor } from '#lib';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 

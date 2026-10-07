@@ -2,7 +2,7 @@
 	import Wordmark from '#lib/components/Wordmark.svelte';
 	import Typography from '#lib/components/Typography.svelte';
 	import PaletteStrip from '#lib/widgets/PaletteStrip.svelte';
-	import type { PaletteColor } from '#lib/color.ts';
+	import type { PaletteColor } from '#lib';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 </script>
