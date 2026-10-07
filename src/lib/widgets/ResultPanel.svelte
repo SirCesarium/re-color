@@ -5,14 +5,33 @@
 	}: { imageUrl?: string | null; onDownload?: () => void } = $props();
 </script>
 
-<section class="result-wrap" aria-label="Result">
-	<span class="result-title">Result</span>
-	<div class="result">
+<section
+	class="animate-[rise_380ms_ease-out_240ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
+	aria-label="Result"
+>
+	<span class="text-base text-ok">Result</span>
+	<div
+	class="result relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
+	>
 		<div class="checker"></div>
 		{#if imageUrl}
-			<img class="out" src={imageUrl} alt="Recolored sprite" />
-			<button class="save" type="button" aria-label="Download result" onclick={onDownload}>
-				<svg class="save-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+			<img
+				class="pointer-events-none absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]"
+				src={imageUrl}
+				alt="Recolored sprite"
+			/>
+			<button
+				class="absolute right-2 bottom-2 grid h-8 w-8 cursor-pointer place-items-center border-2 border-btn-edge bg-btn-bg p-0 text-btn-fg shadow-[3px_3px_0_var(--btn-shadow)] transition-[opacity,transform,background-color] duration-[150ms] ease-out hover:bg-[color-mix(in_srgb,var(--btn-bg)_85%,white)] active:bg-[color-mix(in_srgb,var(--btn-bg)_75%,black)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
+				type="button"
+				aria-label="Download result"
+				onclick={onDownload}
+			>
+				<svg
+					class="h-4 w-4 [shape-rendering:crispEdges]"
+					viewBox="0 0 16 16"
+					fill="currentColor"
+					aria-hidden="true"
+				>
 					<rect x="6" y="1" width="4" height="6" />
 					<rect x="1" y="7" width="14" height="2" />
 					<rect x="3" y="9" width="10" height="2" />
@@ -21,7 +40,10 @@
 				</svg>
 			</button>
 		{:else}
-			<span class="result-hint">No result yet</span>
+			<span
+				class="relative border border-border bg-panel-sunken px-4 py-2 text-base leading-6 text-text"
+				>No result yet</span
+			>
 		{/if}
 	</div>
 </section>
@@ -31,32 +53,6 @@
 		to {
 			background-position: var(--checker-size) var(--checker-size);
 		}
-	}
-
-	.result-wrap {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		width: 100%;
-		max-width: 480px;
-		animation: rise 380ms ease-out 240ms backwards;
-	}
-
-	.result-title {
-		font-size: 16px;
-		color: var(--ok);
-	}
-
-	.result {
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		aspect-ratio: 1;
-		height: auto;
-		background: var(--panel-sunken);
-		border: 1px solid var(--border);
-		overflow: hidden;
 	}
 
 	.checker {
@@ -76,82 +72,23 @@
 		animation: drift 4s linear infinite;
 	}
 
-	.out {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		image-rendering: pixelated;
-		pointer-events: none;
-	}
-
-	.result-hint {
-		position: relative;
-		font-size: 16px;
-		line-height: 1.5;
-		color: var(--text);
-		background: var(--panel-sunken);
-		border: 1px solid var(--border);
-		padding: 8px 16px;
-	}
-
-	.save {
-		position: absolute;
-		right: 8px;
-		bottom: 8px;
-		display: grid;
-		place-items: center;
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		color: var(--btn-fg);
-		background: var(--btn-bg);
-		border: 2px solid var(--btn-edge);
-		box-shadow: 3px 3px 0 var(--btn-shadow);
-		cursor: pointer;
-		transition:
-			opacity 150ms linear,
-			transform 150ms ease-out,
-			background-color 120ms linear;
-	}
-
 	@media (hover: hover) and (pointer: fine) {
-		.save {
+		button[aria-label='Download result'] {
 			opacity: 0;
 			pointer-events: none;
 			transform: translateY(6px);
 		}
 
-		.result:hover .save {
+		.result:hover button[aria-label='Download result'] {
 			opacity: 1;
 			transform: translateY(0);
 			pointer-events: auto;
 		}
 	}
 
-	.save:focus-visible {
+	button[aria-label='Download result']:focus-visible {
 		opacity: 1;
 		transform: translateY(0);
 		pointer-events: auto;
-	}
-
-	.save:hover {
-		background: color-mix(in srgb, var(--btn-bg) 85%, white);
-	}
-
-	.save:active {
-		background: color-mix(in srgb, var(--btn-bg) 75%, black);
-	}
-
-	.save:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 3px;
-	}
-
-	.save-icon {
-		width: 16px;
-		height: 16px;
-		shape-rendering: crispEdges;
 	}
 </style>
