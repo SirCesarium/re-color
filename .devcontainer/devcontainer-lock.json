@@ -1,0 +1,19 @@
+{
+  "features": {
+    "ghcr.io/devcontainer-community/devcontainer-features/fd:1": {
+      "version": "1.0.3",
+      "resolved": "ghcr.io/devcontainer-community/devcontainer-features/fd@sha256:43c6572d83527430c676352882ee2f8cf389508260b7e846bffe8b25c97a1c7b",
+      "integrity": "sha256:43c6572d83527430c676352882ee2f8cf389508260b7e846bffe8b25c97a1c7b"
+    },
+    "ghcr.io/devcontainer-community/devcontainer-features/ripgrep:1": {
+      "version": "1.0.3",
+      "resolved": "ghcr.io/devcontainer-community/devcontainer-features/ripgrep@sha256:5fed7bcc70a222974726a47146f257b58cc96240513ed424793457e39bd7448a",
+      "integrity": "sha256:5fed7bcc70a222974726a47146f257b58cc96240513ed424793457e39bd7448a"
+    },
+    "ghcr.io/shyim/devcontainers-features/bun:0": {
+      "version": "0.0.1",
+      "resolved": "ghcr.io/shyim/devcontainers-features/bun@sha256:689eae681aa08981175829a59953ba67a7d311f6a05c15d1bbbcb2da2839827e",
+      "integrity": "sha256:689eae681aa08981175829a59953ba67a7d311f6a05c15d1bbbcb2da2839827e"
+    }
+  }
+}
