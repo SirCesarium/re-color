@@ -2,6 +2,28 @@
 @import '@fontsource/silkscreen/latin-400.css';
 @import '@fontsource/silkscreen/latin-700.css';
 
+@theme inline {
+	--color-bg: var(--bg);
+	--color-panel: var(--panel);
+	--color-panel-sunken: var(--panel-sunken);
+	--color-panel-hover: var(--panel-hover);
+	--color-border: var(--border);
+	--color-border-dash: var(--border-dash);
+	--color-text: var(--text);
+	--color-text-dim: var(--text-dim);
+	--color-accent: var(--accent);
+	--color-shadow: var(--shadow);
+	--color-pop: var(--pop);
+	--color-ref: var(--ref);
+	--color-sprite-base: var(--base);
+	--color-ok: var(--ok);
+	--color-btn-bg: var(--btn-bg);
+	--color-btn-fg: var(--btn-fg);
+	--color-btn-edge: var(--btn-edge);
+	--color-btn-shadow: var(--btn-shadow);
+	--font-pixel: 'Silkscreen', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 :root {
 	--bg: #f2e5bc;
 	--panel: #fbf1c7;
@@ -87,7 +109,6 @@
 
 	body {
 		margin: 0;
-		font-family: 'Silkscreen', ui-monospace, SFMono-Regular, Menlo, monospace;
 		-webkit-font-smoothing: none;
 		-moz-osx-font-smoothing: grayscale;
 		background-color: var(--bg);
