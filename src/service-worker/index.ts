@@ -2,7 +2,8 @@ import { version } from '$app/env';
 import { assets, immutable, prerendered } from '$app/manifest';
 import { self } from '$app/service-worker';
 
-const CACHE = `cache-${version}`;
+const CACHE_PREFIX = 'cache-';
+const CACHE = `${CACHE_PREFIX}${version}`;
 
 // Paths in $app/manifest are relative to the base path, so they need a
 // leading slash to be comparable with url.pathname.
@@ -13,16 +14,34 @@ const ASSETS = [
 	...assets.map((file) => toPathname(file.path)),
 	...prerendered.map((page) => toPathname(page.path))
 ];
+const PRECACHED_PATHS = new Set(ASSETS);
 
 self.addEventListener('install', (event) => {
-	event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
+	event.waitUntil(
+		caches
+			.open(CACHE)
+			.then((cache) => cache.addAll(ASSETS))
+			.then(() => self.skipWaiting())
+	);
 });
 
 self.addEventListener('activate', (event) => {
 	event.waitUntil(
-		caches.keys().then((keys) =>
-			Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
-		)
+		(async () => {
+			const keys = await caches.keys();
+			const previousCaches = keys.filter(
+				(key) => /^cache-\d+$/.test(key) && key !== CACHE
+			);
+
+			await Promise.all(previousCaches.map((key) => caches.delete(key)));
+			await self.clients.claim();
+
+			if (previousCaches.length === 0) return;
+
+			const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+			// Reload existing tabs so they cannot keep running the previous app version.
+			await Promise.allSettled(clients.map((client) => client.navigate(client.url)));
+		})()
 	);
 });
 
@@ -34,28 +53,37 @@ self.addEventListener('fetch', (event) => {
 	if (url.origin !== self.location.origin) return;
 
 	event.respondWith(
-		caches.open(CACHE).then(async (cache) => {
-			if (ASSETS.includes(url.pathname)) {
-				const cached = await cache.match(url.pathname);
+		(async () => {
+			const cache = await caches.open(CACHE);
+			const isNavigation = event.request.mode === 'navigate';
+
+			if (!isNavigation && PRECACHED_PATHS.has(url.pathname)) {
+				const cached = await cache.match(event.request);
 				if (cached) return cached;
 			}
 
 			try {
-				const response = await fetch(event.request);
+				const request = isNavigation
+					? new Request(event.request, { cache: 'no-cache' })
+					: event.request;
+				const response = await fetch(request);
 
-				if (
-					response.status === 200 &&
-					!response.headers.get('cache-control')?.includes('no-store')
-				) {
-					void cache.put(event.request, response.clone());
+				if (response.ok && !response.headers.get('cache-control')?.includes('no-store')) {
+					await cache.put(event.request, response.clone());
 				}
 
 				return response;
-			} catch {
+			} catch (error) {
 				const cached = await cache.match(event.request);
 				if (cached) return cached;
-				throw new Error(`offline and uncached: ${url.pathname}`);
+
+				if (isNavigation) {
+					const precachedPage = await cache.match(url.pathname);
+					if (precachedPage) return precachedPage;
+				}
+
+				throw error;
 			}
-		})
+		})()
 	);
 });

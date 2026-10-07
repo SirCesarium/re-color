@@ -15,6 +15,12 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
+			serviceWorker: {
+				register: true,
+				options: {
+					updateViaCache: 'none'
+				}
+			},
 			adapter: adapter()
 		})
 	]
