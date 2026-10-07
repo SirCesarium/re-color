@@ -18,49 +18,26 @@
 	let fill = $derived(busy ? Math.round(progress * 100) : 0);
 </script>
 
-<div class="run-block">
-	<button class="run" class:busy type="button" disabled={disabled || busy} aria-busy={busy} {onclick}>
-		<span class="fill" style:width="{fill}%"></span>
-		<span class="label">{busy ? 'processing...' : 'recolor!'}</span>
+<div
+	class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
+>
+	<button
+		class="run relative w-full cursor-pointer overflow-hidden border-2 border-btn-edge bg-btn-bg px-8 py-3 text-base font-bold text-btn-fg shadow-[4px_4px_0_var(--btn-shadow)] transition-[transform,box-shadow,background-color] duration-[80ms] ease-out"
+		class:busy
+		type="button"
+		disabled={disabled || busy}
+		aria-busy={busy}
+		{onclick}
+	>
+		<span class="fill absolute inset-y-0 left-0 bg-[color-mix(in_srgb,var(--btn-fg)_22%,transparent)]" style:width="{fill}%"></span>
+		<span class="label relative z-[1]">{busy ? 'processing...' : 'recolor!'}</span>
 	</button>
 
 	<Hint text={hint} />
 </div>
 
 <style>
-	.run-block {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		width: 100%;
-		max-width: 480px;
-		animation: rise 380ms ease-out 160ms backwards;
-	}
-
-	.run {
-		position: relative;
-		overflow: hidden;
-		font-family: inherit;
-		font-size: 16px;
-		font-weight: 700;
-		width: 100%;
-		padding: 12px 32px;
-		color: var(--btn-fg);
-		background: var(--btn-bg);
-		border: 2px solid var(--btn-edge);
-		box-shadow: 4px 4px 0 var(--btn-shadow);
-		cursor: pointer;
-		transition:
-			transform 80ms ease-out,
-			box-shadow 80ms ease-out,
-			background-color 120ms linear;
-	}
-
 	.fill {
-		position: absolute;
-		inset: 0 auto 0 0;
-		width: 0;
-		background-color: color-mix(in srgb, var(--btn-fg) 22%, transparent);
 		background-image: repeating-linear-gradient(
 			90deg,
 			color-mix(in srgb, var(--btn-fg) 55%, transparent) 0 8px,
@@ -77,11 +54,6 @@
 		to {
 			background-position: 16px 0;
 		}
-	}
-
-	.label {
-		position: relative;
-		z-index: 1;
 	}
 
 	.run:hover {
@@ -136,12 +108,5 @@
 	.run.busy:active {
 		transform: none;
 		box-shadow: 4px 4px 0 var(--btn-shadow);
-	}
-
-	@media (min-width: 900px) {
-		.run-block {
-			grid-column: 1;
-			justify-self: stretch;
-		}
 	}
 </style>
