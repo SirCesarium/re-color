@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Typography from '#lib/components/Typography.svelte';
+
 	let {
 		label,
 		hint,
@@ -88,11 +90,12 @@
 		/>
 		<span
 			class="tag pointer-events-none absolute top-[6px] left-[6px] border border-border bg-panel px-1.5 py-1 text-base leading-none"
-			>{label}</span
 		>
+			{label}
+		</span>
 	{:else}
-		<span class="drop-label text-base">{label}</span>
-		<span class="text-base leading-6 text-text-dim">{hint}</span>
+		<Typography as="span" variant="control-label" class="drop-label">{label}</Typography>
+		<Typography as="span" variant="control-hint">{hint}</Typography>
 	{/if}
 </label>
 
@@ -204,11 +207,11 @@
 		text-shadow: 2px 2px 0 var(--btn-edge);
 	}
 
-	.drop-ref .drop-label {
+	.drop-ref :global(.drop-label) {
 		color: var(--ref);
 	}
 
-	.drop-base .drop-label {
+	.drop-base :global(.drop-label) {
 		color: var(--base);
 	}
 

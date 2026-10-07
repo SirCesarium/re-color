@@ -1,0 +1,181 @@
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+
+	let {
+		variant = 'primary',
+		type = 'button',
+		disabled = false,
+		busy = false,
+		progress = 0,
+		busyLabel = 'processing...',
+		ariaLabel,
+		revealOnHover = false,
+		class: className = '',
+		onclick,
+		children
+	}: {
+		variant?: 'primary' | 'icon';
+		type?: 'button' | 'submit' | 'reset';
+		disabled?: boolean;
+		busy?: boolean;
+		progress?: number;
+		busyLabel?: string;
+		ariaLabel?: string;
+		revealOnHover?: boolean;
+		class?: string;
+		onclick?: (event: MouseEvent) => void;
+		children: Snippet;
+	} = $props();
+
+	let fill = $derived(Math.round(progress * 100));
+</script>
+
+<button
+	class="button button-{variant} {className}"
+	class:busy
+	class:revealable={variant === 'icon' && revealOnHover}
+	{type}
+	disabled={disabled || busy}
+	aria-busy={busy}
+	aria-label={ariaLabel}
+	{onclick}
+>
+	{#if variant === 'primary'}
+		<span class="fill absolute inset-y-0 left-0" style:width="{fill}%"></span>
+		<span class="label relative z-[1]">{#if busy}{busyLabel}{:else}{@render children()}{/if}</span>
+	{:else}
+		{@render children()}
+	{/if}
+</button>
+
+<style>
+	.button {
+		font-family: inherit;
+		transition:
+			transform 80ms ease-out,
+			box-shadow 80ms ease-out,
+			background-color 120ms linear;
+	}
+
+	.button-primary {
+		box-sizing: border-box;
+		position: relative;
+		width: 100%;
+		overflow: hidden;
+		padding: 12px 32px;
+		border: 2px solid var(--btn-edge);
+		background: var(--btn-bg);
+		color: var(--btn-fg);
+		box-shadow: 4px 4px 0 var(--btn-shadow);
+		cursor: pointer;
+		font-size: 16px;
+		font-weight: 700;
+	}
+
+	.fill {
+		background-color: color-mix(in srgb, var(--btn-fg) 22%, transparent);
+		background-image: repeating-linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--btn-fg) 55%, transparent) 0 8px,
+			transparent 8px 16px
+		);
+		transition: width 120ms linear;
+	}
+
+	.button-primary.busy .fill {
+		animation: fill-sweep 600ms linear infinite;
+	}
+
+	.button-primary:hover {
+		background: color-mix(in srgb, var(--btn-bg) 85%, white);
+		transform: translateY(-2px);
+		box-shadow: 6px 6px 0 var(--btn-shadow);
+	}
+
+	.button-primary:active {
+		transform: translate(4px, 4px);
+		box-shadow: 0 0 0 var(--btn-shadow);
+	}
+
+	.button-primary:focus-visible,
+	.button-icon:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 3px;
+	}
+
+	.button-primary:disabled {
+		color: var(--text-dim);
+		background: var(--panel-sunken);
+		border-color: var(--border);
+		box-shadow: 4px 4px 0 var(--border);
+		cursor: not-allowed;
+	}
+
+	.button-primary:disabled:hover,
+	.button-primary:disabled:active {
+		background: var(--panel-sunken);
+		transform: none;
+		box-shadow: 4px 4px 0 var(--border);
+	}
+
+	.button-primary.busy {
+		color: var(--btn-fg);
+		background: var(--btn-bg);
+		border-color: var(--btn-edge);
+		box-shadow: 4px 4px 0 var(--btn-shadow);
+		cursor: progress;
+	}
+
+	.button-primary.busy:hover,
+	.button-primary.busy:active {
+		background: var(--btn-bg);
+		transform: none;
+		box-shadow: 4px 4px 0 var(--btn-shadow);
+	}
+
+	.button-icon {
+		border: 2px solid var(--btn-edge);
+		background: var(--btn-bg);
+		color: var(--btn-fg);
+		box-shadow: 3px 3px 0 var(--btn-shadow);
+		cursor: pointer;
+		transition:
+			opacity 150ms linear,
+			transform 150ms ease-out,
+			background-color 120ms linear;
+	}
+
+	.button-icon:hover {
+		background: color-mix(in srgb, var(--btn-bg) 85%, white);
+	}
+
+	.button-icon:active {
+		background: color-mix(in srgb, var(--btn-bg) 75%, black);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.button-icon.revealable {
+			opacity: 0;
+			pointer-events: none;
+			transform: translateY(6px);
+		}
+
+		:global(.reveal-on-hover:hover) .button-icon.revealable {
+			opacity: 1;
+			pointer-events: auto;
+			transform: translateY(0);
+		}
+	}
+
+	.button-icon.revealable:focus-visible {
+		opacity: 1;
+		pointer-events: auto;
+		transform: translateY(0);
+	}
+
+	@keyframes fill-sweep {
+		to {
+			background-position: 16px 0;
+		}
+	}
+</style>
