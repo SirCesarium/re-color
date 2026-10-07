@@ -6,32 +6,15 @@
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 </script>
 
-<header class="hero">
+<header class="animate-[rise_380ms_ease-out_backwards] text-center min-[900px]:col-start-1 min-[900px]:text-left">
 	<Wordmark />
-	<p class="tagline">Recolor a sprite<br />with any image's palette.</p>
+	<p class="mt-4 text-base leading-6 text-text-dim">Recolor a sprite<br />with any image's palette.</p>
 	<PaletteStrip bind:colors />
 </header>
 
 <style>
-	.hero {
-		text-align: center;
-		animation: rise 380ms ease-out backwards;
-	}
-
-	.tagline {
-		margin: 16px 0 0;
-		font-size: 16px;
-		line-height: 1.5;
-		color: var(--text-dim);
-	}
-
 	@media (min-width: 900px) {
-		.hero {
-			grid-column: 1;
-			text-align: left;
-		}
-
-		.hero :global(.wrap) {
+		header :global(.wrap) {
 			justify-content: flex-start;
 		}
 	}
