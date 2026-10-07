@@ -2,32 +2,16 @@
 	import { resolve } from '$app/paths';
 </script>
 
-<footer class="footer">
-	<a href={resolve('/privacy')}>Privacy</a>
-	<a href="https://github.com/SirCesarium/re-color" target="_blank" rel="noreferrer"
+<footer class="flex gap-6 pb-6 text-base">
+	<a
+		class="text-text-dim underline hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
+		href={resolve('/privacy')}>Privacy</a
+	>
+	<a
+		class="text-text-dim underline hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
+		href="https://github.com/SirCesarium/re-color"
+		target="_blank"
+		rel="noreferrer"
 		>Source on GitHub</a
 	>
 </footer>
-
-<style>
-	.footer {
-		display: flex;
-		gap: 24px;
-		padding-bottom: 24px;
-		font-size: 16px;
-	}
-
-	.footer a {
-		color: var(--text-dim);
-		text-decoration: underline;
-	}
-
-	.footer a:hover {
-		color: var(--accent);
-	}
-
-	.footer a:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 3px;
-	}
-</style>
