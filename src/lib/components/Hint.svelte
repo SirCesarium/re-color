@@ -12,7 +12,7 @@
 
 {#if text}
 	<p
-		class="hint"
+		class="hint pointer-events-none relative m-0 self-center whitespace-nowrap border-2 border-btn-edge bg-panel px-3 py-2 text-base leading-none text-text shadow-[3px_3px_0_var(--shadow)]"
 		class:above={placement === 'above'}
 		role="status"
 		out:fade={{ duration: 250 }}
@@ -21,18 +21,6 @@
 
 <style>
 	.hint {
-		position: relative;
-		margin: 0;
-		align-self: center;
-		padding: 8px 12px;
-		background: var(--panel);
-		border: 2px solid var(--btn-edge);
-		box-shadow: 3px 3px 0 var(--shadow);
-		color: var(--text);
-		font-size: 16px;
-		line-height: 1;
-		white-space: nowrap;
-		pointer-events: none;
 		animation: hint-in 200ms ease-out;
 	}
 
