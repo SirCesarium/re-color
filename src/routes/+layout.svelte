@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import SiteFooter from '#lib/components/SiteFooter.svelte';
+	import SiteFooter from '#lib/widgets/SiteFooter.svelte';
 
 	let { children } = $props();
 

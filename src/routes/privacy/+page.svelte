@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Link from '#lib/components/Link.svelte';
+	import Typography from '#lib/components/Typography.svelte';
 </script>
 
 <svelte:head>
@@ -41,37 +43,30 @@
 </svelte:head>
 
 <main class="box-border flex w-full max-w-[560px] flex-1 flex-col items-center gap-6 px-4 py-12 text-center">
-	<h1
-		class="m-0 text-[32px] font-normal leading-none text-text [text-shadow:4px_4px_0_var(--shadow)]"
-	>
-		Privacy
-	</h1>
+	<Typography as="h1" variant="page-title">Privacy</Typography>
 
-	<p class="m-0 max-w-[44ch] text-base leading-6 text-text">
+	<Typography class="max-w-[44ch]" variant="body">
 		Everything in re::color runs in your browser.
-	</p>
+	</Typography>
 
-	<p class="m-0 max-w-[44ch] text-base leading-6 text-text-dim">
+	<Typography class="max-w-[44ch]" variant="muted">
 		The images you drop are read and processed on your device. No image is
 		ever sent to a server.
-	</p>
+	</Typography>
 
-	<p class="m-0 max-w-[44ch] text-base leading-6 text-text-dim">
+	<Typography class="max-w-[44ch]" variant="muted">
 		There are no accounts and no uploads. Closing the tab clears them.
-	</p>
+	</Typography>
 
-	<p class="m-0 max-w-[44ch] text-base leading-6 text-text-dim">
+	<Typography class="max-w-[44ch]" variant="muted">
 		The full source code is free on GitHub:
-		<a
-			class="text-accent underline hover:text-text focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
+		<Link
 			href="https://github.com/SirCesarium/re-color"
+			variant="accent"
 			target="_blank"
-			rel="noreferrer">github.com/SirCesarium/re-color</a
+			rel="noreferrer">github.com/SirCesarium/re-color</Link
 		>
-	</p>
+	</Typography>
 
-	<a
-		class="mt-2 text-text-dim underline hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
-		href={resolve('/')}>Back to recolor</a
-	>
+	<Link class="mt-2" href={resolve('/')}>Back to recolor</Link>
 </main>

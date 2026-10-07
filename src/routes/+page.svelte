@@ -1,32 +1,58 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import Hero from '#lib/widgets/Hero.svelte';
-	import ImageInputs from '#lib/widgets/ImageInputs.svelte';
-	import ResultPanel from '#lib/widgets/ResultPanel.svelte';
-	import RecolorButton from '#lib/components/RecolorButton.svelte';
-	import MappingPicker from '#lib/components/MappingPicker.svelte';
-	import { extractColors } from '#lib/canvas.ts';
-	import { recolor } from '#lib/recolor.ts';
-	import type { MappingMode, PaletteColor } from '#lib/color.ts';
+	import { onMount, untrack } from "svelte";
+	import Hero from "#lib/widgets/Hero.svelte";
+	import ImageInputs from "#lib/widgets/ImageInputs.svelte";
+	import ResultPanel from "#lib/widgets/ResultPanel.svelte";
+	import Button from "#lib/components/Button.svelte";
+	import ButtonGroup from "#lib/components/ButtonGroup.svelte";
+	import Hint from "#lib/components/Hint.svelte";
+	import Typography from "#lib/components/Typography.svelte";
+	import { extractColors } from "#lib/canvas.ts";
+	import { recolor } from "#lib/recolor.ts";
+	import type { MappingMode, PaletteColor } from "#lib/color.ts";
+
+	const MAPPING_STORAGE_KEY = "recolor.mapping";
+	const MAPPING_OPTIONS: { value: MappingMode; label: string }[] = [
+		{ value: "nearest", label: "Nearest color" },
+		{ value: "luminance", label: "Luminance order" },
+		{ value: "dominant", label: "Dominant color" },
+	];
 
 	let palette = $state<File | null>(null);
 	let sprite = $state<File | null>(null);
 	let colors = $state<PaletteColor[]>([]);
-	let mapping = $state<MappingMode>('luminance');
+	let mapping = $state<MappingMode>("luminance");
 	let result = $state<{ url: string } | null>(null);
 	let busy = $state(false);
 	let progress = $state(0);
 	let hint = $state<string | null>(null);
+	let mappingLoaded = $state(false);
 
 	let ready = $derived(palette !== null && sprite !== null);
 	let activeColors = $derived(colors.filter((color) => color.active).length);
 	let noActiveColors = $derived(activeColors === 0);
 	let mappingSig = $derived(
-		`${mapping}:${colors.map((color) => (color.active ? '1' : '0')).join('')}`
+		`${mapping}:${colors.map((color) => (color.active ? "1" : "0")).join("")}`,
 	);
-	let buttonHint = $derived(ready && noActiveColors ? 'Select at least 1 color' : hint);
+	let buttonHint = $derived(
+		ready && noActiveColors ? "Select at least 1 color" : hint,
+	);
 
 	let runId = 0;
+
+	onMount(() => {
+		const stored = localStorage.getItem(MAPPING_STORAGE_KEY);
+		const option = MAPPING_OPTIONS.find(
+			(candidate) => candidate.value === stored,
+		);
+		if (option) mapping = option.value;
+		mappingLoaded = true;
+	});
+
+	$effect(() => {
+		if (!mappingLoaded) return;
+		localStorage.setItem(MAPPING_STORAGE_KEY, mapping);
+	});
 
 	function clearResult() {
 		if (result) URL.revokeObjectURL(result.url);
@@ -36,8 +62,8 @@
 	function downloadResult() {
 		if (!result || !sprite) return;
 
-		const name = sprite.name.replace(/\.[^.]+$/, '') || 'sprite';
-		const link = document.createElement('a');
+		const name = sprite.name.replace(/\.[^.]+$/, "") || "sprite";
+		const link = document.createElement("a");
 		link.href = result.url;
 		link.download = `${name}-recolored.png`;
 		link.click();
@@ -60,7 +86,7 @@
 				(fraction) => {
 					if (id === runId) progress = fraction;
 				},
-				() => id !== runId
+				() => id !== runId,
 			);
 
 			if (id !== runId || url === null) return;
@@ -69,7 +95,7 @@
 			result = { url };
 		} catch (error) {
 			console.error(error);
-			if (id === runId) hint = 'Recolor failed';
+			if (id === runId) hint = "Recolor failed";
 		} finally {
 			if (id === runId) {
 				busy = false;
@@ -171,17 +197,36 @@
 >
 	<Hero bind:colors />
 	<ImageInputs bind:palette bind:sprite />
-	<RecolorButton
-		disabled={!ready || noActiveColors}
-		{busy}
-		{progress}
-		hint={buttonHint}
-		onclick={handleRecolor}
-	/>
+	<div
+		class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
+	>
+		<Button
+			disabled={!ready || noActiveColors}
+			{busy}
+			{progress}
+			onclick={handleRecolor}
+		>
+			recolor!
+		</Button>
+		<Hint text={buttonHint} />
+	</div>
 	<div
 		class="flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
 	>
-		<MappingPicker bind:mapping />
-		<ResultPanel imageUrl={result?.url ?? null} onDownload={downloadResult} />
+		<section
+			class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
+			aria-label="Color mapping"
+		>
+			<Typography as="span" variant="section-label">Mapping</Typography>
+			<ButtonGroup
+				bind:value={mapping}
+				options={MAPPING_OPTIONS}
+				label="Color mapping"
+			/>
+		</section>
+		<ResultPanel
+			imageUrl={result?.url ?? null}
+			onDownload={downloadResult}
+		/>
 	</div>
 </main>
