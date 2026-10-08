@@ -76,7 +76,7 @@
 		<div class="flex flex-wrap justify-center gap-1">
 			{#each colors as color, index (index)}
 				<button
-					class="sw relative h-4 w-4 cursor-pointer border border-border bg-[var(--c)] p-0 hover:shadow-[0_0_0_2px_var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+					class="sw relative h-4 w-4 cursor-pointer border border-border bg-[var(--c)] p-0 hover:shadow-[0_0_0_2px_var(--accent)]"
 					class:off={!color.active}
 					style:--c={cssRgb(color)}
 					type="button"

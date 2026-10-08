@@ -77,7 +77,7 @@
 
 			<Button
 				variant="icon"
-				class="absolute right-2 bottom-2 z-10 grid h-8 w-8 place-items-center p-0 focus-visible:outline-offset-[3px]"
+				class="absolute right-2 bottom-2 z-10 grid h-8 w-8 place-items-center p-0"
 				ariaLabel="Download result"
 				revealOnHover
 				onclick={onDownload}

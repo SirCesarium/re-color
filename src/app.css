@@ -125,4 +125,13 @@
 		background-size: 16px 16px;
 		color: var(--text);
 	}
+
+	:focus {
+		outline: none !important;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--btn-edge) !important;
+		outline-offset: 2px !important;
+	}
 }

@@ -64,7 +64,6 @@
 	.button {
 		font-family: inherit;
 		transition:
-			transform 80ms ease-out,
 			box-shadow 80ms ease-out,
 			background-color 120ms linear;
 	}
@@ -100,19 +99,11 @@
 
 	.button-primary:hover {
 		background: color-mix(in srgb, var(--btn-bg) 85%, white);
-		transform: translateY(-2px);
 		box-shadow: 6px 6px 0 var(--btn-shadow);
 	}
 
 	.button-primary:active {
-		transform: translate(4px, 4px);
 		box-shadow: 0 0 0 var(--btn-shadow);
-	}
-
-	.button-primary:focus-visible,
-	.button-icon:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 3px;
 	}
 
 	.button-primary:disabled {
@@ -126,7 +117,6 @@
 	.button-primary:disabled:hover,
 	.button-primary:disabled:active {
 		background: var(--panel-sunken);
-		transform: none;
 		box-shadow: 4px 4px 0 var(--border);
 	}
 
@@ -141,7 +131,6 @@
 	.button-primary.busy:hover,
 	.button-primary.busy:active {
 		background: var(--btn-bg);
-		transform: none;
 		box-shadow: 4px 4px 0 var(--btn-shadow);
 	}
 
@@ -180,7 +169,6 @@
 		cursor: pointer;
 		transition:
 			opacity 150ms linear,
-			transform 150ms ease-out,
 			background-color 120ms linear;
 	}
 
@@ -196,20 +184,17 @@
 		.button-icon.revealable {
 			opacity: 0;
 			pointer-events: none;
-			transform: translateY(6px);
 		}
 
 		:global(.reveal-on-hover:hover) .button-icon.revealable {
 			opacity: 1;
 			pointer-events: auto;
-			transform: translateY(0);
 		}
 	}
 
 	.button-icon.revealable:focus-visible {
 		opacity: 1;
 		pointer-events: auto;
-		transform: translateY(0);
 	}
 
 	@keyframes fill-sweep {

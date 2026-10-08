@@ -24,7 +24,7 @@
 </script>
 
 <a
-	class="underline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent {variants[variant]} {className}"
+	class="underline {variants[variant]} {className}"
 	{href}
 	{target}
 	{rel}

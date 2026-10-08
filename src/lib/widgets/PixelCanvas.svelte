@@ -388,7 +388,6 @@
 	.viewport {
 		touch-action: none;
 		cursor: crosshair;
-		outline-offset: -3px;
 		padding: 0;
 		border: 0;
 		background: transparent;

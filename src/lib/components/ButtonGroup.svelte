@@ -96,11 +96,6 @@
 		background: transparent;
 	}
 
-	.seg:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: -4px;
-	}
-
 	.label {
 		min-width: 0;
 		font-size: 16px;
@@ -115,7 +110,7 @@
 	}
 
 	.seg:active .label {
-		transform: translateY(2px);
+		text-shadow: 1px 1px 0 var(--btn-shadow);
 	}
 
 	@keyframes pop {

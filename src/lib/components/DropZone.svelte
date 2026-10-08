@@ -70,7 +70,7 @@
 </script>
 
 <label
-	class="drop drop-{variant} relative flex aspect-square h-auto flex-1 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden bg-panel px-3 text-center text-border-dash transition-[color,background-color,transform] duration-[120ms] ease-out hover:-translate-y-[3px] max-[420px]:w-full max-[420px]:flex-none"
+	class="drop drop-{variant} relative flex aspect-square h-auto flex-1 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden bg-panel px-3 text-center text-border-dash transition-[color,background-color] duration-[120ms] ease-out max-[420px]:w-full max-[420px]:flex-none"
 	class:dragging
 	class:filled={preview !== null}
 	ondragover={onDragOver}
@@ -171,8 +171,7 @@
 	}
 
 	.drop:has(input:focus-visible) {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
+		box-shadow: 0 0 0 2px var(--btn-edge);
 	}
 
 	.drop.filled {
