@@ -62,8 +62,9 @@
 		class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
 	>
 		<Button
-			disabled={!workflow.ready || workflow.noActiveColors}
+			disabled={!workflow.state.busy && (!workflow.ready || workflow.noActiveColors)}
 			busy={workflow.state.busy}
+			cancelOnBusy
 			progress={workflow.state.progress}
 			onclick={workflow.handleRecolor}
 		>

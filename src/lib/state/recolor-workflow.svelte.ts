@@ -229,7 +229,17 @@ export function createRecolorWorkflow() {
 	}
 
 	function handleRecolor() {
-		if (!ready || noActiveColors || state.busy) return;
+		if (state.busy) {
+			runId++;
+			compositionId++;
+			state.busy = false;
+			state.progress = 0;
+			state.hint = null;
+
+			return;
+		}
+
+		if (!ready || noActiveColors) return;
 
 		void startRecolor();
 	}

@@ -8,6 +8,8 @@
 		busy = false,
 		progress = 0,
 		busyLabel = 'processing...',
+		cancelLabel = 'cancel',
+		cancelOnBusy = false,
 		ariaLabel,
 		revealOnHover = false,
 		class: className = '',
@@ -20,6 +22,8 @@
 		busy?: boolean;
 		progress?: number;
 		busyLabel?: string;
+		cancelLabel?: string;
+		cancelOnBusy?: boolean;
 		ariaLabel?: string;
 		revealOnHover?: boolean;
 		class?: string;
@@ -33,16 +37,24 @@
 <button
 	class="button button-{variant} {className}"
 	class:busy
+	class:cancel-on-busy={busy && cancelOnBusy}
 	class:revealable={variant === 'icon' && revealOnHover}
 	{type}
-	disabled={disabled || busy}
+	disabled={disabled || (busy && !cancelOnBusy)}
 	aria-busy={busy}
-	aria-label={ariaLabel}
+	aria-label={busy && cancelOnBusy ? cancelLabel : ariaLabel}
 	{onclick}
 >
 	{#if variant === 'primary'}
 		<span class="fill absolute inset-y-0 left-0" style:width="{fill}%"></span>
-		<span class="label relative z-[1]">{#if busy}{busyLabel}{:else}{@render children()}{/if}</span>
+		<span class="label relative z-[1]">
+			{#if busy}
+				<span class="processing-label">{busyLabel}</span>
+				{#if cancelOnBusy}<span class="cancel-label">{cancelLabel}</span>{/if}
+			{:else}
+				{@render children()}
+			{/if}
+		</span>
 	{:else}
 		{@render children()}
 	{/if}
@@ -131,6 +143,33 @@
 		background: var(--btn-bg);
 		transform: none;
 		box-shadow: 4px 4px 0 var(--btn-shadow);
+	}
+
+	.button-primary.busy.cancel-on-busy {
+		cursor: progress;
+	}
+
+	.button-primary.busy.cancel-on-busy:hover,
+	.button-primary.busy.cancel-on-busy:focus-visible {
+		color: var(--bg);
+		background: var(--sw-red);
+		border-color: var(--sw-red);
+		box-shadow: 4px 4px 0 color-mix(in srgb, var(--sw-red) 65%, var(--text));
+		cursor: pointer;
+	}
+
+	.cancel-label {
+		display: none;
+	}
+
+	.button-primary.busy.cancel-on-busy:hover .processing-label,
+	.button-primary.busy.cancel-on-busy:focus-visible .processing-label {
+		display: none;
+	}
+
+	.button-primary.busy.cancel-on-busy:hover .cancel-label,
+	.button-primary.busy.cancel-on-busy:focus-visible .cancel-label {
+		display: inline;
 	}
 
 	.button-icon {
