@@ -1,23 +1,30 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import Typography from '#lib/components/Typography.svelte';
+	import { hintsEnabled } from '#lib/state/hints.ts';
+	import { t } from 'svelte-i18n';
 
 	let {
 		text = null,
 		placement = 'flow',
 		arrow = 'up',
+		error = false,
 		onDismiss,
 		class: className = ''
 	}: {
 		text?: string | null;
 		placement?: 'above' | 'flow';
 		arrow?: 'up' | 'down';
+		error?: boolean;
 		onDismiss?: () => void;
 		class?: string;
 	} = $props();
+
+	// Errors are status feedback, so they ignore the help-hints preference.
+	const visible = $derived(Boolean(text) && (error || $hintsEnabled));
 </script>
 
-{#if text}
+{#if visible}
 	<div
 		class="hint pointer-events-none relative self-center whitespace-nowrap border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] {className}"
 		class:interactive={onDismiss !== undefined}
@@ -31,7 +38,7 @@
 			<button
 				class="dismiss"
 				type="button"
-				aria-label="Dismiss help"
+				aria-label={$t('hint.dismiss')}
 				onclick={onDismiss}
 			>
 				×

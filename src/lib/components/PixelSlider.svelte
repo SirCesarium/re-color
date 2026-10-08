@@ -1,15 +1,18 @@
 <script lang="ts">
+	import { t } from 'svelte-i18n';
 	let {
 		value,
 		min,
 		max,
 		label,
+		showLabel = true,
 		onchange
 	}: {
 		value: number;
 		min: number;
 		max: number;
 		label: string;
+		showLabel?: boolean;
 		onchange: (value: number) => void;
 	} = $props();
 
@@ -40,15 +43,16 @@
 
 <div class="grid gap-2">
 	<div class="flex items-center justify-between gap-3 text-xs text-text-dim">
-		<label for={inputId}>{label}</label>
+		<label class:sr-only={!showLabel} for={inputId}>{label}</label>
 		<input
-			class="box-border w-[72px] appearance-none border-2 border-btn-edge bg-panel-sunken px-2 py-[3px] text-center text-sm tabular-nums text-text shadow-[2px_2px_0_var(--btn-shadow)] focus-visible:outline-none"
+			class="box-border ms-auto w-[72px] appearance-none border-2 border-btn-edge bg-panel-sunken px-2 py-[3px] text-center text-sm tabular-nums text-text shadow-[2px_2px_0_var(--btn-shadow)] focus-visible:outline-none"
 			id="{inputId}-number"
 			type="text"
 			inputmode="numeric"
 			pattern="[0-9]*"
+			autocomplete="off"
 			bind:value={draft}
-			aria-label="{label} value"
+			aria-label={$t('form.valueAria', { values: { label } })}
 			oninput={updateFromInput}
 			onblur={commitNumber}
 		/>

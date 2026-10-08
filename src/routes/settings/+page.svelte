@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import ButtonGroup from "#lib/components/ButtonGroup.svelte";
+	import Dropdown from "#lib/components/Dropdown.svelte";
 	import PixelSlider from "#lib/components/PixelSlider.svelte";
+	import SettingRow from "#lib/components/SettingRow.svelte";
 	import SwitchButton from "#lib/components/SwitchButton.svelte";
 	import Typography from "#lib/components/Typography.svelte";
-	import { MAPPING_OPTIONS } from "#lib/config/recolor.ts";
+	import { MAPPING_OPTIONS, MAPPING_STORAGE_KEY } from "#lib/config/recolor.ts";
+	import { localeFromNavigator, setLocale } from "#lib/i18n/index.ts";
+	import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale, type MessageKey } from "#lib/i18n/locales.ts";
+	import { LocalizedError } from "#lib/i18n/localized-error.ts";
 	import {
 		APP_SETTINGS_KEY,
 		DEFAULT_APP_SETTINGS,
@@ -17,17 +22,26 @@
 		saveWorkspace,
 	} from "#lib/state/app-settings.ts";
 	import type { AppSettings } from "#lib/state/app-settings.ts";
+	import { hintsEnabled } from "#lib/state/hints.ts";
+	import { t } from "svelte-i18n";
 
 	let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
-	let error = $state<string | null>(null);
+	let error = $state<{ id: MessageKey; values?: Record<string, string | number> } | null>(null);
 	let loading = $state(true);
+
+	const mappingOptions = $derived(
+		MAPPING_OPTIONS.map((option) => ({ value: option.value, label: $t(option.labelKey) })),
+	);
+	const localeOptions = $derived(
+		SUPPORTED_LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] })),
+	);
 
 	onMount(() => {
 		try {
-			settings = parseAppSettings(localStorage.getItem(APP_SETTINGS_KEY));
+			settings = parseAppSettings(localStorage.getItem(APP_SETTINGS_KEY), localeFromNavigator());
 		} catch (cause) {
 			console.error("Could not read saved app settings", cause);
-			error = "Could not load settings from this device.";
+			error = { id: "settings.errorLoad" };
 		}
 
 		document.documentElement.classList.toggle(
@@ -47,8 +61,14 @@
 			error = null;
 		} catch (cause) {
 			console.error("Could not save app settings", cause);
-			error = "Could not save settings to this device.";
+			error = { id: "settings.errorSave" };
 		}
+	}
+
+	function updateLocale(locale: Locale) {
+		settings.locale = locale;
+		setLocale(locale);
+		persistSettings();
 	}
 
 	function updateAnimations(enabled: boolean) {
@@ -57,6 +77,12 @@
 			"animations-disabled",
 			!enabled,
 		);
+		persistSettings();
+	}
+
+	function updateHints(enabled: boolean) {
+		settings.hintsEnabled = enabled;
+		hintsEnabled.set(enabled);
 		persistSettings();
 	}
 
@@ -78,8 +104,7 @@
 					"Could not clear saved workspace after disabling persistence",
 					cause,
 				);
-				error =
-					"Workspace saving is off, but existing saved workspace data could not be removed.";
+				error = { id: "settings.errorWorkspaceClear" };
 			}
 		}
 	}
@@ -109,6 +134,8 @@
 		try {
 			const importedSettings = importAppSettings(await file.text());
 			settings = importedSettings;
+			setLocale(importedSettings.locale);
+			hintsEnabled.set(importedSettings.hintsEnabled);
 			document.documentElement.classList.toggle(
 				"animations-disabled",
 				!importedSettings.animationsEnabled,
@@ -119,9 +146,9 @@
 		} catch (cause) {
 			console.error("Could not import settings file", cause);
 			error =
-				cause instanceof Error
-					? cause.message
-					: "Could not import settings from this file.";
+				cause instanceof LocalizedError
+					? { id: cause.messageId, values: cause.values }
+					: { id: "settings.errorImport" };
 		}
 	}
 
@@ -145,172 +172,198 @@
 				"Could not save default mapping to current workspace",
 				cause,
 			);
-			error = "Could not save the mapping for the current workspace.";
+			error = { id: "settings.errorMappingSave" };
 		}
 	}
 
+	function applyDefaults() {
+		settings = { ...DEFAULT_APP_SETTINGS };
+		setLocale(DEFAULT_APP_SETTINGS.locale);
+		hintsEnabled.set(DEFAULT_APP_SETTINGS.hintsEnabled);
+		document.documentElement.classList.remove("animations-disabled");
+	}
+
+	function resetSettings() {
+		if (!confirm($t("settings.resetConfirm"))) return;
+
+		applyDefaults();
+		localStorage.removeItem(MAPPING_STORAGE_KEY);
+		persistSettings();
+	}
+
 	async function handleClearAppData() {
-		if (
-			!confirm(
-				"Clear all saved app data on this device? This cannot be undone.",
-			)
-		)
-			return;
+		if (!confirm($t("settings.clearConfirm"))) return;
 
 		try {
 			await clearSavedAppData();
-			settings = { ...DEFAULT_APP_SETTINGS };
-			document.documentElement.classList.remove("animations-disabled");
-			error = null;
+			applyDefaults();
+			persistSettings();
 		} catch (cause) {
 			console.error("Could not clear saved app data", cause);
-			error = "Could not clear saved app data from this device.";
+			error = { id: "settings.errorClear" };
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Settings: re::color</title>
+	<title>{$t("settings.metaTitle")}</title>
 	<meta
 		name="description"
-		content="Configure recoloring and local data settings for re::color."
+		content={$t("settings.metaDescription")}
 	/>
 	<link rel="canonical" href="https://recolor.pages.dev/settings" />
 </svelte:head>
 
-<main
-	class="box-border flex w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12"
->
+<main class="box-border flex w-full flex-1 flex-col items-center gap-8 px-3 py-12 sm:px-4">
 	{#if !loading}
-		<section class="flex w-full max-w-[560px] flex-col gap-6" aria-labelledby="settings-title">
-			<Typography id="settings-title" as="h1" variant="section-label" class="m-0">
-				Settings
+		<section class="flex w-full max-w-[860px] flex-col gap-8" aria-labelledby="settings-title">
+			<Typography id="settings-title" as="h1" variant="page-title" class="m-0">
+				{$t("settings.title")}
 			</Typography>
 
-			<div class="flex items-start justify-between gap-4">
-				<div class="grid min-w-0 gap-1.5">
-					<Typography as="span" class="text-sm text-text">Animations</Typography>
-					<Typography as="span" variant="muted" class="text-xs leading-5">
-						Enable interface transitions and motion effects.
+			<div class="grid gap-8">
+				<div class="grid gap-2">
+					<Typography as="h2" variant="section-label" class="m-0">
+						{$t("settings.groupInterface")}
 					</Typography>
-				</div>
-				<SwitchButton
-					checked={settings.animationsEnabled}
-					label="Animations"
-					onchange={updateAnimations}
-				/>
-			</div>
-
-			<div class="flex items-start justify-between gap-4">
-				<div class="grid min-w-0 gap-1.5">
-					<Typography as="span" class="text-sm text-text">Automatically apply changes</Typography>
-					<Typography as="span" variant="muted" class="text-xs leading-5">
-						The first result is always created once both images are ready. When disabled, later
-						palette or mapping changes require pressing Recolor. Pixel exclusions stay live.
-					</Typography>
-				</div>
-				<SwitchButton
-					checked={settings.autoRecolor}
-					label="Automatically apply changes"
-					onchange={updateAutoRecolor}
-				/>
-			</div>
-
-			<div class="flex items-start justify-between gap-4">
-				<div class="grid min-w-0 gap-1.5">
-					<Typography as="span" class="text-sm text-text">Save workspace on this device</Typography>
-					<Typography as="span" variant="muted" class="text-xs leading-5">
-						Remember selected images, palette colors, mapping, and pixel exclusions between
-						visits. Turning this off also removes the saved workspace.
-					</Typography>
-				</div>
-				<SwitchButton
-					checked={settings.persistWorkspace}
-					label="Save workspace on this device"
-					onchange={updatePersistWorkspace}
-				/>
-			</div>
-
-			<div class="grid gap-3">
-				<div class="grid min-w-0 gap-1.5">
-					<Typography as="span" class="text-sm text-text">Maximum palette colors</Typography>
-					<Typography as="span" variant="muted" class="text-xs leading-5">
-						Extract up to this many distinct colors from the palette PNG.
-					</Typography>
-				</div>
-				<PixelSlider
-					value={settings.maxPaletteColors}
-					min={1}
-					max={256}
-					label="Maximum palette colors"
-					onchange={updateMaxPaletteColors}
-				/>
-			</div>
-
-			<div class="grid gap-3">
-				<div class="grid min-w-0 gap-1.5">
-					<Typography as="span" class="text-sm text-text">Default mapping</Typography>
-					<Typography as="span" variant="muted" class="text-xs leading-5">
-						Choose and apply the default color mapping mode.
-					</Typography>
-				</div>
-				<ButtonGroup
-					value={settings.defaultMapping}
-					options={MAPPING_OPTIONS}
-					label="Default color mapping"
-					onchange={updateDefaultMapping}
-				/>
-			</div>
-
-			<div class="grid gap-3 border-t border-border pt-4">
-				<div class="grid min-w-0 gap-1.5">
-					<Typography as="span" class="text-sm text-text">Settings backup</Typography>
-					<Typography as="span" variant="muted" class="text-xs leading-5">
-						Export or import preferences as a versioned JSON file. Workspace images are never
-						included.
-					</Typography>
-				</div>
-				<div class="flex flex-wrap gap-3">
-					<button
-						class="inline-flex min-h-[38px] items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-xs text-text shadow-[3px_3px_0_var(--btn-shadow)] hover:bg-panel-hover focus-visible:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)]"
-						type="button"
-						onclick={exportSettings}
-					>
-						export settings
-					</button>
-					<label
-						class="inline-flex min-h-[38px] cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-xs text-text shadow-[3px_3px_0_var(--btn-shadow)] hover:bg-panel-hover focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)]"
-					>
-						import settings
-						<input
-							class="sr-only"
-							type="file"
-							accept="application/json,.json"
-							aria-label="Import settings JSON file"
-							onchange={handleImportSelection}
-						/>
-					</label>
-				</div>
-			</div>
-
-			<div class="grid gap-4 border-t border-border pt-4">
-				<Typography as="p" variant="muted" class="text-xs leading-5">
-					App preferences and workspace data are stored locally on this device.
-				</Typography>
-				<div class="flex items-start justify-between gap-4 max-[420px]:flex-col">
-					<div class="grid min-w-0 gap-1.5">
-						<Typography as="span" class="text-sm text-text">Clear app data</Typography>
-						<Typography as="span" variant="muted" class="text-xs leading-5">
-							Delete saved images, preferences, and hint history from this device.
-						</Typography>
+					<div class="grid">
+						<SettingRow title={$t("settings.languageTitle")} hint={$t("settings.languageDesc")}>
+							{#snippet control()}
+								<Dropdown
+									class="w-full min-[640px]:w-[200px]"
+									value={settings.locale}
+									options={localeOptions}
+									label={$t("settings.languageAria")}
+									onchange={updateLocale}
+								/>
+							{/snippet}
+						</SettingRow>
+						<SettingRow title={$t("settings.animationsTitle")} hint={$t("settings.animationsDesc")}>
+							{#snippet control()}
+								<SwitchButton
+									checked={settings.animationsEnabled}
+									label={$t("settings.animationsTitle")}
+									onchange={updateAnimations}
+								/>
+							{/snippet}
+						</SettingRow>
+						<SettingRow title={$t("settings.hintsTitle")} hint={$t("settings.hintsDesc")}>
+							{#snippet control()}
+								<SwitchButton
+									checked={settings.hintsEnabled}
+									label={$t("settings.hintsTitle")}
+									onchange={updateHints}
+								/>
+							{/snippet}
+						</SettingRow>
 					</div>
-					<button
-						class="flex-none border-2 border-[var(--sw-red)] bg-panel px-2.5 py-2 text-xs text-[var(--sw-red)] shadow-[3px_3px_0_var(--btn-shadow)] hover:bg-[var(--sw-red)] hover:text-panel"
-						type="button"
-						onclick={handleClearAppData}
-					>
-						clear app data
-					</button>
+				</div>
+
+				<div class="grid gap-2">
+					<Typography as="h2" variant="section-label" class="m-0">
+						{$t("settings.groupRecolor")}
+					</Typography>
+					<div class="grid">
+						<SettingRow title={$t("settings.autoRecolorTitle")} hint={$t("settings.autoRecolorDesc")}>
+							{#snippet control()}
+								<SwitchButton
+									checked={settings.autoRecolor}
+									label={$t("settings.autoRecolorTitle")}
+									onchange={updateAutoRecolor}
+								/>
+							{/snippet}
+						</SettingRow>
+						<SettingRow
+							stacked
+							title={$t("settings.maxColorsTitle")}
+							hint={$t("settings.maxColorsDesc")}
+						>
+							{#snippet control()}
+								<PixelSlider
+									value={settings.maxPaletteColors}
+									min={1}
+									max={256}
+									label={$t("settings.maxColorsTitle")}
+									showLabel={false}
+									onchange={updateMaxPaletteColors}
+								/>
+							{/snippet}
+						</SettingRow>
+						<SettingRow stacked title={$t("settings.mappingTitle")} hint={$t("settings.mappingDesc")}>
+							{#snippet control()}
+								<ButtonGroup
+									value={settings.defaultMapping}
+									options={mappingOptions}
+									label={$t("settings.mappingAria")}
+									onchange={updateDefaultMapping}
+								/>
+							{/snippet}
+						</SettingRow>
+					</div>
+				</div>
+
+				<div class="grid gap-2">
+					<Typography as="h2" variant="section-label" class="m-0">
+						{$t("settings.groupData")}
+					</Typography>
+					<div class="grid">
+						<SettingRow title={$t("settings.persistTitle")} hint={$t("settings.persistDesc")}>
+							{#snippet control()}
+								<SwitchButton
+									checked={settings.persistWorkspace}
+									label={$t("settings.persistTitle")}
+									onchange={updatePersistWorkspace}
+								/>
+							{/snippet}
+						</SettingRow>
+						<SettingRow stacked title={$t("settings.backupTitle")} hint={$t("settings.backupDesc")}>
+							{#snippet control()}
+								<div class="flex flex-wrap gap-3">
+									<button
+										class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
+										type="button"
+										onclick={exportSettings}
+									>
+										{$t("settings.export")}
+									</button>
+									<label
+										class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)]"
+									>
+										{$t("settings.import")}
+										<input
+											class="sr-only"
+											type="file"
+											accept="application/json,.json"
+											aria-label={$t("settings.importAria")}
+											onchange={handleImportSelection}
+										/>
+									</label>
+								</div>
+							{/snippet}
+						</SettingRow>
+						<SettingRow title={$t("settings.resetTitle")} hint={$t("settings.resetDesc")}>
+							{#snippet control()}
+								<button
+									class="min-h-11 cursor-pointer border-2 border-btn-edge bg-panel px-3 py-2 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
+									type="button"
+									onclick={resetSettings}
+								>
+									{$t("settings.resetBtn")}
+								</button>
+							{/snippet}
+						</SettingRow>
+						<SettingRow title={$t("settings.clearTitle")} hint={$t("settings.clearDesc")}>
+							{#snippet control()}
+								<button
+									class="min-h-11 cursor-pointer border-2 border-[var(--sw-red)] bg-panel px-3 py-2 text-base text-[var(--sw-red)] shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-[var(--sw-red)] hover:text-panel"
+									type="button"
+									onclick={handleClearAppData}
+								>
+									{$t("settings.clearBtn")}
+								</button>
+							{/snippet}
+						</SettingRow>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -320,10 +373,10 @@
 		<Typography
 			as="p"
 			variant="body"
-			class="w-full max-w-[560px] text-sm text-[var(--sw-red)]"
+			class="w-full max-w-[860px] text-[var(--sw-red)]"
 			role="alert"
 		>
-			{error}
+			{$t(error.id, { values: error.values })}
 		</Typography>
 	{/if}
 </main>
