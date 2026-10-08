@@ -90,6 +90,22 @@ test('accepts PNG images up to the configured dimensions', async () => {
 	await expect(validateImageFile(pngBlob(png))).resolves.toBeUndefined();
 });
 
+test('yields to the event loop while extracting a maximum-size palette image', async () => {
+	const png = makeIndexedPng(512, 512, [[20, 40, 60]], Array(512 * 512).fill(0), [255]);
+	let timerRan = false;
+	setTimeout(() => {
+		timerRan = true;
+	}, 0);
+
+	await extractColorsFromFile(
+		pngBlob(png),
+		{ maxColors: 64, alphaThreshold: 128 },
+		canvasConfig
+	);
+
+	expect(timerRan).toBe(true);
+});
+
 test('rejects non-PNG, oversized, and over-dimensioned uploads', async () => {
 	await expect(validateImageFile(new Blob(['not a png'], { type: 'image/png' }))).rejects.toThrow(
 		'Choose a valid PNG image.'

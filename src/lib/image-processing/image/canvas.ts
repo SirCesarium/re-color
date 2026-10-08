@@ -34,12 +34,12 @@ export async function loadImage(file: Blob): Promise<LoadedImage> {
 	const signature = new Uint8Array(await file.slice(0, 8).arrayBuffer());
 
 	if (isPng(signature)) {
-		const decoded = decodePng(new Uint8Array(await file.arrayBuffer()));
+		const pixels = await decodePngInWorker(await file.arrayBuffer());
 
 		return {
-			width: decoded.width,
-			height: decoded.height,
-			pixels: decoded.data,
+			width: pixels.width,
+			height: pixels.height,
+			pixels: new Uint8ClampedArray(pixels.data),
 			close: () => {}
 		};
 	}
@@ -78,6 +78,60 @@ export async function loadImage(file: Blob): Promise<LoadedImage> {
 		URL.revokeObjectURL(url);
 		throw error;
 	}
+}
+
+function decodePngInWorker(
+	data: ArrayBuffer
+): Promise<{ width: number; height: number; data: ArrayBuffer }> {
+	if (typeof Worker === 'undefined') {
+		const decoded = decodePng(new Uint8Array(data));
+		return Promise.resolve({
+			width: decoded.width,
+			height: decoded.height,
+			data: decoded.data.buffer
+		});
+	}
+
+	return new Promise((resolve, reject) => {
+		const worker = new Worker(new URL('./png.worker.ts', import.meta.url), { type: 'module' });
+
+		worker.addEventListener(
+			'message',
+			(event: MessageEvent<{ width?: number; height?: number; pixels?: ArrayBuffer; error?: string }>) => {
+				worker.terminate();
+
+				if (event.data.error) {
+					reject(new Error(event.data.error));
+					return;
+				}
+
+				if (
+					event.data.width === undefined ||
+					event.data.height === undefined ||
+					!event.data.pixels
+				) {
+					reject(new Error('PNG decoder returned an invalid response'));
+					return;
+				}
+
+				resolve({
+					width: event.data.width,
+					height: event.data.height,
+					data: event.data.pixels
+				});
+			},
+			{ once: true }
+		);
+		worker.addEventListener(
+			'error',
+			(event) => {
+				worker.terminate();
+				reject(new Error(`PNG decoder worker failed: ${event.message}`));
+			},
+			{ once: true }
+		);
+		worker.postMessage(data, [data]);
+	});
 }
 
 /**

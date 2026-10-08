@@ -1,6 +1,7 @@
 import { keyToRgb, rgbToKey } from './color/metrics.ts';
 import type { CanvasConfig } from './image/canvas.ts';
 import { context2d, createCanvas, loadImage, readPixels } from './image/canvas.ts';
+import { yieldToBrowser } from './image/scheduler.ts';
 import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, PaletteExtractionConfig } from './types.ts';
 
@@ -48,7 +49,7 @@ export async function extractColorsFromFile(
 	const image = await loadImage(file);
 
 	try {
-		return colorsFromRgba(image.pixels ?? readPixels(image, canvas).data, config);
+		return await colorsFromRgbaAsync(image.pixels ?? readPixels(image, canvas).data, config);
 	} finally {
 		image.close();
 	}
@@ -79,6 +80,38 @@ function colorsFromRgba(data: Uint8ClampedArray, config: PaletteExtractionConfig
 		counts.set(key, (counts.get(key) ?? 0) + 1);
 	}
 
+	return sortedColors(counts, config);
+}
+
+async function colorsFromRgbaAsync(
+	data: Uint8ClampedArray,
+	config: PaletteExtractionConfig
+): Promise<PaletteColor[]> {
+	const counts = new Map<number, number>();
+	let index = 0;
+
+	while (index < data.length) {
+		const start = performance.now();
+
+		while (index < data.length && performance.now() - start < 6) {
+			if (data[index + 3] >= config.alphaThreshold) {
+				const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+				counts.set(key, (counts.get(key) ?? 0) + 1);
+			}
+
+			index += 4;
+		}
+
+		if (index < data.length) await yieldToBrowser();
+	}
+
+	return sortedColors(counts, config);
+}
+
+function sortedColors(
+	counts: Map<number, number>,
+	config: PaletteExtractionConfig
+): PaletteColor[] {
 	return [...counts.entries()]
 		.sort((a, b) => b[1] - a[1])
 		.slice(0, config.maxColors)

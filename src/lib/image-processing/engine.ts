@@ -58,7 +58,15 @@ export async function recolorSprite(
 
 		if (isCancelled()) return null;
 
-		const counts = countColors(data, config.transparency.minAlpha);
+		const counts = await countColors(
+			data,
+			config.transparency.minAlpha,
+			chunkDurationMs,
+			yieldToMain,
+			isCancelled
+		);
+		if (!counts || isCancelled()) return null;
+
 		const activePalette = palette.filter((color) => color.active);
 
 		const lookup = await createColorLookup(
@@ -123,17 +131,33 @@ export async function recolorSprite(
 	}
 }
 
-/** Counts non-transparent source pixels by packed RGB key. */
-function countColors(data: Uint8ClampedArray, minAlpha: number): Map<number, number> {
+/** Counts non-transparent source pixels without monopolizing the main thread. */
+async function countColors(
+	data: Uint8ClampedArray,
+	minAlpha: number,
+	chunkDurationMs: number,
+	yieldToMain: () => Promise<void>,
+	isCancelled: () => boolean
+): Promise<Map<number, number> | null> {
 	const counts = new Map<number, number>();
+	let index = 0;
 
-	for (let index = 0; index < data.length; index += 4) {
-		if (data[index + 3] < minAlpha) continue;
+	while (index < data.length) {
+		const start = performance.now();
 
-		const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+		while (index < data.length && performance.now() - start < chunkDurationMs) {
+			if (data[index + 3] >= minAlpha) {
+				const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+				counts.set(key, (counts.get(key) ?? 0) + 1);
+			}
 
-		counts.set(key, (counts.get(key) ?? 0) + 1);
+			index += 4;
+		}
+
+		if (isCancelled()) return null;
+		if (index < data.length) await yieldToMain();
 	}
+
 	return counts;
 }
 
