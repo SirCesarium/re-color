@@ -1,6 +1,6 @@
 import { keyToRgb, rgbToKey } from './color/metrics.ts';
 import type { CanvasConfig } from './image/canvas.ts';
-import { context2d, createCanvas } from './image/canvas.ts';
+import { context2d, createCanvas, loadImage, readPixels } from './image/canvas.ts';
 import type { PaletteColor, PaletteExtractionConfig } from './types.ts';
 
 /**
@@ -22,13 +22,7 @@ export function extractColors(
 	config: PaletteExtractionConfig,
 	canvas: CanvasConfig
 ): PaletteColor[] {
-	if (!Number.isInteger(config.maxColors) || config.maxColors < 0) {
-		throw new RangeError('maxColors must be a non-negative integer');
-	}
-
-	if (!Number.isInteger(config.alphaThreshold) || config.alphaThreshold < 0 || config.alphaThreshold > 255) {
-		throw new RangeError('alphaThreshold must be an integer between zero and 255');
-	}
+	validateExtractionConfig(config);
 
 	const surface = createCanvas(image.naturalWidth, image.naturalHeight);
 	const context = context2d(surface, canvas);
@@ -36,6 +30,43 @@ export function extractColors(
 	context.drawImage(image, 0, 0);
 
 	const { data } = context.getImageData(0, 0, surface.width, surface.height);
+	return colorsFromRgba(data, config);
+}
+
+/**
+ * Extracts colors from an input file. PNG samples are decoded directly from
+ * their stored pixel values so browser color management cannot change the palette.
+ */
+export async function extractColorsFromFile(
+	file: Blob,
+	config: PaletteExtractionConfig,
+	canvas: CanvasConfig
+): Promise<PaletteColor[]> {
+	validateExtractionConfig(config);
+	const image = await loadImage(file);
+
+	try {
+		return colorsFromRgba(image.pixels ?? readPixels(image, canvas).data, config);
+	} finally {
+		image.close();
+	}
+}
+
+function validateExtractionConfig(config: PaletteExtractionConfig): void {
+	if (!Number.isInteger(config.maxColors) || config.maxColors < 0) {
+		throw new RangeError('maxColors must be a non-negative integer');
+	}
+
+	if (
+		!Number.isInteger(config.alphaThreshold) ||
+		config.alphaThreshold < 0 ||
+		config.alphaThreshold > 255
+	) {
+		throw new RangeError('alphaThreshold must be an integer between zero and 255');
+	}
+}
+
+function colorsFromRgba(data: Uint8ClampedArray, config: PaletteExtractionConfig): PaletteColor[] {
 	const counts = new Map<number, number>();
 
 	for (let index = 0; index < data.length; index += 4) {

@@ -1,5 +1,9 @@
 import { onDestroy, onMount, untrack } from 'svelte';
-import { composeExcludedPixels, extractColors, recolorSprite } from '../image-processing/index.ts';
+import {
+	composeExcludedPixels,
+	extractColorsFromFile,
+	recolorSprite
+} from '../image-processing/index.ts';
 import type { MappingMode, PaletteColor, RecolorConfig } from '../image-processing/types.ts';
 import {
 	CANVAS_CONFIG,
@@ -356,20 +360,20 @@ export function createRecolorWorkflow() {
 		}
 
 		let cancelled = false;
-		const url = URL.createObjectURL(file);
-		const image = new Image();
+		void extractColorsFromFile(file, PALETTE_CONFIG, CANVAS_CONFIG)
+			.then((colors) => {
+				if (!cancelled) state.colors = colors;
+			})
+			.catch((error: unknown) => {
+				if (cancelled) return;
 
-		image.onload = () => {
-			if (!cancelled) {
-				state.colors = extractColors(image, PALETTE_CONFIG, CANVAS_CONFIG);
-			}
-		};
-
-		image.src = url;
+				console.error('Could not extract the palette image colors', error);
+				state.colors = [];
+				state.hint = 'Could not read palette image';
+			});
 
 		return () => {
 			cancelled = true;
-			URL.revokeObjectURL(url);
 		};
 	});
 

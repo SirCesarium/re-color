@@ -1,11 +1,15 @@
+import { decodePng, isPng } from './png.ts';
+
 /** A decoded image source together with its intrinsic dimensions and cleanup callback. */
 export type LoadedImage = {
 	/** Drawable source accepted by `CanvasRenderingContext2D.drawImage`. */
-	source: CanvasImageSource;
+	source?: CanvasImageSource;
 	/** Intrinsic width in pixels. */
 	width: number;
 	/** Intrinsic height in pixels. */
 	height: number;
+	/** Original decoded PNG samples, avoiding browser color-profile conversion. */
+	pixels?: Uint8ClampedArray<ArrayBuffer>;
 	/** Releases resources allocated while decoding the image. */
 	close: () => void;
 };
@@ -19,13 +23,26 @@ export type CanvasConfig = {
 };
 
 /**
- * Decodes an image file into a drawable browser image source.
+ * Decodes PNG samples directly and other supported formats through browser image APIs.
  *
  * @param file Image file to decode.
  * @returns The decoded image dimensions and a callback that releases its resources.
- * @throws If both bitmap and image-element decoding fail.
+ * @throws If PNG data is invalid or decoding fails.
  */
 export async function loadImage(file: Blob): Promise<LoadedImage> {
+	const signature = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+
+	if (isPng(signature)) {
+		const decoded = decodePng(new Uint8Array(await file.arrayBuffer()));
+
+		return {
+			width: decoded.width,
+			height: decoded.height,
+			pixels: decoded.data,
+			close: () => {}
+		};
+	}
+
 	if (typeof createImageBitmap === 'function') {
 		try {
 			const bitmap = await createImageBitmap(file);
@@ -89,18 +106,8 @@ export async function composeExcludedPixels(
 			throw new Error('Original and recolored image dimensions do not match');
 		}
 
-		const surface = createCanvas(base.width, base.height);
-		const context = context2d(surface, canvasConfig);
-		const originalSurface = createCanvas(original.width, original.height);
-		const originalContext = context2d(originalSurface, canvasConfig);
-
-		context.imageSmoothingEnabled = false;
-		originalContext.imageSmoothingEnabled = false;
-		context.drawImage(base.source, 0, 0);
-		originalContext.drawImage(original.source, 0, 0);
-
-		const outputPixels = context.getImageData(0, 0, base.width, base.height);
-		const originalPixels = originalContext.getImageData(0, 0, original.width, original.height);
+		const outputPixels = readPixels(base, canvasConfig);
+		const originalPixels = readPixels(original, canvasConfig);
 		const pixelCount = base.width * base.height;
 
 		for (const pixelIndex of excludedPixels) {
@@ -115,6 +122,8 @@ export async function composeExcludedPixels(
 			);
 		}
 
+		const surface = createCanvas(base.width, base.height);
+		const context = context2d(surface, canvasConfig);
 		context.putImageData(outputPixels, 0, 0);
 
 		return await toBlobUrl(surface, outputConfig);
@@ -174,6 +183,9 @@ export function context2d(
  * @throws If canvas creation, drawing, or pixel access fails.
  */
 export function readPixels(image: LoadedImage, config: CanvasConfig): ImageData {
+	if (image.pixels) return new ImageData(image.pixels, image.width, image.height);
+	if (!image.source) throw new Error('Decoded image does not have a readable source');
+
 	const context = context2d(createCanvas(image.width, image.height), config);
 
 	context.drawImage(image.source, 0, 0);
