@@ -1,28 +1,31 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/alpine
+// For config options see https://aka.ms/devcontainer.json
 {
-	"name": "Bun project",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:trixie",
-	"features": {
-		"ghcr.io/shyim/devcontainers-features/bun:0": {},
-		"ghcr.io/devcontainer-community/devcontainer-features/fd:1": {},
-		"ghcr.io/devcontainer-community/devcontainer-features/ripgrep:1": {}
+	"name": "re-color",
+	"build": {
+		"dockerfile": "Dockerfile"
 	},
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	// Use 'postCreateCommand' to run commands after the container is created.
+	// vite.config.ts listens on 0.0.0.0:5173
+	"forwardPorts": [
+		5173
+	],
+	"portsAttributes": {
+		"5173": {
+			"label": "Vite dev server",
+			"onAutoForward": "openPreview"
+		}
+	},
 	"postCreateCommand": "bun install --frozen-lockfile",
-	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"svelte.svelte-vscode"
+				"svelte.svelte-vscode",
+				"bradlc.vscode-tailwindcss",
+				"ardenivanov.svelte-intellisense",
+				"ms-azuretools.vscode-docker",
+				"eamodio.gitlens",
+				"stivo.tailwind-fold"
 			]
 		}
 	}
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }
