@@ -45,8 +45,9 @@
 		const color = colors[index];
 		if (!color) return;
 
-		colors[index] = { ...color, active: !color.active };
-		if (!color.active) dismiss();
+		const active = !color.active;
+		colors[index] = { ...color, active };
+		if (!active) dismiss();
 	}
 
 	function onPointerMove(event: PointerEvent) {
