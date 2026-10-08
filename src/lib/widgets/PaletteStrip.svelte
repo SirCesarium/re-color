@@ -68,7 +68,7 @@
 </script>
 
 <div
-	class="wrap relative mt-4 inline-flex max-w-full justify-center"
+	class="wrap relative mt-4 flex w-full justify-center"
 	role="presentation"
 	bind:this={root}
 	onpointermove={onPointerMove}

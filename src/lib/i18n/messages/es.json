@@ -31,7 +31,7 @@
 	"result.empty": "No hay resultado aún",
 	"palette.enable": "Activar color",
 	"palette.disable": "Desactivar color",
-	"palette.toggleHint": "Haz clic para activar/desactivar",
+	"palette.toggleHint": "Puedes hacer clic en un color para excluirlo del recoloreo",
 	"footer.settings": "Ajustes",
 	"footer.home": "Inicio",
 	"footer.privacy": "Privacidad",

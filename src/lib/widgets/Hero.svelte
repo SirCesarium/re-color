@@ -8,7 +8,9 @@
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 </script>
 
-<header class="animate-[rise_380ms_ease-out_backwards] text-center min-[900px]:col-start-1 min-[900px]:text-left">
+<header
+	class="animate-[rise_380ms_ease-out_backwards] w-full text-center min-[900px]:col-start-1 min-[900px]:text-left"
+>
 	<Wordmark />
 	<Typography variant="tagline">
 		{$t('hero.tagline1')}<br />{$t('hero.tagline2')}
@@ -20,6 +22,10 @@
 	@media (min-width: 900px) {
 		header :global(.wrap) {
 			justify-content: flex-start;
+		}
+
+		header :global(.hint.above) {
+			margin-inline: 0 auto;
 		}
 	}
 </style>

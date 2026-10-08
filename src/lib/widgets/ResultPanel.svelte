@@ -107,8 +107,6 @@
 	}
 
 	.help-anchor :global(.pixel-help) {
-		max-width: 100%;
-		white-space: normal;
 		text-align: left;
 		font-size: 12px;
 		line-height: 1.35;

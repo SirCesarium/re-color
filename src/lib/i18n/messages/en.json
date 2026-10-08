@@ -31,7 +31,7 @@
 	"result.empty": "No result yet",
 	"palette.enable": "Enable color",
 	"palette.disable": "Disable color",
-	"palette.toggleHint": "Click to enable/disable",
+	"palette.toggleHint": "You can click a color to exclude it from the recolor",
 	"footer.settings": "Settings",
 	"footer.home": "Home",
 	"footer.privacy": "Privacy",

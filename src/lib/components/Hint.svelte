@@ -26,7 +26,7 @@
 
 {#if visible}
 	<div
-		class="hint pointer-events-none relative self-center whitespace-nowrap border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] {className}"
+		class="hint pointer-events-none relative self-center border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] {className}"
 		class:interactive={onDismiss !== undefined}
 		class:above={placement === 'above'}
 		class:down-arrow={placement === 'above' || arrow === 'down'}
@@ -51,6 +51,9 @@
 <style>
 	.hint {
 		animation: hint-in 200ms ease-out;
+		max-width: 100%;
+		white-space: normal;
+		text-wrap: balance;
 	}
 
 	.hint.above {
