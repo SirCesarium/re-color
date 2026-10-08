@@ -1,6 +1,7 @@
 import { createColorLookup } from './color/mapping/registry.ts';
 import { rgbToKey } from './color/metrics.ts';
 import { context2d, createCanvas, loadImage, readPixels, toBlobUrl } from './image/canvas.ts';
+import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, RecolorConfig, Rgb } from './types.ts';
 
 /**
@@ -32,6 +33,7 @@ export async function recolorSprite(
 	config: RecolorConfig
 ): Promise<string | null> {
 	validateConfig(config);
+	await validateImageFile(file);
 
 	if (!palette.some((color) => color.active)) return null;
 

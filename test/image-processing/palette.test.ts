@@ -1,7 +1,19 @@
 import { expect, test } from 'bun:test';
 import { zlibSync } from 'fflate';
+import {
+	CANVAS_CONFIG,
+	MAPPING_CONFIG,
+	OUTPUT_CONFIG,
+	PROCESSING_CONFIG,
+	TRANSPARENCY_CONFIG
+} from '../../src/lib/config/recolor.ts';
+import { recolorSprite } from '../../src/lib/image-processing/engine.ts';
 import { extractColorsFromFile } from '../../src/lib/image-processing/palette.ts';
 import { decodePng } from '../../src/lib/image-processing/image/png.ts';
+import {
+	MAX_IMAGE_BYTES,
+	validateImageFile
+} from '../../src/lib/image-processing/image/validation.ts';
 
 const canvasConfig = { willReadFrequently: true, colorSpace: 'srgb' as const };
 
@@ -70,6 +82,64 @@ test('extracts packed 4-bit indexed PNG samples exactly', async () => {
 
 	expect(colors).toHaveLength(2);
 	expect(new Set(colors.map(({ r, g, b }) => `${r},${g},${b}`)).size).toBe(2);
+});
+
+test('accepts PNG images up to the configured dimensions', async () => {
+	const png = makeIndexedPng(512, 512, [[20, 40, 60]], Array(512 * 512).fill(0), [255]);
+
+	await expect(validateImageFile(pngBlob(png))).resolves.toBeUndefined();
+});
+
+test('rejects non-PNG, oversized, and over-dimensioned uploads', async () => {
+	await expect(validateImageFile(new Blob(['not a png'], { type: 'image/png' }))).rejects.toThrow(
+		'Choose a valid PNG image.'
+	);
+	await expect(
+		validateImageFile(new Blob([new Uint8Array(MAX_IMAGE_BYTES + 1)]))
+	).rejects.toThrow('Image must be 2 MiB or smaller.');
+
+	const oversized = makeIndexedPng(513, 1, [[20, 40, 60]], [0], [255]);
+	await expect(validateImageFile(pngBlob(oversized))).rejects.toThrow(
+		'Image dimensions must not exceed 512 × 512 pixels.'
+	);
+});
+
+test('PNG decoder rejects excessive dimensions before inflating image data', () => {
+	const png = makePng([
+		chunk('IHDR', header(513, 1, 8, 6, 0)),
+		chunk('IDAT', zlibSync(new Uint8Array())),
+		chunk('IEND', new Uint8Array())
+	]);
+
+	expect(() => decodePng(png)).toThrow(
+		'PNG dimensions exceed the supported 512 × 512 pixel limit'
+	);
+});
+
+test('palette extraction and recoloring reject files that are not PNG', async () => {
+	const invalidFile = new File(['not a png'], 'sprite.png', { type: 'image/png' });
+
+	await expect(
+		extractColorsFromFile(
+			invalidFile,
+			{ maxColors: 64, alphaThreshold: 128 },
+			canvasConfig
+		)
+	).rejects.toThrow('Choose a valid PNG image.');
+
+	await expect(
+		recolorSprite(invalidFile, [], {
+			canvas: CANVAS_CONFIG,
+			mapping: MAPPING_CONFIG,
+			transparency: TRANSPARENCY_CONFIG,
+			processing: {
+				...PROCESSING_CONFIG,
+				onProgress: () => {},
+				isCancelled: () => false
+			},
+			output: OUTPUT_CONFIG
+		})
+	).rejects.toThrow('Choose a valid PNG image.');
 });
 
 function pngBlob(bytes: Uint8Array): Blob {

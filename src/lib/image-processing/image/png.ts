@@ -1,4 +1,5 @@
 import { unzlibSync } from 'fflate';
+import { MAX_IMAGE_HEIGHT, MAX_IMAGE_WIDTH } from './validation.ts';
 
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 const ADAM7_PASSES = [
@@ -187,6 +188,9 @@ function validateHeader(
 
 	if (!header.width || !header.height || !Number.isSafeInteger(header.width * header.height)) {
 		throw new RangeError('Invalid PNG dimensions');
+	}
+	if (header.width > MAX_IMAGE_WIDTH || header.height > MAX_IMAGE_HEIGHT) {
+		throw new RangeError('PNG dimensions exceed the supported 512 × 512 pixel limit');
 	}
 	if (!depths?.includes(header.bitDepth)) throw new Error('Unsupported PNG color type or bit depth');
 	if (header.interlace !== 0 && header.interlace !== 1) throw new Error('Unsupported PNG interlace method');

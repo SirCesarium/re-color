@@ -1,4 +1,5 @@
 import { decodePng, isPng } from './png.ts';
+import { validateImageFile } from './validation.ts';
 
 /** A decoded image source together with its intrinsic dimensions and cleanup callback. */
 export type LoadedImage = {
@@ -92,6 +93,7 @@ export async function composeExcludedPixels(
 	canvasConfig: CanvasConfig,
 	outputConfig: { mimeType: string; quality?: number }
 ): Promise<string> {
+	await validateImageFile(originalFile);
 	const response = await fetch(baseUrl);
 
 	if (!response.ok) throw new Error(`Could not read the recolored image: ${response.status}`);

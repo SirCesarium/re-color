@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Typography from '#lib/components/Typography.svelte';
+	import { validateImageFile } from '#lib/image-processing/image/validation.ts';
 
 	let {
 		label,
@@ -15,6 +16,8 @@
 
 	let preview = $state<string | null>(null);
 	let dragging = $state(false);
+	let error = $state<string | null>(null);
+	let selectionId = 0;
 
 	$effect(() => {
 		const url = preview;
@@ -23,14 +26,29 @@
 		};
 	});
 
-	function load(candidate: File | undefined) {
-		if (!candidate || !candidate.type.startsWith('image/')) return;
-		preview = URL.createObjectURL(candidate);
-		file = candidate;
+	async function load(candidate: File | undefined) {
+		if (!candidate) return;
+
+		const id = ++selectionId;
+		error = null;
+
+		try {
+			await validateImageFile(candidate);
+			if (id !== selectionId) return;
+
+			preview = URL.createObjectURL(candidate);
+			file = candidate;
+		} catch (cause) {
+			if (id !== selectionId) return;
+			error = cause instanceof Error ? cause.message : 'Could not read this image.';
+		}
 	}
 
 	function onInput(event: Event) {
-		load((event.currentTarget as HTMLInputElement).files?.[0]);
+		const input = event.currentTarget as HTMLInputElement;
+		const candidate = input.files?.[0];
+		input.value = '';
+		void load(candidate);
 	}
 
 	function onDragOver(event: DragEvent) {
@@ -62,10 +80,19 @@
 	<input
 		class="sr-only"
 		type="file"
-		accept="image/*"
-		aria-label="Upload {label} image"
+		accept="image/png,.png"
+		aria-label="Upload {label} PNG image"
 		onchange={onInput}
 	/>
+
+	{#if error}
+		<span
+			class="absolute right-1 bottom-1 left-1 z-10 border border-[var(--sw-red)] bg-panel px-2 py-1 text-xs text-[var(--sw-red)]"
+			role="alert"
+		>
+			{error}
+		</span>
+	{/if}
 
 	{#if dragging}
 		<span

@@ -1,6 +1,7 @@
 import { keyToRgb, rgbToKey } from './color/metrics.ts';
 import type { CanvasConfig } from './image/canvas.ts';
 import { context2d, createCanvas, loadImage, readPixels } from './image/canvas.ts';
+import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, PaletteExtractionConfig } from './types.ts';
 
 /**
@@ -43,6 +44,7 @@ export async function extractColorsFromFile(
 	canvas: CanvasConfig
 ): Promise<PaletteColor[]> {
 	validateExtractionConfig(config);
+	await validateImageFile(file);
 	const image = await loadImage(file);
 
 	try {
