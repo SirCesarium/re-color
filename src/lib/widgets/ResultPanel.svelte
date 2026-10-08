@@ -47,7 +47,7 @@
 </script>
 
 <section
-	class="animate-[rise_380ms_ease-out_240ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
+	class="animate-[rise_380ms_ease-out_240ms_backwards] flex w-full max-w-120 flex-col gap-2"
 	aria-label={$t('result.section')}
 >
 	<Typography as="span" variant="section-label">{$t('result.section')}</Typography>
