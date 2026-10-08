@@ -52,7 +52,7 @@
 >
 	<Typography as="span" variant="section-label">{$t('result.section')}</Typography>
 	<div
-		class="result reveal-on-hover relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
+		class="result relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
 		<div class="checker"></div>
 		<PixelCanvas
@@ -75,29 +75,11 @@
 					/>
 				</div>
 			{/if}
-
-			<Button
-				variant="icon"
-				class="absolute right-2 bottom-2 z-10 grid h-8 w-8 place-items-center p-0"
-				ariaLabel="Download result"
-				revealOnHover
-				onclick={onDownload}
-			>
-				<svg
-					class="h-4 w-4 [shape-rendering:crispEdges]"
-					viewBox="0 0 16 16"
-					fill="currentColor"
-					aria-hidden="true"
-				>
-					<rect x="6" y="1" width="4" height="6" />
-					<rect x="1" y="7" width="14" height="2" />
-					<rect x="3" y="9" width="10" height="2" />
-					<rect x="5" y="11" width="6" height="2" />
-					<rect x="7" y="13" width="2" height="2" />
-				</svg>
-			</Button>
 		{/if}
 	</div>
+	{#if imageUrl}
+		<Button onclick={onDownload}>{$t('result.download')}</Button>
+	{/if}
 </section>
 
 <style>
