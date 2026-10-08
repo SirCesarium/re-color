@@ -60,7 +60,7 @@
 	"settings.hintsTitle": "Avisos de ayuda",
 	"settings.hintsDesc": "Muestra las burbujas flotantes con consejos.",
 	"settings.autoRecolorTitle": "Aplicar cambios automáticamente",
-	"settings.autoRecolorDesc": "Actualizar automáticamente el área de resultados cuando estén disponibles la paleta de colores y la imagen del sprite.",
+	"settings.autoRecolorDesc": "Actualiza automáticamente la vista previa del resultado cuando tanto la paleta como el sprite estén cargados.",
 	"settings.persistTitle": "Guardar el espacio de trabajo en este dispositivo",
 	"settings.persistDesc": "Previene que al refrescar el navegador se pierdan cambios.",
 	"settings.maxColorsTitle": "Máximo de colores de paleta",

@@ -60,7 +60,7 @@
 	"settings.hintsTitle": "Help hints",
 	"settings.hintsDesc": "Show floating bubbles with tips.",
 	"settings.autoRecolorTitle": "Automatically apply changes",
-	"settings.autoRecolorDesc": "Auto update the result viewport when the color palette and sprite sources are available.",
+	"settings.autoRecolorDesc": "Automatically update the result preview when both the palette and sprite are loaded.",
 	"settings.persistTitle": "Save workspace on this device",
 	"settings.persistDesc": "Prevents losing changes when refreshing the browser.",
 	"settings.maxColorsTitle": "Maximum palette colors",
