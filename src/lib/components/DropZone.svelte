@@ -18,12 +18,23 @@
 	let dragging = $state(false);
 	let error = $state<string | null>(null);
 	let selectionId = 0;
+	let previewedFile: File | null = null;
 
 	$effect(() => {
 		const url = preview;
 		return () => {
 			if (url) URL.revokeObjectURL(url);
 		};
+	});
+
+	$effect(() => {
+		const currentFile = file;
+		if (currentFile === previewedFile) return;
+
+		selectionId++;
+		previewedFile = currentFile;
+		preview = currentFile ? URL.createObjectURL(currentFile) : null;
+		error = null;
 	});
 
 	async function load(candidate: File | undefined) {
@@ -36,7 +47,6 @@
 			await validateImageFile(candidate);
 			if (id !== selectionId) return;
 
-			preview = URL.createObjectURL(candidate);
 			file = candidate;
 		} catch (cause) {
 			if (id !== selectionId) return;

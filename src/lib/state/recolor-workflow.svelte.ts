@@ -272,6 +272,20 @@ export function createRecolorWorkflow() {
 		link.click();
 	}
 
+	function clearFormData() {
+		runId++;
+		compositionId++;
+		workspaceRestoreCancelled = true;
+		clearResult();
+		state.palette = null;
+		state.sprite = null;
+		state.colors = [];
+		state.excludedPixels = [];
+		state.busy = false;
+		state.progress = 0;
+		state.hint = null;
+	}
+
 	async function startRecolor() {
 		const file = state.sprite;
 
@@ -556,6 +570,7 @@ export function createRecolorWorkflow() {
 			return buttonHint;
 		},
 		setSetting,
+		clearFormData,
 		handleRecolor,
 		toggleExcludedPixel,
 		setPixelExclusion,

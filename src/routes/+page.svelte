@@ -10,6 +10,12 @@
 	import { createRecolorWorkflow } from "#lib/state/recolor-workflow.svelte.ts";
 
 	const workflow = createRecolorWorkflow();
+
+	function confirmClearFormData() {
+		if (confirm("Clear the selected images and current recolor form?")) {
+			workflow.clearFormData();
+		}
+	}
 </script>
 
 <svelte:head>
@@ -61,8 +67,16 @@
 	<div
 		class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
 	>
+		<button
+			class="self-start text-xs text-text-dim underline decoration-dotted underline-offset-4 hover:text-text"
+			type="button"
+			onclick={confirmClearFormData}
+		>
+			clear form data
+		</button>
 		<Button
-			disabled={!workflow.state.busy && (!workflow.ready || workflow.noActiveColors)}
+			disabled={!workflow.state.busy &&
+				(!workflow.ready || workflow.noActiveColors)}
 			busy={workflow.state.busy}
 			cancelOnBusy
 			progress={workflow.state.progress}
