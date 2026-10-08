@@ -7,14 +7,15 @@
 	const isHome = $derived(page.url.pathname === '/');
 </script>
 
-<footer class="flex gap-6 pb-6 text-base">
+<footer class="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 px-4 pb-6 text-center text-sm min-[640px]:gap-6 min-[640px]:text-base">
 	{#if isHome}
-		<Link href={resolve('/settings')}>{$t('footer.settings')}</Link>
+		<Link class="whitespace-nowrap" href={resolve('/settings')}>{$t('footer.settings')}</Link>
 	{:else}
-		<Link href={resolve('/')}>{$t('footer.home')}</Link>
+		<Link class="whitespace-nowrap" href={resolve('/')}>{$t('footer.home')}</Link>
 	{/if}
-	<Link href={resolve('/privacy')}>{$t('footer.privacy')}</Link>
+	<Link class="whitespace-nowrap" href={resolve('/privacy')}>{$t('footer.privacy')}</Link>
 	<Link
+		class="whitespace-nowrap"
 		href="https://github.com/SirCesarium/re-color"
 		variant="muted"
 		target="_blank"
