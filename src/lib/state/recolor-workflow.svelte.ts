@@ -1,5 +1,15 @@
 import { onDestroy, onMount, untrack } from 'svelte';
 import {
+	APP_SETTINGS_KEY,
+	DEFAULT_APP_SETTINGS,
+	clearWorkspace,
+	isMappingMode,
+	loadWorkspace,
+	parseAppSettings,
+	saveWorkspace
+} from './app-settings.ts';
+import type { AppSettings, PersistedWorkspace } from './app-settings.ts';
+import {
 	composeExcludedPixels,
 	extractColorsFromFile,
 	recolorSprite
@@ -7,7 +17,6 @@ import {
 import type { MappingMode, PaletteColor, RecolorConfig } from '../image-processing/types.ts';
 import {
 	CANVAS_CONFIG,
-	MAPPING_OPTIONS,
 	MAPPING_CONFIG,
 	MAPPING_STORAGE_KEY,
 	OUTPUT_CONFIG,
@@ -22,6 +31,10 @@ type WorkflowState = {
 	sprite: File | null;
 	colors: PaletteColor[];
 	mapping: MappingMode;
+	settings: AppSettings;
+	settingsLoaded: boolean;
+	workspaceLoaded: boolean;
+	paletteColorsLoaded: boolean;
 	result: {
 		url: string;
 		previewUrl: string;
@@ -32,7 +45,6 @@ type WorkflowState = {
 	busy: boolean;
 	progress: number;
 	hint: string | null;
-	mappingLoaded: boolean;
 };
 
 /** Creates isolated reactive state and lifecycle effects for one recolor page. */
@@ -42,12 +54,15 @@ export function createRecolorWorkflow() {
 		sprite: null,
 		colors: [],
 		mapping: 'luminance',
+		settings: { ...DEFAULT_APP_SETTINGS },
+		settingsLoaded: false,
+		workspaceLoaded: false,
+		paletteColorsLoaded: false,
 		result: null,
 		excludedPixels: [],
 		busy: false,
 		progress: 0,
-		hint: null,
-		mappingLoaded: false
+		hint: null
 	});
 
 	const ready = $derived(state.palette !== null && state.sprite !== null);
@@ -57,26 +72,127 @@ export function createRecolorWorkflow() {
 		`${state.mapping}:${state.colors.map((color) => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`).join(';')}`
 	);
 	const exclusionSig = $derived([...state.excludedPixels].sort((a, b) => a - b).join(','));
-	const buttonHint = $derived(
-		ready && noActiveColors ? 'Select at least 1 color' : state.hint
-	);
+	const buttonHint = $derived.by(() => {
+		if (ready && noActiveColors) return 'Select at least 1 color';
+		if (
+			ready &&
+			state.result &&
+			!state.busy &&
+			state.result.mappingSignature !== mappingSig &&
+			!state.settings.autoRecolor
+		) {
+			return 'Press recolor to apply the new changes.';
+		}
+		return state.hint;
+	});
 
 	let runId = 0;
 	let compositionId = 0;
+	let workspaceSaveTimer: ReturnType<typeof setTimeout> | undefined;
+	let workspaceRestoreCancelled = false;
 
 	onMount(() => {
-		const stored = localStorage.getItem(MAPPING_STORAGE_KEY);
-		const option = MAPPING_OPTIONS.find((candidate) => candidate.value === stored);
+		let disposed = false;
 
-		if (option) state.mapping = option.value;
+		try {
+			const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
+			state.settings = parseAppSettings(storedSettings);
+			if (!storedSettings) {
+				const legacyMapping = localStorage.getItem(MAPPING_STORAGE_KEY);
+				if (isMappingMode(legacyMapping)) {
+					state.settings.defaultMapping = legacyMapping;
+					state.mapping = legacyMapping;
+				}
+			}
+		} catch (error) {
+			console.error('Could not read saved app settings', error);
+		}
+		state.mapping = state.settings.defaultMapping;
+		state.settingsLoaded = true;
 
-		state.mappingLoaded = true;
+		void (async () => {
+			try {
+				if (!state.settings.persistWorkspace) {
+					await clearWorkspace();
+					return;
+				}
+
+				const workspace = await loadWorkspace();
+				if (disposed || workspaceRestoreCancelled) return;
+
+				if (workspace) {
+					state.palette = workspace.palette
+						? new File([workspace.palette.blob], workspace.palette.name, {
+								type: 'image/png'
+							})
+						: null;
+					state.sprite = workspace.sprite
+						? new File([workspace.sprite.blob], workspace.sprite.name, {
+								type: 'image/png'
+							})
+						: null;
+					state.colors = workspace.colors.map((color) => ({ ...color }));
+					state.excludedPixels = workspace.excludedPixels;
+				}
+			} catch (error) {
+				console.error('Could not restore saved app workspace', error);
+				state.hint = 'Could not restore saved app data';
+			} finally {
+				if (!disposed) state.workspaceLoaded = true;
+			}
+		})();
+
+		return () => {
+			disposed = true;
+		};
 	});
 
 	$effect(() => {
-		if (!state.mappingLoaded) return;
+		if (!state.settingsLoaded) return;
 
-		localStorage.setItem(MAPPING_STORAGE_KEY, state.mapping);
+		state.settings.defaultMapping = state.mapping;
+
+		try {
+			localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(state.settings));
+		} catch (error) {
+			console.error('Could not save app settings', error);
+			state.hint = 'Could not save app settings';
+		}
+	});
+
+	$effect(() => {
+		if (!state.settingsLoaded || typeof document === 'undefined') return;
+
+		document.documentElement.classList.toggle(
+			'animations-disabled',
+			!state.settings.animationsEnabled
+		);
+	});
+
+	$effect(() => {
+		if (!state.workspaceLoaded || !state.settings.persistWorkspace) return;
+
+		const workspace: PersistedWorkspace = {
+			palette: state.palette
+				? { name: state.palette.name, blob: state.palette.slice(0, state.palette.size, 'image/png') }
+				: null,
+			sprite: state.sprite
+				? { name: state.sprite.name, blob: state.sprite.slice(0, state.sprite.size, 'image/png') }
+				: null,
+			mapping: state.mapping,
+			colors: state.colors.map(({ r, g, b, active }) => ({ r, g, b, active })),
+			excludedPixels: [...state.excludedPixels]
+		};
+
+		clearTimeout(workspaceSaveTimer);
+		workspaceSaveTimer = setTimeout(() => {
+			void saveWorkspace(workspace).catch((error: unknown) => {
+				console.error('Could not save app workspace', error);
+				state.hint = 'Could not save app data';
+			});
+		}, 350);
+
+		return () => clearTimeout(workspaceSaveTimer);
 	});
 
 	function clearResult() {
@@ -244,6 +360,12 @@ export function createRecolorWorkflow() {
 		void startRecolor();
 	}
 
+	function setSetting<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
+		state.settings[key] = value;
+
+		if (key === 'defaultMapping') state.mapping = state.settings.defaultMapping;
+	}
+
 	function toggleExcludedPixel(index: number) {
 		if (!Number.isInteger(index) || index < 0) return;
 
@@ -276,20 +398,13 @@ export function createRecolorWorkflow() {
 			const composition = await composeForCurrentExclusions(
 				result.previewUrl,
 				file,
-				() =>
-					id !== compositionId ||
-					state.result?.previewUrl !== result.previewUrl ||
-					state.result.mappingSignature !== mappingSig
+				() => id !== compositionId || state.result?.previewUrl !== result.previewUrl
 			);
 
 			if (!composition || id !== compositionId) return;
 
 			const currentResult = state.result;
-			if (
-				!currentResult ||
-				currentResult.previewUrl !== result.previewUrl ||
-				currentResult.mappingSignature !== mappingSig
-			) {
+			if (!currentResult || currentResult.previewUrl !== result.previewUrl) {
 				releaseResult(composition.url, new Set([result.previewUrl]));
 				return;
 			}
@@ -335,23 +450,38 @@ export function createRecolorWorkflow() {
 
 	$effect(() => {
 		const signature = mappingSig;
+		const result = state.result;
+		const autoRecolor = state.settings.autoRecolor;
 
 		untrack(() => {
-			if (signature && state.result !== null) void startRecolor();
+			if (
+				signature &&
+				result &&
+				result.mappingSignature !== signature &&
+				autoRecolor
+			) {
+				void startRecolor();
+			}
+		});
+	});
+
+	$effect(() => {
+		const canRunInitial = ready && state.paletteColorsLoaded && state.workspaceLoaded;
+		const hasResult = state.result !== null;
+
+		untrack(() => {
+			if (canRunInitial && !hasResult && !state.busy && !noActiveColors) {
+				void startRecolor();
+			}
 		});
 	});
 
 	$effect(() => {
 		const signature = exclusionSig;
 		const result = state.result;
-		const mapping = mappingSig;
 
 		untrack(() => {
-			if (
-				!result ||
-				result.mappingSignature !== mapping ||
-				result.exclusionSignature === signature
-			) {
+			if (!result || result.exclusionSignature === signature) {
 				return;
 			}
 
@@ -362,23 +492,41 @@ export function createRecolorWorkflow() {
 
 	$effect(() => {
 		const file = state.palette;
+		const maxColors = state.settings.maxPaletteColors;
 
 		if (!file) {
 			state.colors = [];
+			state.paletteColorsLoaded = false;
 
 			return;
 		}
 
 		let cancelled = false;
-		void extractColorsFromFile(file, PALETTE_CONFIG, CANVAS_CONFIG)
+		state.paletteColorsLoaded = false;
+		const previousColors = untrack(() => state.colors);
+		void extractColorsFromFile(
+			file,
+			{ ...PALETTE_CONFIG, maxColors },
+			CANVAS_CONFIG
+		)
 			.then((colors) => {
-				if (!cancelled) state.colors = colors;
+				if (cancelled) return;
+
+				state.colors = colors.map((color) => {
+					const previous = previousColors?.find(
+						(candidate) =>
+							candidate.r === color.r && candidate.g === color.g && candidate.b === color.b
+					);
+					return previous ? { ...color, active: previous.active } : color;
+				});
+				state.paletteColorsLoaded = true;
 			})
 			.catch((error: unknown) => {
 				if (cancelled) return;
 
 				console.error('Could not extract the palette image colors', error);
 				state.colors = [];
+				state.paletteColorsLoaded = false;
 				state.hint = 'Could not read palette image';
 			});
 
@@ -389,7 +537,11 @@ export function createRecolorWorkflow() {
 
 	onDestroy(() => {
 		runId++;
+		clearTimeout(workspaceSaveTimer);
 		clearResult();
+		if (typeof document !== 'undefined') {
+			document.documentElement.classList.remove('animations-disabled');
+		}
 	});
 
 	return {
@@ -403,6 +555,7 @@ export function createRecolorWorkflow() {
 		get buttonHint() {
 			return buttonHint;
 		},
+		setSetting,
 		handleRecolor,
 		toggleExcludedPixel,
 		setPixelExclusion,

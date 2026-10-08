@@ -11,7 +11,7 @@ import type {
 export const MAPPING_STORAGE_KEY = 'recolor.mapping';
 
 export const PALETTE_CONFIG: PaletteExtractionConfig = {
-	maxColors: 64,
+	maxColors: 256,
 	alphaThreshold: 128
 };
 
