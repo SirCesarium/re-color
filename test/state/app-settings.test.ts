@@ -20,18 +20,22 @@ test('restores valid saved preferences', () => {
 		parseAppSettings(
 			JSON.stringify({
 				animationsEnabled: false,
+				hintsEnabled: false,
 				autoRecolor: false,
 				persistWorkspace: false,
 				maxPaletteColors: 256,
-				defaultMapping: 'nearest'
+				defaultMapping: 'nearest',
+				locale: 'es'
 			})
 		)
 	).toEqual({
 		animationsEnabled: false,
+		hintsEnabled: false,
 		autoRecolor: false,
 		persistWorkspace: false,
 		maxPaletteColors: 256,
-		defaultMapping: 'nearest'
+		defaultMapping: 'nearest',
+		locale: 'es'
 	});
 });
 
@@ -44,10 +48,12 @@ test('validates supported mapping modes without unsafe casts', () => {
 test('exports and imports only versioned app settings', () => {
 	const settings = {
 		animationsEnabled: false,
+		hintsEnabled: true,
 		autoRecolor: false,
 		persistWorkspace: false,
 		maxPaletteColors: 180,
-		defaultMapping: 'dominant' as const
+		defaultMapping: 'dominant' as const,
+		locale: 'es' as const
 	};
 	const exported = exportAppSettings(settings);
 	const document = JSON.parse(exported);
@@ -62,16 +68,16 @@ test('exports and imports only versioned app settings', () => {
 });
 
 test('rejects unsupported or invalid settings exports', () => {
-	expect(() => importAppSettings('{ invalid json')).toThrow('not valid JSON');
+	expect(() => importAppSettings('{ invalid json')).toThrow('settings.importInvalidJson');
 	expect(() => importAppSettings(JSON.stringify({ format: 'other', version: 1 }))).toThrow(
-		'not a re::color settings export'
+		'settings.importWrongFormat'
 	);
 	expect(
 		() =>
 			importAppSettings(
 				JSON.stringify({ format: 're-color-settings', version: 2, settings: DEFAULT_APP_SETTINGS })
 			)
-	).toThrow('Unsupported settings file version');
+	).toThrow('settings.importBadVersion');
 	expect(
 		() =>
 			importAppSettings(
@@ -81,5 +87,41 @@ test('rejects unsupported or invalid settings exports', () => {
 					settings: { ...DEFAULT_APP_SETTINGS, maxPaletteColors: 1000 }
 				})
 			)
-	).toThrow('missing or invalid preferences');
+	).toThrow('settings.importInvalidPreferences');
+});
+
+test('uses the browser locale when saved preferences predate it', () => {
+	expect(parseAppSettings(null, 'es')).toEqual({ ...DEFAULT_APP_SETTINGS, locale: 'es' });
+	expect(parseAppSettings(JSON.stringify({ locale: 'de' }), 'es')).toEqual({
+		...DEFAULT_APP_SETTINGS,
+		locale: 'es'
+	});
+	expect(parseAppSettings(JSON.stringify({ locale: 'es' }), 'en')).toEqual({
+		...DEFAULT_APP_SETTINGS,
+		locale: 'es'
+	});
+});
+
+test('imports version 1 exports without a locale setting', () => {
+	const legacy = JSON.stringify({
+		format: 're-color-settings',
+		version: 1,
+		settings: {
+			animationsEnabled: false,
+			autoRecolor: true,
+			persistWorkspace: true,
+			maxPaletteColors: 64,
+			defaultMapping: 'luminance'
+		}
+	});
+
+	expect(importAppSettings(legacy)).toEqual({
+		animationsEnabled: false,
+		hintsEnabled: true,
+		autoRecolor: true,
+		persistWorkspace: true,
+		maxPaletteColors: 64,
+		defaultMapping: 'luminance',
+		locale: 'en'
+	});
 });

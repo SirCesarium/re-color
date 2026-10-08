@@ -1,3 +1,5 @@
+import { LocalizedError } from '../i18n/localized-error.ts';
+import { DEFAULT_LOCALE, isLocale, type Locale } from '../i18n/locales.ts';
 import type { MappingMode } from '../image-processing/types.ts';
 
 export const APP_SETTINGS_KEY = 'recolor.settings';
@@ -7,27 +9,33 @@ export const SETTINGS_EXPORT_VERSION = 1;
 
 export type AppSettings = {
 	animationsEnabled: boolean;
+	hintsEnabled: boolean;
 	autoRecolor: boolean;
 	persistWorkspace: boolean;
 	maxPaletteColors: number;
 	defaultMapping: MappingMode;
+	locale: Locale;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
 	animationsEnabled: true,
+	hintsEnabled: true,
 	autoRecolor: true,
 	persistWorkspace: true,
-	maxPaletteColors: 256,
-	defaultMapping: 'luminance'
+	maxPaletteColors: 64,
+	defaultMapping: 'luminance',
+	locale: DEFAULT_LOCALE
 };
 
 const MAPPING_MODES: readonly MappingMode[] = ['nearest', 'luminance', 'dominant'];
 const APP_SETTING_KEYS = [
 	'animationsEnabled',
+	'hintsEnabled',
 	'autoRecolor',
 	'persistWorkspace',
 	'maxPaletteColors',
-	'defaultMapping'
+	'defaultMapping',
+	'locale'
 ] as const satisfies readonly (keyof AppSettings)[];
 
 export function isMappingMode(value: unknown): value is MappingMode {
@@ -46,7 +54,10 @@ function isAppSettings(value: unknown): value is AppSettings {
 		Number.isInteger(settings.maxPaletteColors) &&
 		settings.maxPaletteColors >= 1 &&
 		settings.maxPaletteColors <= 256 &&
-		isMappingMode(settings.defaultMapping)
+		isMappingMode(settings.defaultMapping) &&
+		// Locale and hints are optional so older version 1 exports still import.
+		(settings.locale === undefined || isLocale(settings.locale)) &&
+		(settings.hintsEnabled === undefined || typeof settings.hintsEnabled === 'boolean')
 	);
 }
 
@@ -68,22 +79,22 @@ export function importAppSettings(json: string): AppSettings {
 	try {
 		candidate = JSON.parse(json);
 	} catch {
-		throw new Error('This file is not valid JSON.');
+		throw new LocalizedError('settings.importInvalidJson');
 	}
 
 	if (!candidate || typeof candidate !== 'object') {
-		throw new Error('This file does not contain re::color settings.');
+		throw new LocalizedError('settings.importNotSettings');
 	}
 
 	const document = candidate as Record<string, unknown>;
 	if (document.format !== SETTINGS_EXPORT_FORMAT) {
-		throw new Error('This file is not a re::color settings export.');
+		throw new LocalizedError('settings.importWrongFormat');
 	}
 	if (document.version !== SETTINGS_EXPORT_VERSION) {
-		throw new Error(`Unsupported settings file version: ${String(document.version)}.`);
+		throw new LocalizedError('settings.importBadVersion', { version: String(document.version) });
 	}
 	if (!isAppSettings(document.settings)) {
-		throw new Error('The settings file contains missing or invalid preferences.');
+		throw new LocalizedError('settings.importInvalidPreferences');
 	}
 
 	const settings = document.settings;
@@ -92,16 +103,24 @@ export function importAppSettings(json: string): AppSettings {
 		autoRecolor: settings.autoRecolor,
 		persistWorkspace: settings.persistWorkspace,
 		maxPaletteColors: settings.maxPaletteColors,
-		defaultMapping: settings.defaultMapping
+		defaultMapping: settings.defaultMapping,
+		locale: isLocale(settings.locale) ? settings.locale : DEFAULT_LOCALE,
+		hintsEnabled:
+			typeof settings.hintsEnabled === 'boolean'
+				? settings.hintsEnabled
+				: DEFAULT_APP_SETTINGS.hintsEnabled
 	};
 }
 
-export function parseAppSettings(value: string | null): AppSettings {
-	if (!value) return { ...DEFAULT_APP_SETTINGS };
+export function parseAppSettings(
+	value: string | null,
+	localeFallback: Locale = DEFAULT_LOCALE
+): AppSettings {
+	if (!value) return { ...DEFAULT_APP_SETTINGS, locale: localeFallback };
 
 	try {
 		const candidate: unknown = JSON.parse(value);
-		if (!candidate || typeof candidate !== 'object') return { ...DEFAULT_APP_SETTINGS };
+		if (!candidate || typeof candidate !== 'object') return { ...DEFAULT_APP_SETTINGS, locale: localeFallback };
 
 		const stored = candidate as Partial<Record<keyof AppSettings, unknown>>;
 
@@ -110,6 +129,10 @@ export function parseAppSettings(value: string | null): AppSettings {
 				typeof stored.animationsEnabled === 'boolean'
 					? stored.animationsEnabled
 					: DEFAULT_APP_SETTINGS.animationsEnabled,
+			hintsEnabled:
+				typeof stored.hintsEnabled === 'boolean'
+					? stored.hintsEnabled
+					: DEFAULT_APP_SETTINGS.hintsEnabled,
 			autoRecolor:
 				typeof stored.autoRecolor === 'boolean'
 					? stored.autoRecolor
@@ -128,10 +151,11 @@ export function parseAppSettings(value: string | null): AppSettings {
 			defaultMapping:
 				isMappingMode(stored.defaultMapping)
 					? stored.defaultMapping
-					: DEFAULT_APP_SETTINGS.defaultMapping
+					: DEFAULT_APP_SETTINGS.defaultMapping,
+			locale: isLocale(stored.locale) ? stored.locale : localeFallback
 		};
 	} catch {
-		return { ...DEFAULT_APP_SETTINGS };
+		return { ...DEFAULT_APP_SETTINGS, locale: localeFallback };
 	}
 }
 
