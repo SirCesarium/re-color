@@ -5,9 +5,11 @@
 		as = 'p',
 		variant = 'body',
 		class: className = '',
+		id,
+		role,
 		children
 	}: {
-		as?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'strong' | 'label';
+		as?: 'h1' | 'h2' | 'h3' | 'p' | 'div' | 'span' | 'strong' | 'label';
 		variant?:
 			| 'body'
 			| 'muted'
@@ -18,6 +20,8 @@
 			| 'control-label'
 			| 'control-hint';
 		class?: string;
+		id?: string;
+		role?: string;
 		children: Snippet;
 	} = $props();
 
@@ -34,6 +38,6 @@
 	};
 </script>
 
-<svelte:element this={as} class="{variants[variant]} {className}">
+<svelte:element this={as} {id} {role} class="{variants[variant]} {className}">
 	{@render children()}
 </svelte:element>

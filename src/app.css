@@ -102,6 +102,15 @@
 	}
 }
 
+.animations-disabled,
+.animations-disabled *,
+.animations-disabled *::before,
+.animations-disabled *::after {
+	animation: none !important;
+	transition: none !important;
+	scroll-behavior: auto !important;
+}
+
 @layer base {
 	html {
 		-webkit-text-size-adjust: 100%;

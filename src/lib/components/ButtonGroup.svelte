@@ -3,11 +3,13 @@
 		options,
 		value = $bindable<T>(),
 		label,
+		onchange,
 		class: className = ''
 	}: {
 		options: readonly { value: T; label: string }[];
 		value?: T;
 		label: string;
+		onchange?: (value: T) => void;
 		class?: string;
 	} = $props();
 
@@ -29,7 +31,10 @@
 			type="button"
 			aria-pressed={value === option.value}
 			title={option.label}
-			onclick={() => (value = option.value)}
+			onclick={() => {
+				value = option.value;
+				onchange?.(option.value);
+			}}
 		>
 			<span class="label">{option.label}</span>
 		</button>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import Typography from '#lib/components/Typography.svelte';
 
 	let {
 		text = null,
@@ -17,15 +18,15 @@
 </script>
 
 {#if text}
-	<p
-		class="hint pointer-events-none relative m-0 self-center whitespace-nowrap border-2 border-btn-edge bg-panel px-3 py-2 text-base leading-none text-text shadow-[3px_3px_0_var(--shadow)] {className}"
+	<div
+		class="hint pointer-events-none relative self-center whitespace-nowrap border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] {className}"
 		class:interactive={onDismiss !== undefined}
 		class:above={placement === 'above'}
 		class:down-arrow={placement === 'above' || arrow === 'down'}
 		role="status"
 		out:fade={{ duration: 250 }}
 	>
-		<span>{text}</span>
+		<Typography as="span" variant="body" class="hint-content leading-none">{text}</Typography>
 		{#if onDismiss}
 			<button
 				class="dismiss"
@@ -37,7 +38,7 @@
 			</button>
 		{/if}
 		<span class="tail"></span>
-	</p>
+	</div>
 {/if}
 
 <style>
@@ -62,7 +63,7 @@
 		gap: 8px;
 	}
 
-	.hint.interactive > span:first-child {
+	.hint.interactive :global(.hint-content) {
 		flex: 1;
 	}
 
