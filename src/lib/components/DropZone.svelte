@@ -1,5 +1,7 @@
 <script lang="ts">
 	import Typography from '#lib/components/Typography.svelte';
+	import { LocalizedError } from '#lib/i18n/localized-error.ts';
+	import { t } from 'svelte-i18n';
 	import { validateImageFile } from '#lib/image-processing/image/validation.ts';
 
 	let {
@@ -50,7 +52,7 @@
 			file = candidate;
 		} catch (cause) {
 			if (id !== selectionId) return;
-			error = cause instanceof Error ? cause.message : 'Could not read this image.';
+			error = cause instanceof LocalizedError ? cause.messageId : 'dropzone.readFailed';
 		}
 	}
 
@@ -91,7 +93,7 @@
 		class="sr-only"
 		type="file"
 		accept="image/png,.png"
-		aria-label="Upload {label} PNG image"
+		aria-label={$t('dropzone.upload', { values: { label } })}
 		onchange={onInput}
 	/>
 
@@ -100,7 +102,7 @@
 			class="absolute right-1 bottom-1 left-1 z-10 border border-[var(--sw-red)] bg-panel px-2 py-1 text-xs text-[var(--sw-red)]"
 			role="alert"
 		>
-			{error}
+			{$t(error)}
 		</span>
 	{/if}
 
@@ -113,7 +115,7 @@
 			<span class="relative w-full overflow-hidden">
 				<span class="track flex w-max items-center gap-4 whitespace-nowrap">
 					{#each Array(6) as _, i (i)}
-						<span class="text-[clamp(14px,4vw,20px)]">DROP IT HERE!</span>
+						<span class="text-[clamp(14px,4vw,20px)]">{$t('dropzone.dropIt')}</span>
 					{/each}
 				</span>
 			</span>

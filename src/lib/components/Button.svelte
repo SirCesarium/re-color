@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { t } from 'svelte-i18n';
 
 	let {
 		variant = 'primary',
@@ -7,8 +8,8 @@
 		disabled = false,
 		busy = false,
 		progress = 0,
-		busyLabel = 'processing...',
-		cancelLabel = 'cancel',
+		busyLabel,
+		cancelLabel,
 		cancelOnBusy = false,
 		ariaLabel,
 		revealOnHover = false,
@@ -42,15 +43,15 @@
 	{type}
 	disabled={disabled || (busy && !cancelOnBusy)}
 	aria-busy={busy}
-	aria-label={busy && cancelOnBusy ? cancelLabel : ariaLabel}
+	aria-label={busy && cancelOnBusy ? (cancelLabel ?? $t('button.cancel')) : ariaLabel}
 	{onclick}
 >
 	{#if variant === 'primary'}
 		<span class="fill absolute inset-y-0 left-0" style:width="{fill}%"></span>
 		<span class="label relative z-[1]">
 			{#if busy}
-				<span class="processing-label">{busyLabel}</span>
-				{#if cancelOnBusy}<span class="cancel-label">{cancelLabel}</span>{/if}
+				<span class="processing-label">{busyLabel ?? $t('button.processing')}</span>
+				{#if cancelOnBusy}<span class="cancel-label">{cancelLabel ?? $t('button.cancel')}</span>{/if}
 			{:else}
 				{@render children()}
 			{/if}

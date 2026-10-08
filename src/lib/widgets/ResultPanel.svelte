@@ -4,6 +4,7 @@
 	import Hint from '#lib/components/Hint.svelte';
 	import Typography from '#lib/components/Typography.svelte';
 	import PixelCanvas from '#lib/widgets/PixelCanvas.svelte';
+	import { t } from 'svelte-i18n';
 
 	let {
 		imageUrl = null,
@@ -47,9 +48,9 @@
 
 <section
 	class="animate-[rise_380ms_ease-out_240ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
-	aria-label="Result"
+	aria-label={$t('result.section')}
 >
-	<Typography as="span" variant="section-label">Result</Typography>
+	<Typography as="span" variant="section-label">{$t('result.section')}</Typography>
 	<div
 		class="result reveal-on-hover relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
@@ -69,7 +70,7 @@
 					<Hint
 						class="pixel-help"
 						arrow="down"
-						text="Click or tap to toggle a pixel. Hold and drag to paint: start on a recolored pixel to exclude, or on an excluded pixel to restore its colors. Changes appear while you drag."
+						text={$t('result.pixelHelp')}
 						onDismiss={dismissHelp}
 					/>
 				</div>

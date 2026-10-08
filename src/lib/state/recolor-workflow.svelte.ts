@@ -25,6 +25,8 @@ import {
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
 } from '../config/recolor.ts';
+import { localeFromNavigator } from '../i18n/index.ts';
+import type { MessageKey } from '../i18n/locales.ts';
 
 type WorkflowState = {
 	palette: File | null;
@@ -44,8 +46,18 @@ type WorkflowState = {
 	excludedPixels: number[];
 	busy: boolean;
 	progress: number;
-	hint: string | null;
+	hint: MessageKey | null;
 };
+
+/** Hints that report failures: they stay visible even with help hints disabled. */
+const ERROR_HINT_KEYS = new Set<MessageKey>([
+	'workflow.restoreFailed',
+	'workflow.saveSettingsFailed',
+	'workflow.saveDataFailed',
+	'workflow.recolorFailed',
+	'workflow.exclusionFailed',
+	'workflow.paletteFailed'
+]);
 
 /** Creates isolated reactive state and lifecycle effects for one recolor page. */
 export function createRecolorWorkflow() {
@@ -72,8 +84,8 @@ export function createRecolorWorkflow() {
 		`${state.mapping}:${state.colors.map((color) => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`).join(';')}`
 	);
 	const exclusionSig = $derived([...state.excludedPixels].sort((a, b) => a - b).join(','));
-	const buttonHint = $derived.by(() => {
-		if (ready && noActiveColors) return 'Select at least 1 color';
+	const buttonHint = $derived.by<MessageKey | null>(() => {
+		if (ready && noActiveColors) return 'workflow.noColors';
 		if (
 			ready &&
 			state.result &&
@@ -81,10 +93,11 @@ export function createRecolorWorkflow() {
 			state.result.mappingSignature !== mappingSig &&
 			!state.settings.autoRecolor
 		) {
-			return 'Press recolor to apply the new changes.';
+			return 'workflow.applyChanges';
 		}
 		return state.hint;
 	});
+	const hintIsError = $derived(buttonHint !== null && ERROR_HINT_KEYS.has(buttonHint));
 
 	let runId = 0;
 	let compositionId = 0;
@@ -96,7 +109,7 @@ export function createRecolorWorkflow() {
 
 		try {
 			const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-			state.settings = parseAppSettings(storedSettings);
+			state.settings = parseAppSettings(storedSettings, localeFromNavigator());
 			if (!storedSettings) {
 				const legacyMapping = localStorage.getItem(MAPPING_STORAGE_KEY);
 				if (isMappingMode(legacyMapping)) {
@@ -136,7 +149,7 @@ export function createRecolorWorkflow() {
 				}
 			} catch (error) {
 				console.error('Could not restore saved app workspace', error);
-				state.hint = 'Could not restore saved app data';
+				state.hint = 'workflow.restoreFailed';
 			} finally {
 				if (!disposed) state.workspaceLoaded = true;
 			}
@@ -156,7 +169,7 @@ export function createRecolorWorkflow() {
 			localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(state.settings));
 		} catch (error) {
 			console.error('Could not save app settings', error);
-			state.hint = 'Could not save app settings';
+			state.hint = 'workflow.saveSettingsFailed';
 		}
 	});
 
@@ -188,7 +201,7 @@ export function createRecolorWorkflow() {
 		workspaceSaveTimer = setTimeout(() => {
 			void saveWorkspace(workspace).catch((error: unknown) => {
 				console.error('Could not save app workspace', error);
-				state.hint = 'Could not save app data';
+				state.hint = 'workflow.saveDataFailed';
 			});
 		}, 350);
 
@@ -349,7 +362,7 @@ export function createRecolorWorkflow() {
 			releaseResult(createdResultUrl);
 			console.error(error);
 
-			if (id === runId) state.hint = 'Recolor failed';
+			if (id === runId) state.hint = 'workflow.recolorFailed';
 		} finally {
 			if (id === runId) {
 				state.busy = false;
@@ -437,7 +450,7 @@ export function createRecolorWorkflow() {
 		} catch (error) {
 			console.error(error);
 
-			if (id === compositionId) state.hint = 'Could not update excluded pixels';
+			if (id === compositionId) state.hint = 'workflow.exclusionFailed';
 		}
 	}
 
@@ -541,7 +554,7 @@ export function createRecolorWorkflow() {
 				console.error('Could not extract the palette image colors', error);
 				state.colors = [];
 				state.paletteColorsLoaded = false;
-				state.hint = 'Could not read palette image';
+				state.hint = 'workflow.paletteFailed';
 			});
 
 		return () => {
@@ -568,6 +581,9 @@ export function createRecolorWorkflow() {
 		},
 		get buttonHint() {
 			return buttonHint;
+		},
+		get buttonHintIsError() {
+			return hintIsError;
 		},
 		setSetting,
 		clearFormData,

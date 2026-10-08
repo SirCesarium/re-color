@@ -1,3 +1,5 @@
+import { LocalizedError } from '../../i18n/localized-error.ts';
+
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 const IHDR_TYPE = [73, 72, 68, 82];
 
@@ -13,7 +15,7 @@ export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
  */
 export async function validateImageFile(file: Blob): Promise<void> {
 	if (file.size > MAX_IMAGE_BYTES) {
-		throw new Error('Image must be 2 MiB or smaller.');
+		throw new LocalizedError('validation.tooLarge');
 	}
 
 	const header = new Uint8Array(await file.slice(0, 24).arrayBuffer());
@@ -27,7 +29,7 @@ export async function validateImageFile(file: Blob): Promise<void> {
 		header[11] !== 13 ||
 		!IHDR_TYPE.every((byte, index) => header[12 + index] === byte)
 	) {
-		throw new Error('Choose a valid PNG image.');
+		throw new LocalizedError('validation.notPng');
 	}
 
 	const view = new DataView(header.buffer, header.byteOffset, header.byteLength);
@@ -40,6 +42,6 @@ export async function validateImageFile(file: Blob): Promise<void> {
 		width > MAX_IMAGE_WIDTH ||
 		height > MAX_IMAGE_HEIGHT
 	) {
-		throw new Error('Image dimensions must not exceed 512 × 512 pixels.');
+		throw new LocalizedError('validation.tooBig');
 	}
 }

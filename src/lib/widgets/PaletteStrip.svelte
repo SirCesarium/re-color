@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Hint from '#lib/components/Hint.svelte';
+	import { t } from 'svelte-i18n';
 	import { cssRgb, type PaletteColor } from '#lib';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
@@ -81,13 +82,13 @@
 					style:--c={cssRgb(color)}
 					type="button"
 					aria-pressed={color.active}
-					aria-label={color.active ? 'Disable color' : 'Enable color'}
+					aria-label={color.active ? $t('palette.disable') : $t('palette.enable')}
 					onclick={() => toggle(index)}
 				></button>
 			{/each}
 		</div>
 
-		<Hint placement="above" text={hintVisible ? 'Click to enable/disable' : null} />
+		<Hint placement="above" text={hintVisible ? $t('palette.toggleHint') : null} />
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}

@@ -8,21 +8,26 @@
 	import Typography from "#lib/components/Typography.svelte";
 	import { MAPPING_OPTIONS } from "#lib/config/recolor.ts";
 	import { createRecolorWorkflow } from "#lib/state/recolor-workflow.svelte.ts";
+	import { t } from "svelte-i18n";
 
 	const workflow = createRecolorWorkflow();
 
+	const mappingOptions = $derived(
+		MAPPING_OPTIONS.map((option) => ({ value: option.value, label: $t(option.labelKey) }))
+	);
+
 	function confirmClearFormData() {
-		if (confirm("Clear the selected images and current recolor form?")) {
+		if (confirm($t("home.clearFormConfirm"))) {
 			workflow.clearFormData();
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>re::color: recolor a sprite with any image's palette</title>
+	<title>{$t("home.title")}</title>
 	<meta
 		name="description"
-		content="Recolor a sprite with any image's palette. Runs entirely on your device, no image is ever uploaded."
+		content={$t("home.description")}
 	/>
 	<link rel="canonical" href="https://recolor.pages.dev/" />
 
@@ -33,26 +38,26 @@
 	<meta property="og:title" content="re::color" />
 	<meta
 		property="og:description"
-		content="Recolor a sprite with any image's palette. Runs entirely on your device."
+		content={$t("home.ogDescription")}
 	/>
 	<meta property="og:image" content="https://recolor.pages.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta
 		property="og:image:alt"
-		content="re::color wordmark above the tagline Recolor a sprite with any image's palette, over a row of seven palette colors."
+		content={$t("meta.ogAlt")}
 	/>
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="re::color" />
 	<meta
 		name="twitter:description"
-		content="Recolor a sprite with any image's palette. Runs entirely on your device."
+		content={$t("home.ogDescription")}
 	/>
 	<meta name="twitter:image" content="https://recolor.pages.dev/og.png" />
 	<meta
 		name="twitter:image:alt"
-		content="re::color wordmark above the tagline Recolor a sprite with any image's palette, over a row of seven palette colors."
+		content={$t("meta.ogAlt")}
 	/>
 </svelte:head>
 
@@ -72,7 +77,7 @@
 			type="button"
 			onclick={confirmClearFormData}
 		>
-			clear form data
+			{$t("home.clearForm")}
 		</button>
 		<Button
 			disabled={!workflow.state.busy &&
@@ -82,22 +87,25 @@
 			progress={workflow.state.progress}
 			onclick={workflow.handleRecolor}
 		>
-			recolor!
+			{$t("home.recolor")}
 		</Button>
-		<Hint text={workflow.buttonHint} />
+		<Hint
+		error={workflow.buttonHintIsError}
+		text={workflow.buttonHint ? $t(workflow.buttonHint) : null}
+	/>
 	</div>
 	<div
 		class="flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
 	>
 		<section
 			class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
-			aria-label="Color mapping"
+			aria-label={$t("home.mappingAria")}
 		>
-			<Typography as="span" variant="section-label">Mapping</Typography>
+			<Typography as="span" variant="section-label">{$t("home.mappingSection")}</Typography>
 			<ButtonGroup
 				bind:value={workflow.state.mapping}
-				options={MAPPING_OPTIONS}
-				label="Color mapping"
+				options={mappingOptions}
+				label={$t("home.mappingAria")}
 			/>
 		</section>
 		<ResultPanel

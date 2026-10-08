@@ -58,8 +58,8 @@ export const OUTPUT_EXTENSIONS: Record<RecolorConfig['output']['mimeType'], stri
 	'image/webp': 'webp'
 };
 
-export const MAPPING_OPTIONS: { value: MappingMode; label: string; labelKey: string }[] = [
-	{ value: 'nearest', label: 'Nearest color', labelKey: 'mapping.nearest' },
-	{ value: 'luminance', label: 'Luminance order', labelKey: 'mapping.luminance' },
-	{ value: 'dominant', label: 'Dominant color', labelKey: 'mapping.dominant' }
+export const MAPPING_OPTIONS: { value: MappingMode; labelKey: string }[] = [
+	{ value: 'nearest', labelKey: 'mapping.nearest' },
+	{ value: 'luminance', labelKey: 'mapping.luminance' },
+	{ value: 'dominant', labelKey: 'mapping.dominant' }
 ];

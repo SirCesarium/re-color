@@ -108,15 +108,15 @@ test('yields to the event loop while extracting a maximum-size palette image', a
 
 test('rejects non-PNG, oversized, and over-dimensioned uploads', async () => {
 	await expect(validateImageFile(new Blob(['not a png'], { type: 'image/png' }))).rejects.toThrow(
-		'Choose a valid PNG image.'
+		'validation.notPng'
 	);
 	await expect(
 		validateImageFile(new Blob([new Uint8Array(MAX_IMAGE_BYTES + 1)]))
-	).rejects.toThrow('Image must be 2 MiB or smaller.');
+	).rejects.toThrow('validation.tooLarge');
 
 	const oversized = makeIndexedPng(513, 1, [[20, 40, 60]], [0], [255]);
 	await expect(validateImageFile(pngBlob(oversized))).rejects.toThrow(
-		'Image dimensions must not exceed 512 × 512 pixels.'
+		'validation.tooBig'
 	);
 });
 
@@ -141,7 +141,7 @@ test('palette extraction and recoloring reject files that are not PNG', async ()
 			{ maxColors: 64, alphaThreshold: 128 },
 			canvasConfig
 		)
-	).rejects.toThrow('Choose a valid PNG image.');
+	).rejects.toThrow('validation.notPng');
 
 	await expect(
 		recolorSprite(invalidFile, [], {
@@ -155,7 +155,7 @@ test('palette extraction and recoloring reject files that are not PNG', async ()
 			},
 			output: OUTPUT_CONFIG
 		})
-	).rejects.toThrow('Choose a valid PNG image.');
+	).rejects.toThrow('validation.notPng');
 });
 
 function pngBlob(bytes: Uint8Array): Blob {

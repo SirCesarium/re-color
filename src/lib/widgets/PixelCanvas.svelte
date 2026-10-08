@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from 'svelte-i18n';
 	let {
 		imageUrl = null,
 		spriteFile = null,
@@ -356,7 +357,7 @@
 		class="viewport absolute inset-0 overflow-hidden"
 		bind:this={viewport}
 		type="button"
-		aria-label="Interactive sprite preview. Tap or click a pixel to toggle recoloring. Use arrow keys to select and Space to toggle."
+		aria-label={$t('result.canvasAria')}
 		onpointerup={onPointerUp}
 		onpointerdown={onPointerDown}
 		onpointermove={onPointerMove}
@@ -377,11 +378,11 @@
 		{/if}
 	</button>
 {:else if imageUrl && previewError}
-	<div class="preview-message" role="alert">Could not load preview</div>
+	<div class="preview-message" role="alert">{$t('result.previewError')}</div>
 {:else if imageUrl}
-	<div class="preview-message">Loading preview...</div>
+	<div class="preview-message">{$t('result.loading')}</div>
 {:else}
-	<div class="preview-message">No result yet</div>
+	<div class="preview-message">{$t('result.empty')}</div>
 {/if}
 
 <style>
