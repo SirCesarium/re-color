@@ -35,12 +35,6 @@ self.addEventListener('activate', (event) => {
 
 			await Promise.all(previousCaches.map((key) => caches.delete(key)));
 			await self.clients.claim();
-
-			if (previousCaches.length === 0) return;
-
-			const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-			// Reload existing tabs so they cannot keep running the previous app version.
-			await Promise.allSettled(clients.map((client) => client.navigate(client.url)));
 		})()
 	);
 });
