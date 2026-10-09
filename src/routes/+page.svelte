@@ -13,7 +13,10 @@
 	const workflow = createRecolorWorkflow();
 
 	const mappingOptions = $derived(
-		MAPPING_OPTIONS.map((option) => ({ value: option.value, label: $t(option.labelKey) }))
+		MAPPING_OPTIONS.map((option) => ({
+			value: option.value,
+			label: $t(option.labelKey),
+		})),
 	);
 
 	function confirmClearFormData() {
@@ -25,10 +28,7 @@
 
 <svelte:head>
 	<title>{$t("home.title")}</title>
-	<meta
-		name="description"
-		content={$t("home.description")}
-	/>
+	<meta name="description" content={$t("home.description")} />
 	<link rel="canonical" href="https://recolor.pages.dev/" />
 
 	<meta property="og:type" content="website" />
@@ -36,29 +36,17 @@
 	<meta property="og:locale" content="en_US" />
 	<meta property="og:url" content="https://recolor.pages.dev/" />
 	<meta property="og:title" content="re::color" />
-	<meta
-		property="og:description"
-		content={$t("home.ogDescription")}
-	/>
+	<meta property="og:description" content={$t("home.ogDescription")} />
 	<meta property="og:image" content="https://recolor.pages.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta
-		property="og:image:alt"
-		content={$t("meta.ogAlt")}
-	/>
+	<meta property="og:image:alt" content={$t("meta.ogAlt")} />
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="re::color" />
-	<meta
-		name="twitter:description"
-		content={$t("home.ogDescription")}
-	/>
+	<meta name="twitter:description" content={$t("home.ogDescription")} />
 	<meta name="twitter:image" content="https://recolor.pages.dev/og.png" />
-	<meta
-		name="twitter:image:alt"
-		content={$t("meta.ogAlt")}
-	/>
+	<meta name="twitter:image:alt" content={$t("meta.ogAlt")} />
 </svelte:head>
 
 <main
