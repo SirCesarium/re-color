@@ -22,8 +22,7 @@
 				"bradlc.vscode-tailwindcss",
 				"ardenivanov.svelte-intellisense",
 				"ms-azuretools.vscode-docker",
-				"eamodio.gitlens",
-				"stivo.tailwind-fold"
+				"eamodio.gitlens"
 			]
 		}
 	}
