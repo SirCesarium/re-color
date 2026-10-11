@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import en from './messages/en.json';
 
 export const SUPPORTED_LOCALES = ['en', 'es'] as const;
@@ -15,6 +17,8 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 	es: 'Español'
 };
 
+export const LOCALE_SCHEMA = z.enum(SUPPORTED_LOCALES);
+
 export function isLocale(value: unknown): value is Locale {
-	return typeof value === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(value);
+	return LOCALE_SCHEMA.safeParse(value).success;
 }
