@@ -16,7 +16,7 @@ export function encodeRgbaPng(
 	width: number,
 	height: number,
 	rgba: Uint8ClampedArray | Uint8Array
-): Uint8Array {
+): Uint8Array<ArrayBuffer> {
 	if (rgba.length !== width * height * 4) {
 		throw new Error(
 			`encodeRgbaPng: expected ${width * height * 4} bytes for ${width}×${height}, got ${rgba.length}`

@@ -38,7 +38,7 @@ const ADAM7_PASSES = [
 ] as const;
 
 /** Builds a PNG file from ready-made chunks. */
-export function makePng(chunks: Uint8Array[]): Uint8Array {
+export function makePng(chunks: Uint8Array[]): Uint8Array<ArrayBuffer> {
 	const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 	const output = new Uint8Array(
 		signature.length + chunks.reduce((sum, part) => sum + part.length, 0)
@@ -53,7 +53,7 @@ export function makePng(chunks: Uint8Array[]): Uint8Array {
 }
 
 /** Builds a PNG chunk with a valid length and CRC. */
-export function chunk(type: string, data: Uint8Array): Uint8Array {
+export function chunk(type: string, data: Uint8Array): Uint8Array<ArrayBuffer> {
 	const name = new TextEncoder().encode(type);
 	const bytes = new Uint8Array(data.length + 12);
 	const view = new DataView(bytes.buffer);
