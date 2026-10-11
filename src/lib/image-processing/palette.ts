@@ -1,3 +1,4 @@
+import { validateExtractionConfig } from './config-schema.ts';
 import { keyToRgb, rgbToKey } from './color/metrics.ts';
 import type { CanvasConfig } from './image/canvas.ts';
 import { context2d, createCanvas, loadImage, readPixels } from './image/canvas.ts';
@@ -52,20 +53,6 @@ export async function extractColorsFromFile(
 		return await colorsFromRgbaAsync(image.pixels ?? readPixels(image, canvas).data, config);
 	} finally {
 		image.close();
-	}
-}
-
-function validateExtractionConfig(config: PaletteExtractionConfig): void {
-	if (!Number.isInteger(config.maxColors) || config.maxColors < 0) {
-		throw new RangeError('maxColors must be a non-negative integer');
-	}
-
-	if (
-		!Number.isInteger(config.alphaThreshold) ||
-		config.alphaThreshold < 0 ||
-		config.alphaThreshold > 255
-	) {
-		throw new RangeError('alphaThreshold must be an integer between zero and 255');
 	}
 }
 

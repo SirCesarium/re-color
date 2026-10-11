@@ -1,3 +1,4 @@
+import { validateRecolorConfig } from './config-schema.ts';
 import { createColorLookup } from './color/mapping/registry.ts';
 import { rgbToKey } from './color/metrics.ts';
 import { context2d, createCanvas, loadImage, readPixels, toBlobUrl } from './image/canvas.ts';
@@ -32,7 +33,7 @@ export async function recolorSprite(
 	palette: readonly PaletteColor[],
 	config: RecolorConfig
 ): Promise<string | null> {
-	validateConfig(config);
+	validateRecolorConfig(config);
 	await validateImageFile(file);
 
 	if (!palette.some((color) => color.active)) return null;
@@ -201,65 +202,5 @@ function validateExcludedPixels(
 		if (!Number.isInteger(index) || index < 0 || index >= pixelCount) {
 			throw new RangeError(`excludedPixels contains an invalid pixel index: ${index}`);
 		}
-	}
-}
-
-/** Rejects invalid runtime values before image processing begins. */
-function validateConfig(config: RecolorConfig): void {
-	const { processing, transparency, mapping, output } = config;
-
-	validateByte('transparency.minAlpha', transparency.minAlpha);
-	validateByte('transparency.opaqueAlpha', transparency.opaqueAlpha);
-
-	if (!Number.isFinite(processing.chunkDurationMs) || processing.chunkDurationMs <= 0) {
-		throw new RangeError('processing.chunkDurationMs must be greater than zero');
-	}
-
-	validateProgress(processing.progress);
-
-	for (const [index, weight] of mapping.distanceWeights.entries()) {
-		if (!Number.isFinite(weight) || weight < 0) {
-			throw new RangeError(`mapping.distanceWeights[${index}] must be non-negative`);
-		}
-	}
-
-	for (const [index, weight] of mapping.luminanceWeights.entries()) {
-		if (!Number.isFinite(weight) || weight < 0) {
-			throw new RangeError(`mapping.luminanceWeights[${index}] must be non-negative`);
-		}
-	}
-
-	if (
-		output.quality !== undefined &&
-		(!Number.isFinite(output.quality) || output.quality < 0 || output.quality > 1)
-	) {
-		throw new RangeError('output.quality must be between zero and one');
-	}
-}
-
-/** Validates a channel-like value represented by an integer byte. */
-function validateByte(name: string, value: number): void {
-	if (!Number.isInteger(value) || value < 0 || value > 255) {
-		throw new RangeError(`${name} must be an integer between zero and 255`);
-	}
-}
-
-/** Ensures progress milestones are finite, normalized, and non-decreasing. */
-function validateProgress(progress: RecolorConfig['processing']['progress']): void {
-	const values = [
-		progress.start,
-		progress.imageLoaded,
-		progress.pixelsRead,
-		progress.processingComplete,
-		progress.complete
-	];
-
-	if (
-		values.some((value) => !Number.isFinite(value) || value < 0 || value > 1) ||
-		values.some((value, index) => index > 0 && value < values[index - 1])
-	) {
-		throw new RangeError(
-			'processing.progress values must be ordered fractions between zero and one'
-		);
 	}
 }
