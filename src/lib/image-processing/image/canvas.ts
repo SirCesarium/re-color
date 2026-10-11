@@ -152,40 +152,42 @@ export async function composeExcludedPixels(
 
 	if (!response.ok) throw new Error(`Could not read the recolored image: ${response.status}`);
 
-	const [base, original] = await Promise.all([
-		loadImage(await response.blob()),
-		loadImage(originalFile)
-	]);
+	const base = await loadImage(await response.blob());
 
 	try {
-		if (base.width !== original.width || base.height !== original.height) {
-			throw new Error('Original and recolored image dimensions do not match');
-		}
+		const original = await loadImage(originalFile);
 
-		const outputPixels = readPixels(base, canvasConfig);
-		const originalPixels = readPixels(original, canvasConfig);
-		const pixelCount = base.width * base.height;
-
-		for (const pixelIndex of excludedPixels) {
-			if (!Number.isInteger(pixelIndex) || pixelIndex < 0 || pixelIndex >= pixelCount) {
-				throw new RangeError(`excludedPixels contains an invalid pixel index: ${pixelIndex}`);
+		try {
+			if (base.width !== original.width || base.height !== original.height) {
+				throw new Error('Original and recolored image dimensions do not match');
 			}
 
-			const channelIndex = pixelIndex * 4;
-			outputPixels.data.set(
-				originalPixels.data.subarray(channelIndex, channelIndex + 4),
-				channelIndex
-			);
+			const outputPixels = readPixels(base, canvasConfig);
+			const originalPixels = readPixels(original, canvasConfig);
+			const pixelCount = base.width * base.height;
+
+			for (const pixelIndex of excludedPixels) {
+				if (!Number.isInteger(pixelIndex) || pixelIndex < 0 || pixelIndex >= pixelCount) {
+					throw new RangeError(`excludedPixels contains an invalid pixel index: ${pixelIndex}`);
+				}
+
+				const channelIndex = pixelIndex * 4;
+				outputPixels.data.set(
+					originalPixels.data.subarray(channelIndex, channelIndex + 4),
+					channelIndex
+				);
+			}
+
+			const surface = createCanvas(base.width, base.height);
+			const context = context2d(surface, canvasConfig);
+			context.putImageData(outputPixels, 0, 0);
+
+			return await toBlobUrl(surface, outputConfig);
+		} finally {
+			original.close();
 		}
-
-		const surface = createCanvas(base.width, base.height);
-		const context = context2d(surface, canvasConfig);
-		context.putImageData(outputPixels, 0, 0);
-
-		return await toBlobUrl(surface, outputConfig);
 	} finally {
 		base.close();
-		original.close();
 	}
 }
 
