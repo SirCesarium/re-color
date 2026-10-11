@@ -509,3 +509,142 @@ test('rejects decompressed image data that does not match the header', () => {
 		)
 	).toThrow('Indexed PNG references a missing palette entry');
 });
+
+test('ignores trailing bytes after the end chunk', () => {
+	const pixels = [[10, 20, 30, 255]];
+	const png = makeSampledPng({
+		width: 1,
+		height: 1,
+		colorType: 6,
+		bitDepth: 8,
+		pixels
+	});
+	const withTrailing = new Uint8Array([...png, 1, 2, 3, 4, 5, 6, 7, 8]);
+
+	expect([...decodePng(withTrailing).data]).toEqual(pixels[0]);
+});
+
+test('reassembles image data split across many IDAT chunks', () => {
+	const pixels = Array.from({ length: 4 }, (_, index) => [index * 30, 60, 90, 255]);
+	const scanlines = (() => {
+		const bytes: number[] = [];
+		for (let y = 0; y < 2; y++) {
+			bytes.push(0);
+			for (let x = 0; x < 2; x++) bytes.push(...pixels[y * 2 + x]);
+		}
+		return new Uint8Array(bytes);
+	})();
+	const compressed = zlibSync(scanlines);
+	const middle = Math.floor(compressed.length / 2);
+	const png = makePng([
+		chunk('IHDR', header(2, 2, 8, 6, 0)),
+		chunk('IDAT', compressed.subarray(0, 1)),
+		chunk('IDAT', compressed.subarray(1, middle)),
+		chunk('IDAT', compressed.subarray(middle)),
+		chunk('IEND', new Uint8Array())
+	]);
+
+	expect([...decodePng(png).data]).toEqual(pixels.flat());
+});
+
+test('rejects an image whose only IDAT chunk carries no data', () => {
+	const png = makePng([
+		chunk('IHDR', header(1, 1, 8, 6, 0)),
+		chunk('IDAT', new Uint8Array(0)),
+		chunk('IEND', new Uint8Array())
+	]);
+
+	// A zero-length stream never inflates into pixel rows.
+	expect(() => decodePng(png)).toThrow();
+});
+
+test('applies 16-bit truecolor tRNS samples as alpha', () => {
+	const png = makeSampledPng({
+		width: 2,
+		height: 1,
+		colorType: 2,
+		bitDepth: 16,
+		pixels: [
+			[65535, 0, 0],
+			[0, 32768, 65535]
+		],
+		trns: [0xff, 0xff, 0, 0, 0, 0]
+	});
+
+	expect([...decodePng(png).data]).toEqual([255, 0, 0, 0, 0, 128, 255, 255]);
+});
+
+test('ignores a palette attached to a grayscale image', () => {
+	const png = makeSampledPng({
+		width: 2,
+		height: 1,
+		colorType: 0,
+		bitDepth: 8,
+		pixels: [[10], [200]],
+		// PLTE would map the samples elsewhere; grayscale samples must win.
+		plte: [
+			[99, 99, 99],
+			[1, 2, 3]
+		]
+	});
+
+	expect([...decodePng(png).data]).toEqual([10, 10, 10, 255, 200, 200, 200, 255]);
+});
+
+test('does not verify chunk checksums', () => {
+	const png = makeSampledPng({
+		width: 1,
+		height: 1,
+		colorType: 6,
+		bitDepth: 8,
+		pixels: [[7, 8, 9, 255]]
+	});
+	// The IHDR checksum spans bytes 29-32; corrupting it changes nothing today.
+	const corrupt = new Uint8Array(png);
+	corrupt[29] ^= 0xff;
+
+	expect([...decodePng(corrupt).data]).toEqual([7, 8, 9, 255]);
+});
+
+test('rejects interlaced indexed pixels that reference missing palette entries', () => {
+	const png = makeSampledPng({
+		width: 1,
+		height: 1,
+		colorType: 3,
+		bitDepth: 4,
+		interlace: 1,
+		pixels: [[3]],
+		plte: [
+			[1, 2, 3],
+			[4, 5, 6]
+		]
+	});
+
+	expect(() => decodePng(png)).toThrow('Indexed PNG references a missing palette entry');
+});
+
+test('decodes 16-bit samples in interlaced images', () => {
+	const pixels = Array.from({ length: 4 }, (_, index) => [
+		index * 16384,
+		65535 - index * 16384,
+		32768,
+		index === 0 ? 0 : 65535
+	]);
+	const png = makeSampledPng({
+		width: 2,
+		height: 2,
+		colorType: 6,
+		bitDepth: 16,
+		interlace: 1,
+		pixels
+	});
+
+	const expected = pixels.map(([r, g, b, a]) => [
+		Math.round((r * 255) / 65535),
+		Math.round((g * 255) / 65535),
+		Math.round((b * 255) / 65535),
+		Math.round((a * 255) / 65535)
+	]);
+
+	expect([...decodePng(png).data]).toEqual(expected.flat());
+});
