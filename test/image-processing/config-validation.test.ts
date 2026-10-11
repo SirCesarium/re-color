@@ -134,3 +134,62 @@ test('rejects invalid palette extraction values', async () => {
 		extractColorsFromFile(new Blob(['x']), { maxColors: 64, alphaThreshold: 256 }, canvasConfig)
 	).rejects.toThrow('alphaThreshold must be an integer between zero and 255');
 });
+
+/** Simulates tampered configs that bypass the tuple types. */
+function untypedWeights(values: number[]): typeof MAPPING_CONFIG.distanceWeights {
+	return values as unknown as typeof MAPPING_CONFIG.distanceWeights;
+}
+
+test('rejects mapping weights that do not hold exactly three entries', async () => {
+	await expectRejectedConfig(
+		(config) => {
+			config.mapping.distanceWeights = untypedWeights([]);
+		},
+		'mapping.distanceWeights must contain exactly 3 entries'
+	);
+	await expectRejectedConfig(
+		(config) => {
+			config.mapping.luminanceWeights = untypedWeights([0.2, 0.7]);
+		},
+		'mapping.luminanceWeights must contain exactly 3 entries'
+	);
+	await expectRejectedConfig(
+		(config) => {
+			config.mapping.distanceWeights = untypedWeights([1, 1, 1, 1]);
+		},
+		'mapping.distanceWeights must contain exactly 3 entries'
+	);
+});
+
+test('rejects an unknown mapping mode before processing', async () => {
+	await expectRejectedConfig(
+		(config) => {
+			(config.mapping as { mode: string }).mode = 'quantize';
+		},
+		'mapping.mode must be one of nearest, luminance, dominant'
+	);
+});
+
+test('rejects a non-finite output quality', async () => {
+	await expectRejectedConfig(
+		(config) => {
+			config.output.quality = Number.NaN;
+		},
+		'output.quality must be between zero and one'
+	);
+});
+
+test('accepts a zero maximum palette size', async () => {
+	// The invalid file proves the extraction config passed validation: decoding fails next.
+	await expect(
+		extractColorsFromFile(new Blob(['x']), { maxColors: 0, alphaThreshold: 128 }, canvasConfig)
+	).rejects.toThrow('validation.notPng');
+});
+
+test('accepts progress milestones that repeat', async () => {
+	// "Ordered" means non-decreasing: repeated fractions are legal.
+	const config = baseConfig();
+	config.processing.progress = { ...config.processing.progress, imageLoaded: 0, pixelsRead: 0 };
+
+	await expect(recolorSprite(invalidFile, [], config)).rejects.toThrow('validation.notPng');
+});
