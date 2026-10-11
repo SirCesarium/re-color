@@ -35,7 +35,7 @@ function config(overrides: Partial<RecolorConfig> = {}): RecolorConfig {
 		transparency: TRANSPARENCY_CONFIG,
 		processing: {
 			...PROCESSING_CONFIG,
-			onProgress: () => {},
+			onProgress: () => { },
 			isCancelled: () => false
 		},
 		output: OUTPUT_CONFIG,
@@ -78,23 +78,36 @@ test('recolors every eligible pixel to the active palette color', async () => {
 test('emits ordered progress from start to completion', async () => {
 	const file = rgbaFile(32, 32, rgbaPixels(32, 32, (x) => [x * 8, 40, 80, 255]));
 	const fractions: number[] = [];
+	const realNow = performance.now;
 
-	const url = await recolorSprite(file, [GREEN], config({
-		processing: {
-			...PROCESSING_CONFIG,
-			chunkDurationMs: 0.25,
-			onProgress: (fraction) => fractions.push(fraction),
-			isCancelled: () => false
-		}
-	}));
+	let clock = 0;
 
-	expect(url).not.toBeNull();
+	performance.now = () => (clock += 0.1);
+
+	try {
+		const url = await recolorSprite(file, [GREEN], config({
+			processing: {
+				...PROCESSING_CONFIG,
+				chunkDurationMs: 0.25,
+				onProgress: (fraction) => fractions.push(fraction),
+				isCancelled: () => false,
+				yieldToMain: async () => { }
+			}
+		}));
+
+		expect(url).not.toBeNull();
+	} finally {
+		performance.now = realNow;
+	}
+
 	expect(fractions[0]).toBe(0);
 	expect(fractions.at(-1)).toBe(1);
 	for (let index = 1; index < fractions.length; index++) {
 		expect(fractions[index]).toBeGreaterThanOrEqual(fractions[index - 1]);
 	}
-	// A multi-chunk image reports intermediate fractions between the milestones.
+	// A multi-chunk image reports intermediate fractions between the milestones:
+	// the three milestones, one report per two-row chunk, then the last two.
+	expect(fractions).toHaveLength(3 + 16 + 2);
 	expect(fractions.some((fraction) => fraction > 0.1 && fraction < 0.9)).toBe(true);
 });
 
