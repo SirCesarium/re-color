@@ -16,7 +16,11 @@ Recolor a pixel art sprite with any image's palette, privately, in your browser.
 
 ## See it in action
 
-<!-- Video placeholder -->
+<div align="center">
+
+https://github.com/user-attachments/assets/1a4b56f3-1a3a-4ae8-b91c-57b1b61cf0d8
+
+</div>
 
 ## Features
 
@@ -30,13 +34,13 @@ Extract a color palette from a reference sprite and __re-colorize__ another one.
 - **Luminance order** — sorts both sprite and palette by brightness and pairs them, so shading survives the swap.
 - **Dominant color** — finds your sprite's most-used color and pins it to the palette's dominant, then fills in the rest.
 
-<!-- Image -->
+<img width="512" height="129" alt="image" src="https://github.com/user-attachments/assets/1fcdcf29-0cac-46c4-aee5-4ef3a0cc2003" />
 
 ### Pixel-level control
 
 Tap any pixel in the live preview to exclude it from the recolor.
 
-<!-- Image -->
+<img width="1025" height="560" alt="image" src="https://github.com/user-attachments/assets/a7baed56-1518-474b-9832-a69773f1d478" />
 
 ### Download the result
 
@@ -46,13 +50,19 @@ Export the recolored sprite as a PNG — same dimensions as your input, named `<
 
 The current palette, sprite, mapping mode and pixel exclusions are saved locally (IndexedDB), so a refresh doesn't lose your work. You can turn this off in settings.
 
+<img width="907" height="128" alt="image" src="https://github.com/user-attachments/assets/19447af9-8824-4797-9b92-443884635fdc" />
+
 ### Preferences that stick
 
 Auto-apply the result, maximum palette colors, default mapping mode, animations and help hints — all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
 
+<img width="973" height="818" alt="image" src="https://github.com/user-attachments/assets/250f99df-8096-4e60-83c5-341a633067b9" />
+
 ### Available in English and Spanish
 
 The interface follows your browser language on first visit, and you can switch anytime in settings.
+
+<img width="911" height="268" alt="image" src="https://github.com/user-attachments/assets/8ebf6028-67f8-4779-a2d3-1aeaa2c8e0bc" />
 
 ### Install it as an app
 
