@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { LocalizedError } from '../../src/lib/i18n/localized-error.ts';
 import {
 	DEFAULT_APP_SETTINGS,
 	exportAppSettings,
@@ -6,6 +7,19 @@ import {
 	isMappingMode,
 	parseAppSettings
 } from '../../src/lib/state/app-settings.ts';
+
+/** Runs an import that must fail and returns the localized rejection. */
+function importFailure(json: string): LocalizedError {
+	try {
+		importAppSettings(json);
+	} catch (cause) {
+		if (cause instanceof LocalizedError) return cause;
+
+		throw cause;
+	}
+
+	throw new Error('expected the settings import to fail');
+}
 
 test('uses the built-in app settings when saved preferences are absent or invalid', () => {
 	expect(parseAppSettings(null)).toEqual(DEFAULT_APP_SETTINGS);
@@ -124,4 +138,96 @@ test('imports version 1 exports without a locale setting', () => {
 		defaultMapping: 'luminance',
 		locale: 'en'
 	});
+});
+
+test('falls back to the defaults when the stored value is not an object', () => {
+	// JSON arrays, numbers, and null are not settings documents.
+	for (const stored of ['[]', '[1,2,3]', '5', '"settings"', 'null', '{}']) {
+		expect(parseAppSettings(stored), stored).toEqual(DEFAULT_APP_SETTINGS);
+	}
+});
+
+test('recovers each invalid field individually without discarding valid ones', () => {
+	const restored = parseAppSettings(
+		JSON.stringify({
+			animationsEnabled: 'yes',
+			hintsEnabled: false,
+			autoRecolor: false,
+			persistWorkspace: false,
+			maxPaletteColors: 32,
+			defaultMapping: 'nearest',
+			locale: 'es'
+		})
+	);
+
+	// Only the tampered boolean reverts; every other preference survives.
+	expect(restored.animationsEnabled).toBe(DEFAULT_APP_SETTINGS.animationsEnabled);
+	expect(restored.hintsEnabled).toBe(false);
+	expect(restored.maxPaletteColors).toBe(32);
+	expect(restored.defaultMapping).toBe('nearest');
+	expect(restored.locale).toBe('es');
+});
+
+test('ignores unknown stored keys', () => {
+	const restored = parseAppSettings(
+		JSON.stringify({
+			...DEFAULT_APP_SETTINGS,
+			theme: 'dark',
+			maxPaletteColors: 1
+		})
+	);
+
+	expect(restored).toEqual({ ...DEFAULT_APP_SETTINGS, maxPaletteColors: 1 });
+	expect('theme' in restored).toBe(false);
+});
+
+test('accepts the palette size boundaries', () => {
+	const smallest = parseAppSettings(
+		JSON.stringify({ ...DEFAULT_APP_SETTINGS, maxPaletteColors: 1 })
+	);
+	expect(smallest.maxPaletteColors).toBe(1);
+
+	const largest = parseAppSettings(
+		JSON.stringify({ ...DEFAULT_APP_SETTINGS, maxPaletteColors: 256 })
+	);
+	expect(largest.maxPaletteColors).toBe(256);
+});
+
+test('rejects exports without a usable version', () => {
+	// A missing version reports the raw undefined value.
+	const missing = importFailure(
+		JSON.stringify({ format: 're-color-settings', settings: DEFAULT_APP_SETTINGS })
+	);
+	expect(missing.messageId).toBe('settings.importBadVersion');
+	expect(missing.values).toEqual({ version: 'undefined' });
+
+	// A version of the wrong type is reported verbatim.
+	const wrongType = importFailure(
+		JSON.stringify({ format: 're-color-settings', version: '1', settings: DEFAULT_APP_SETTINGS })
+	);
+	expect(wrongType.messageId).toBe('settings.importBadVersion');
+	expect(wrongType.values).toEqual({ version: '1' });
+});
+
+test('rejects exports whose settings are missing or not an object', () => {
+	expect(() =>
+		importAppSettings(JSON.stringify({ format: 're-color-settings', version: 1, settings: null }))
+	).toThrow('settings.importInvalidPreferences');
+
+	expect(() =>
+		importAppSettings(JSON.stringify({ format: 're-color-settings', version: 1, settings: 7 })
+		)).toThrow('settings.importInvalidPreferences');
+});
+
+test('strips unknown keys when importing settings', () => {
+	const imported = importAppSettings(
+		JSON.stringify({
+			format: 're-color-settings',
+			version: 1,
+			settings: { ...DEFAULT_APP_SETTINGS, telemetry: true }
+		})
+	);
+
+	expect(imported).toEqual(DEFAULT_APP_SETTINGS);
+	expect('telemetry' in imported).toBe(false);
 });
