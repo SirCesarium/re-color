@@ -47,6 +47,7 @@
 	"validation.tooLarge": "La imagen debe ser de 2 MiB o menos.",
 	"validation.notPng": "Elige una imagen PNG válida.",
 	"validation.tooBig": "Las dimensiones de la imagen no pueden superar 512 × 512 píxeles.",
+	"validation.empty": "La imagen debe medir al menos 1 × 1 píxel.",
 	"form.valueAria": "valor de {label}",
 	"meta.ogAlt": "Logotipo de re::color sobre la frase Recolor a sprite with any image's palette, encima de una fila de siete colores de paleta.",
 	"settings.title": "Ajustes",

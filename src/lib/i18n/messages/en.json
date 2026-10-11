@@ -47,6 +47,7 @@
 	"validation.tooLarge": "Image must be 2 MiB or smaller.",
 	"validation.notPng": "Choose a valid PNG image.",
 	"validation.tooBig": "Image dimensions must not exceed 512 × 512 pixels.",
+	"validation.empty": "Image must be at least 1 × 1 pixel.",
 	"form.valueAria": "{label} value",
 	"meta.ogAlt": "re::color wordmark above the tagline Recolor a sprite with any image's palette, over a row of seven palette colors.",
 	"settings.title": "Settings",

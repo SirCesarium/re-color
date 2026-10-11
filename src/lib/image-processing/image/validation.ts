@@ -36,12 +36,11 @@ export async function validateImageFile(file: Blob): Promise<void> {
 	const width = view.getUint32(16);
 	const height = view.getUint32(20);
 
-	if (
-		width === 0 ||
-		height === 0 ||
-		width > MAX_IMAGE_WIDTH ||
-		height > MAX_IMAGE_HEIGHT
-	) {
+	if (width === 0 || height === 0) {
+		throw new LocalizedError('validation.empty');
+	}
+
+	if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT) {
 		throw new LocalizedError('validation.tooBig');
 	}
 }
