@@ -1,5 +1,7 @@
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { z } from 'zod';
 import { LocalizedError } from '../i18n/localized-error.ts';
-import { DEFAULT_LOCALE, isLocale, type Locale } from '../i18n/locales.ts';
+import { DEFAULT_LOCALE, LOCALE_SCHEMA, type Locale } from '../i18n/locales.ts';
 import type { MappingMode } from '../image-processing/types.ts';
 
 export const APP_SETTINGS_KEY = 'recolor.settings';
@@ -27,7 +29,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 	locale: DEFAULT_LOCALE
 };
 
-const MAPPING_MODES: readonly MappingMode[] = ['nearest', 'luminance', 'dominant'];
+const MAPPING_MODES = ['nearest', 'luminance', 'dominant'] as const satisfies readonly MappingMode[];
+const MAPPING_MODE_SCHEMA = z.enum(MAPPING_MODES);
 const APP_SETTING_KEYS = [
 	'animationsEnabled',
 	'hintsEnabled',
@@ -38,27 +41,43 @@ const APP_SETTING_KEYS = [
 	'locale'
 ] as const satisfies readonly (keyof AppSettings)[];
 
-export function isMappingMode(value: unknown): value is MappingMode {
-	return typeof value === 'string' && MAPPING_MODES.some((mode) => mode === value);
+/**
+ * Strict schema applied to settings documents.
+ *
+ * `locale` and `hintsEnabled` are optional so older version 1 exports still import.
+ */
+const APP_SETTINGS_SCHEMA = z.object({
+	animationsEnabled: z.boolean(),
+	hintsEnabled: z.boolean().optional(),
+	autoRecolor: z.boolean(),
+	persistWorkspace: z.boolean(),
+	maxPaletteColors: z.number().int().min(1).max(256),
+	defaultMapping: MAPPING_MODE_SCHEMA,
+	locale: LOCALE_SCHEMA.optional()
+});
+
+/** Lenient schema for stored settings: invalid or missing fields fall back individually. */
+function storedAppSettingsSchema(localeFallback: Locale) {
+	return z
+		.object({
+			animationsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.animationsEnabled),
+			hintsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.hintsEnabled),
+			autoRecolor: z.boolean().catch(DEFAULT_APP_SETTINGS.autoRecolor),
+			persistWorkspace: z.boolean().catch(DEFAULT_APP_SETTINGS.persistWorkspace),
+			maxPaletteColors: z
+				.number()
+				.int()
+				.min(1)
+				.max(256)
+				.catch(DEFAULT_APP_SETTINGS.maxPaletteColors),
+			defaultMapping: MAPPING_MODE_SCHEMA.catch(DEFAULT_APP_SETTINGS.defaultMapping),
+			locale: LOCALE_SCHEMA.catch(localeFallback)
+		})
+		.catch({ ...DEFAULT_APP_SETTINGS, locale: localeFallback });
 }
 
-function isAppSettings(value: unknown): value is AppSettings {
-	if (!value || typeof value !== 'object') return false;
-
-	const settings = value as Partial<Record<keyof AppSettings, unknown>>;
-	return (
-		typeof settings.animationsEnabled === 'boolean' &&
-		typeof settings.autoRecolor === 'boolean' &&
-		typeof settings.persistWorkspace === 'boolean' &&
-		typeof settings.maxPaletteColors === 'number' &&
-		Number.isInteger(settings.maxPaletteColors) &&
-		settings.maxPaletteColors >= 1 &&
-		settings.maxPaletteColors <= 256 &&
-		isMappingMode(settings.defaultMapping) &&
-		// Locale and hints are optional so older version 1 exports still import.
-		(settings.locale === undefined || isLocale(settings.locale)) &&
-		(settings.hintsEnabled === undefined || typeof settings.hintsEnabled === 'boolean')
-	);
+export function isMappingMode(value: unknown): value is MappingMode {
+	return MAPPING_MODE_SCHEMA.safeParse(value).success;
 }
 
 export function exportAppSettings(settings: AppSettings): string {
@@ -93,22 +112,17 @@ export function importAppSettings(json: string): AppSettings {
 	if (document.version !== SETTINGS_EXPORT_VERSION) {
 		throw new LocalizedError('settings.importBadVersion', { version: String(document.version) });
 	}
-	if (!isAppSettings(document.settings)) {
+
+	const parsed = APP_SETTINGS_SCHEMA.safeParse(document.settings);
+
+	if (!parsed.success) {
 		throw new LocalizedError('settings.importInvalidPreferences');
 	}
 
-	const settings = document.settings;
 	return {
-		animationsEnabled: settings.animationsEnabled,
-		autoRecolor: settings.autoRecolor,
-		persistWorkspace: settings.persistWorkspace,
-		maxPaletteColors: settings.maxPaletteColors,
-		defaultMapping: settings.defaultMapping,
-		locale: isLocale(settings.locale) ? settings.locale : DEFAULT_LOCALE,
-		hintsEnabled:
-			typeof settings.hintsEnabled === 'boolean'
-				? settings.hintsEnabled
-				: DEFAULT_APP_SETTINGS.hintsEnabled
+		...parsed.data,
+		locale: parsed.data.locale ?? DEFAULT_LOCALE,
+		hintsEnabled: parsed.data.hintsEnabled ?? DEFAULT_APP_SETTINGS.hintsEnabled
 	};
 }
 
@@ -120,40 +134,8 @@ export function parseAppSettings(
 
 	try {
 		const candidate: unknown = JSON.parse(value);
-		if (!candidate || typeof candidate !== 'object') return { ...DEFAULT_APP_SETTINGS, locale: localeFallback };
 
-		const stored = candidate as Partial<Record<keyof AppSettings, unknown>>;
-
-		return {
-			animationsEnabled:
-				typeof stored.animationsEnabled === 'boolean'
-					? stored.animationsEnabled
-					: DEFAULT_APP_SETTINGS.animationsEnabled,
-			hintsEnabled:
-				typeof stored.hintsEnabled === 'boolean'
-					? stored.hintsEnabled
-					: DEFAULT_APP_SETTINGS.hintsEnabled,
-			autoRecolor:
-				typeof stored.autoRecolor === 'boolean'
-					? stored.autoRecolor
-					: DEFAULT_APP_SETTINGS.autoRecolor,
-			persistWorkspace:
-				typeof stored.persistWorkspace === 'boolean'
-					? stored.persistWorkspace
-					: DEFAULT_APP_SETTINGS.persistWorkspace,
-			maxPaletteColors:
-				typeof stored.maxPaletteColors === 'number' &&
-				Number.isInteger(stored.maxPaletteColors) &&
-				stored.maxPaletteColors >= 1 &&
-				stored.maxPaletteColors <= 256
-					? stored.maxPaletteColors
-					: DEFAULT_APP_SETTINGS.maxPaletteColors,
-			defaultMapping:
-				isMappingMode(stored.defaultMapping)
-					? stored.defaultMapping
-					: DEFAULT_APP_SETTINGS.defaultMapping,
-			locale: isLocale(stored.locale) ? stored.locale : localeFallback
-		};
+		return storedAppSettingsSchema(localeFallback).parse(candidate);
 	} catch {
 		return { ...DEFAULT_APP_SETTINGS, locale: localeFallback };
 	}
@@ -172,65 +154,56 @@ const DATABASE_VERSION = 1;
 const STORE = 'state';
 const WORKSPACE_KEY = 'current';
 
-function openDatabase(): Promise<IDBDatabase> {
-	return new Promise((resolve, reject) => {
-		const request = indexedDB.open(DATABASE, DATABASE_VERSION);
+interface WorkspaceDatabase extends DBSchema {
+	state: {
+		key: string;
+		value: PersistedWorkspace;
+	};
+}
 
-		request.onupgradeneeded = () => {
-			request.result.createObjectStore(STORE);
-		};
-		request.onsuccess = () => resolve(request.result);
-		request.onerror = () => reject(request.error ?? new Error('Could not open local workspace'));
-	});
+let databasePromise: Promise<IDBPDatabase<WorkspaceDatabase>> | undefined;
+
+/** Reuses one connection, reopening after failures or an upgrade in another tab. */
+function openDatabase(): Promise<IDBPDatabase<WorkspaceDatabase>> {
+	databasePromise ??= openDB<WorkspaceDatabase>(DATABASE, DATABASE_VERSION, {
+		upgrade(database) {
+			database.createObjectStore(STORE);
+		}
+	}).then(
+		(database) => {
+			database.addEventListener('versionchange', () => {
+				database.close();
+				databasePromise = undefined;
+			});
+
+			return database;
+		},
+		(error) => {
+			databasePromise = undefined;
+			throw error;
+		}
+	);
+
+	return databasePromise;
 }
 
 export async function loadWorkspace(): Promise<PersistedWorkspace | null> {
 	const database = await openDatabase();
+	const workspace = await database.get(STORE, WORKSPACE_KEY);
 
-	try {
-		return await new Promise((resolve, reject) => {
-			const request = database.transaction(STORE, 'readonly').objectStore(STORE).get(WORKSPACE_KEY);
-			request.onsuccess = () => resolve((request.result as PersistedWorkspace | undefined) ?? null);
-			request.onerror = () => reject(request.error ?? new Error('Could not load saved workspace'));
-		});
-	} finally {
-		database.close();
-	}
+	return workspace ?? null;
 }
 
 export async function saveWorkspace(workspace: PersistedWorkspace): Promise<void> {
 	const database = await openDatabase();
 
-	try {
-		await new Promise<void>((resolve, reject) => {
-			const transaction = database.transaction(STORE, 'readwrite');
-			transaction.objectStore(STORE).put(workspace, WORKSPACE_KEY);
-			transaction.oncomplete = () => resolve();
-			transaction.onerror = () =>
-				reject(transaction.error ?? new Error('Could not save workspace'));
-			transaction.onabort = () => reject(transaction.error ?? new Error('Saving workspace aborted'));
-		});
-	} finally {
-		database.close();
-	}
+	await database.put(STORE, workspace, WORKSPACE_KEY);
 }
 
 export async function clearWorkspace(): Promise<void> {
 	const database = await openDatabase();
 
-	try {
-		await new Promise<void>((resolve, reject) => {
-			const transaction = database.transaction(STORE, 'readwrite');
-			transaction.objectStore(STORE).clear();
-			transaction.oncomplete = () => resolve();
-			transaction.onerror = () =>
-				reject(transaction.error ?? new Error('Could not clear saved workspace'));
-			transaction.onabort = () =>
-				reject(transaction.error ?? new Error('Clearing workspace aborted'));
-		});
-	} finally {
-		database.close();
-	}
+	await database.clear(STORE);
 }
 
 export async function clearSavedAppData(): Promise<void> {
