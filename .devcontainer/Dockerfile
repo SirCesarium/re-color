@@ -1,6 +1,6 @@
 ARG VARIANT=trixie
 
-FROM oven/bun:1.4.2 AS bun
+FROM oven/bun:1.4.3 AS bun
 
 FROM mcr.microsoft.com/devcontainers/base:${VARIANT}
 
