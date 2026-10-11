@@ -30,11 +30,19 @@ function byteField(name: string) {
 	return z.number({ error: message }).int(message).min(0, message).max(255, message);
 }
 
-/** Channel weights: every entry must be a finite, non-negative number. */
+/** Channel weights: exactly three finite, non-negative entries. */
 function weightsField(name: string) {
+	const lengthMessage = `${name} must contain exactly 3 entries`;
+
 	return z
 		.array(z.unknown())
 		.superRefine((weights, ctx) => {
+			if (weights.length !== 3) {
+				ctx.addIssue({ code: 'custom', message: lengthMessage });
+
+				return;
+			}
+
 			for (const [index, weight] of weights.entries()) {
 				if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) {
 					ctx.addIssue({ code: 'custom', message: WEIGHTS_MESSAGE(name, index) });
