@@ -60,14 +60,21 @@ test('rejects a 2 MiB file plus one byte', async () => {
 	await expect(validateImageFile(new Blob([body]))).rejects.toThrow('validation.tooLarge');
 });
 
-test('reports zero dimensions with the dimensions message', async () => {
-	// Known wart: a 0 × 0 PNG is rejected as "too big" even though it is empty.
+test('reports zero dimensions as an empty image', async () => {
 	const png = makePng([
 		chunk('IHDR', header(0, 0, 8, 6, 0)),
 		chunk('IEND', new Uint8Array())
 	]);
 
-	await expect(validateImageFile(pngBlob(png))).rejects.toThrow('validation.tooBig');
+	await expect(validateImageFile(pngBlob(png))).rejects.toThrow('validation.empty');
+
+	// A single zero dimension is empty too, not oversized.
+	const flat = makePng([
+		chunk('IHDR', header(512, 0, 8, 6, 0)),
+		chunk('IEND', new Uint8Array())
+	]);
+
+	await expect(validateImageFile(pngBlob(flat))).rejects.toThrow('validation.empty');
 });
 
 test('accepts the largest supported dimensions', async () => {
