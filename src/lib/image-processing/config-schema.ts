@@ -76,6 +76,9 @@ const PROGRESS_SCHEMA = z
 		}
 	});
 
+const MAPPING_MODES = ['nearest', 'luminance', 'dominant'] as const;
+const MAPPING_MODE_MESSAGE = 'mapping.mode must be one of nearest, luminance, dominant';
+
 const RECOLOR_CONFIG_SCHEMA = z.object({
 	transparency: z.object({
 		minAlpha: byteField('transparency.minAlpha'),
@@ -88,6 +91,7 @@ const RECOLOR_CONFIG_SCHEMA = z.object({
 		progress: PROGRESS_SCHEMA
 	}),
 	mapping: z.object({
+		mode: z.enum(MAPPING_MODES, { error: MAPPING_MODE_MESSAGE }),
 		distanceWeights: weightsField('mapping.distanceWeights'),
 		luminanceWeights: weightsField('mapping.luminanceWeights')
 	}),
