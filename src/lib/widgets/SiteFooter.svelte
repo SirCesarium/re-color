@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { resolve } from '$app/paths';
-	import Link from '#lib/components/Link.svelte';
 	import { t } from 'svelte-i18n';
+	import Link from '#lib/components/Link.svelte';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 
 	const isHome = $derived(page.url.pathname === '/');
 </script>

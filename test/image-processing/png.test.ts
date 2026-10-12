@@ -1,24 +1,35 @@
 import { expect, test } from 'bun:test';
 import { zlibSync } from 'fflate';
 import { decodePng, isPng } from '../../src/lib/image-processing/image/png.ts';
-import { chunk, header, makePng, makeSampledPng } from '../support/png-fixtures.ts';
+import {
+	chunk,
+	header,
+	makePng,
+	makeSampledPng
+} from '../support/png-fixtures.ts';
 
 test('decodes grayscale samples at every supported bit depth', () => {
 	const cases = [
 		{
 			bitDepth: 1 as const,
 			pixels: [[0], [1], [0], [1]],
-			expected: [0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255]
+			expected: [
+				0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255
+			]
 		},
 		{
 			bitDepth: 2 as const,
 			pixels: [[0], [1], [2], [3]],
-			expected: [0, 0, 0, 255, 85, 85, 85, 255, 170, 170, 170, 255, 255, 255, 255, 255]
+			expected: [
+				0, 0, 0, 255, 85, 85, 85, 255, 170, 170, 170, 255, 255, 255, 255, 255
+			]
 		},
 		{
 			bitDepth: 4 as const,
 			pixels: [[0], [5], [10], [15]],
-			expected: [0, 0, 0, 255, 85, 85, 85, 255, 170, 170, 170, 255, 255, 255, 255, 255]
+			expected: [
+				0, 0, 0, 255, 85, 85, 85, 255, 170, 170, 170, 255, 255, 255, 255, 255
+			]
 		},
 		{
 			bitDepth: 8 as const,
@@ -28,12 +39,20 @@ test('decodes grayscale samples at every supported bit depth', () => {
 		{
 			bitDepth: 16 as const,
 			pixels: [[0], [16384], [32768], [65535]],
-			expected: [0, 0, 0, 255, 64, 64, 64, 255, 128, 128, 128, 255, 255, 255, 255, 255]
+			expected: [
+				0, 0, 0, 255, 64, 64, 64, 255, 128, 128, 128, 255, 255, 255, 255, 255
+			]
 		}
 	];
 
 	for (const { bitDepth, pixels, expected } of cases) {
-		const png = makeSampledPng({ width: pixels.length, height: 1, colorType: 0, bitDepth, pixels });
+		const png = makeSampledPng({
+			width: pixels.length,
+			height: 1,
+			colorType: 0,
+			bitDepth,
+			pixels
+		});
 
 		expect([...decodePng(png).data]).toEqual(expected);
 	}
@@ -50,7 +69,9 @@ test('decodes truecolor samples at 8 and 16 bits', () => {
 			[250, 200, 100]
 		]
 	});
-	expect([...decodePng(eightBit).data]).toEqual([1, 2, 3, 255, 250, 200, 100, 255]);
+	expect([...decodePng(eightBit).data]).toEqual([
+		1, 2, 3, 255, 250, 200, 100, 255
+	]);
 
 	const sixteenBit = makeSampledPng({
 		width: 2,
@@ -62,7 +83,9 @@ test('decodes truecolor samples at 8 and 16 bits', () => {
 			[16384, 32896, 65535]
 		]
 	});
-	expect([...decodePng(sixteenBit).data]).toEqual([255, 0, 128, 255, 64, 128, 255, 255]);
+	expect([...decodePng(sixteenBit).data]).toEqual([
+		255, 0, 128, 255, 64, 128, 255, 255
+	]);
 });
 
 test('decodes grayscale samples with alpha at 8 and 16 bits', () => {
@@ -76,7 +99,9 @@ test('decodes grayscale samples with alpha at 8 and 16 bits', () => {
 			[20, 0]
 		]
 	});
-	expect([...decodePng(eightBit).data]).toEqual([10, 10, 10, 255, 20, 20, 20, 0]);
+	expect([...decodePng(eightBit).data]).toEqual([
+		10, 10, 10, 255, 20, 20, 20, 0
+	]);
 
 	const sixteenBit = makeSampledPng({
 		width: 2,
@@ -88,7 +113,9 @@ test('decodes grayscale samples with alpha at 8 and 16 bits', () => {
 			[32768, 32768]
 		]
 	});
-	expect([...decodePng(sixteenBit).data]).toEqual([255, 255, 255, 255, 128, 128, 128, 128]);
+	expect([...decodePng(sixteenBit).data]).toEqual([
+		255, 255, 255, 255, 128, 128, 128, 128
+	]);
 });
 
 test('decodes RGBA samples at 8 and 16 bits', () => {
@@ -102,7 +129,9 @@ test('decodes RGBA samples at 8 and 16 bits', () => {
 			[255, 254, 253, 252]
 		]
 	});
-	expect([...decodePng(eightBit).data]).toEqual([1, 2, 3, 4, 255, 254, 253, 252]);
+	expect([...decodePng(eightBit).data]).toEqual([
+		1, 2, 3, 4, 255, 254, 253, 252
+	]);
 
 	const sixteenBit = makeSampledPng({
 		width: 1,
@@ -158,7 +187,9 @@ test('applies grayscale tRNS samples as alpha', () => {
 		trns: [0, 5]
 	});
 
-	expect([...decodePng(png).data]).toEqual([0, 0, 0, 255, 5, 5, 5, 0, 7, 7, 7, 255]);
+	expect([...decodePng(png).data]).toEqual([
+		0, 0, 0, 255, 5, 5, 5, 0, 7, 7, 7, 255
+	]);
 });
 
 test('applies truecolor tRNS samples as alpha', () => {
@@ -192,7 +223,9 @@ test('applies indexed tRNS entries as alpha', () => {
 		trns: [255, 0, 128]
 	});
 
-	expect([...decodePng(png).data]).toEqual([1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 128]);
+	expect([...decodePng(png).data]).toEqual([
+		1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 128
+	]);
 });
 
 test('matches 16-bit grayscale tRNS against the raw sample before scaling', () => {
@@ -212,7 +245,12 @@ test('applies each supported row filter while decoding', () => {
 	const pixels: number[][] = [];
 	for (let y = 0; y < 5; y++) {
 		for (let x = 0; x < 3; x++) {
-			pixels.push([y * 10 + x, y * 10 + x + 1, y * 10 + x + 2, x === 1 ? 0 : 255]);
+			pixels.push([
+				y * 10 + x,
+				y * 10 + x + 1,
+				y * 10 + x + 2,
+				x === 1 ? 0 : 255
+			]);
 		}
 	}
 
@@ -223,7 +261,7 @@ test('applies each supported row filter while decoding', () => {
 		bitDepth: 8,
 		pixels,
 		// One row per filter type: none, sub, up, average, Paeth.
-		filter: (y) => y
+		filter: y => y
 	});
 
 	expect([...decodePng(png).data]).toEqual(pixels.flat());
@@ -258,7 +296,12 @@ test('decodes interlaced images whose Adam7 passes are empty', () => {
 		[8, 8],
 		[7, 3]
 	]) {
-		const pixels = Array.from({ length: width * height }, (_, index) => [index, index, index, 255]);
+		const pixels = Array.from({ length: width * height }, (_, index) => [
+			index,
+			index,
+			index,
+			255
+		]);
 		const png = makeSampledPng({
 			width,
 			height,
@@ -337,12 +380,16 @@ test('rejects malformed PNG chunk structure', () => {
 	const badCompression = header(1, 1, 8, 6, 0);
 	badCompression[10] = 1;
 	expect(() =>
-		decodePng(makePng([chunk('IHDR', badCompression), chunk('IEND', new Uint8Array())]))
+		decodePng(
+			makePng([chunk('IHDR', badCompression), chunk('IEND', new Uint8Array())])
+		)
 	).toThrow('Unsupported PNG compression or filter method');
 	const badFilter = header(1, 1, 8, 6, 0);
 	badFilter[11] = 1;
 	expect(() =>
-		decodePng(makePng([chunk('IHDR', badFilter), chunk('IEND', new Uint8Array())]))
+		decodePng(
+			makePng([chunk('IHDR', badFilter), chunk('IEND', new Uint8Array())])
+		)
 	).toThrow('Unsupported PNG compression or filter method');
 
 	// Unknown critical chunks are unsupported.
@@ -358,11 +405,16 @@ test('rejects malformed PNG chunk structure', () => {
 	).toThrow('Unsupported critical PNG chunk: JUNK');
 
 	// Image data and the end marker are required.
-	expect(() => decodePng(makePng([chunk('IHDR', header(1, 1, 8, 6, 0))]))).toThrow(
-		'PNG is missing required image data'
-	);
 	expect(() =>
-		decodePng(makePng([chunk('IHDR', header(1, 1, 8, 6, 0)), chunk('IEND', new Uint8Array())]))
+		decodePng(makePng([chunk('IHDR', header(1, 1, 8, 6, 0))]))
+	).toThrow('PNG is missing required image data');
+	expect(() =>
+		decodePng(
+			makePng([
+				chunk('IHDR', header(1, 1, 8, 6, 0)),
+				chunk('IEND', new Uint8Array())
+			])
+		)
 	).toThrow('PNG is missing required image data');
 	expect(() =>
 		decodePng(
@@ -387,7 +439,11 @@ test('rejects malformed PNG chunk structure', () => {
 });
 
 test('rejects unsupported header values', () => {
-	const decodeWithHeader = (headerBytes: Uint8Array, palette?: Uint8Array, trns?: Uint8Array) => {
+	const decodeWithHeader = (
+		headerBytes: Uint8Array,
+		palette?: Uint8Array,
+		trns?: Uint8Array
+	) => {
 		const chunks = [chunk('IHDR', headerBytes)];
 		if (palette) chunks.push(chunk('PLTE', palette));
 		if (trns) chunks.push(chunk('tRNS', trns));
@@ -397,19 +453,26 @@ test('rejects unsupported header values', () => {
 		return () => decodePng(makePng(chunks));
 	};
 
-	expect(decodeWithHeader(header(0, 1, 8, 6, 0))).toThrow('Invalid PNG dimensions');
+	expect(decodeWithHeader(header(0, 1, 8, 6, 0))).toThrow(
+		'Invalid PNG dimensions'
+	);
 	expect(decodeWithHeader(header(2, 2, 4, 6, 0))).toThrow(
 		'Unsupported PNG color type or bit depth'
 	);
 	expect(decodeWithHeader(header(2, 2, 8, 5, 0))).toThrow(
 		'Unsupported PNG color type or bit depth'
 	);
-	expect(decodeWithHeader(header(2, 2, 8, 6, 2))).toThrow('Unsupported PNG interlace method');
+	expect(decodeWithHeader(header(2, 2, 8, 6, 2))).toThrow(
+		'Unsupported PNG interlace method'
+	);
 });
 
 test('rejects invalid palette and transparency chunks', () => {
 	const decodeWith = (chunks: Uint8Array[]) => () => decodePng(makePng(chunks));
-	const image = [chunk('IDAT', zlibSync(new Uint8Array(5))), chunk('IEND', new Uint8Array())];
+	const image = [
+		chunk('IDAT', zlibSync(new Uint8Array(5))),
+		chunk('IEND', new Uint8Array())
+	];
 	const palette = new Uint8Array([1, 2, 3]);
 
 	// Indexed images require a palette, and only one of them.
@@ -485,17 +548,22 @@ test('rejects decompressed image data that does not match the header', () => {
 	const row = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8]);
 
 	// A 2 × 2 RGBA image needs two rows.
-	expect(decodeWithIdat(header(2, 2, 8, 6, 0), row)).toThrow('PNG pixel data is truncated');
+	expect(decodeWithIdat(header(2, 2, 8, 6, 0), row)).toThrow(
+		'PNG pixel data is truncated'
+	);
 
 	// A 1 × 1 RGBA image needs exactly one row.
-	expect(decodeWithIdat(header(1, 1, 8, 6, 0), new Uint8Array([...row, 9, 9]))).toThrow(
-		'PNG contains unexpected decompressed pixel data'
-	);
+	expect(
+		decodeWithIdat(header(1, 1, 8, 6, 0), new Uint8Array([...row, 9, 9]))
+	).toThrow('PNG contains unexpected decompressed pixel data');
 
 	// Row filters above the Paeth filter are undefined.
-	expect(decodeWithIdat(header(1, 1, 8, 6, 0), new Uint8Array([5, 1, 2, 3, 4, 5, 6, 7, 8]))).toThrow(
-		'Unsupported PNG row filter'
-	);
+	expect(
+		decodeWithIdat(
+			header(1, 1, 8, 6, 0),
+			new Uint8Array([5, 1, 2, 3, 4, 5, 6, 7, 8])
+		)
+	).toThrow('Unsupported PNG row filter');
 
 	// Indexed pixels may only reference palette entries that exist.
 	expect(() =>
@@ -525,7 +593,12 @@ test('ignores trailing bytes after the end chunk', () => {
 });
 
 test('reassembles image data split across many IDAT chunks', () => {
-	const pixels = Array.from({ length: 4 }, (_, index) => [index * 30, 60, 90, 255]);
+	const pixels = Array.from({ length: 4 }, (_, index) => [
+		index * 30,
+		60,
+		90,
+		255
+	]);
 	const scanlines = (() => {
 		const bytes: number[] = [];
 		for (let y = 0; y < 2; y++) {
@@ -588,7 +661,9 @@ test('ignores a palette attached to a grayscale image', () => {
 		]
 	});
 
-	expect([...decodePng(png).data]).toEqual([10, 10, 10, 255, 200, 200, 200, 255]);
+	expect([...decodePng(png).data]).toEqual([
+		10, 10, 10, 255, 200, 200, 200, 255
+	]);
 });
 
 test('does not verify chunk checksums', () => {
@@ -620,7 +695,9 @@ test('rejects interlaced indexed pixels that reference missing palette entries',
 		]
 	});
 
-	expect(() => decodePng(png)).toThrow('Indexed PNG references a missing palette entry');
+	expect(() => decodePng(png)).toThrow(
+		'Indexed PNG references a missing palette entry'
+	);
 });
 
 test('decodes 16-bit samples in interlaced images', () => {

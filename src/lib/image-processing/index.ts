@@ -1,18 +1,17 @@
-/** Yields between processing chunks using the browser Scheduler API when available. */
-export { yieldToBrowser } from './image/scheduler.ts';
-/** Composes excluded source pixels into an already-recolored image without remapping colors. */
-export { composeExcludedPixels } from './image/canvas.ts';
-/** Converts RGB channel values to a CSS `rgb()` color string. */
+/** Formats an RGB color as a CSS `rgb()` string. */
 export { cssRgb } from './color/format.ts';
-/** Samples the most frequent colors from a decoded image. */
-export { extractColors } from './palette.ts';
-/** Samples a file using raw PNG samples when available, independent of browser color management. */
-export { extractColorsFromFile } from './palette.ts';
-/** Recolors an image using an explicit palette and processing configuration. */
+/** Recolors a sprite with an explicit palette and config. */
 export { recolorSprite } from './engine.ts';
-/** Canvas settings and image resource types used by the browser adapters. */
+/** Canvas options shared by the browser-side helpers. */
 export type { CanvasConfig } from './image/canvas.ts';
-/** Public color, palette, mapping, plugin, and processing configuration types. */
+/** Paints the excluded original pixels back over an already-recolored image. */
+export { composeExcludedPixels } from './image/canvas.ts';
+/** Hands the browser a break between processing chunks. */
+export { yieldToBrowser } from './image/scheduler.ts';
+/** Picks the most frequent colors of an image as a palette. */
+/** Same, but from a file, reading PNG samples raw to dodge color management. */
+export { extractColors, extractColorsFromFile } from './palette.ts';
+/** Public types: colors, palettes, mapping, plugins, and processing config. */
 export type {
 	ColorMappingConfig,
 	ColorMappingInput,

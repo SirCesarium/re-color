@@ -8,10 +8,12 @@ export const MAX_IMAGE_HEIGHT = 512;
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 /**
- * Validates the upload constraints using the file contents rather than its
- * extension or browser-reported MIME type.
+ * Enforces the upload limits: 2 MiB, PNG only, up to 512×512.
  *
- * @throws If the file is too large, is not a PNG, or exceeds the pixel dimensions.
+ * The check reads the file's actual bytes instead of trusting its name or the
+ * MIME type the browser reports, both of which are trivially wrong.
+ *
+ * @throws {LocalizedError} When the file is too large, not a PNG, empty, or too big.
  */
 export async function validateImageFile(file: Blob): Promise<void> {
 	if (file.size > MAX_IMAGE_BYTES) {
@@ -32,7 +34,11 @@ export async function validateImageFile(file: Blob): Promise<void> {
 		throw new LocalizedError('validation.notPng');
 	}
 
-	const view = new DataView(header.buffer, header.byteOffset, header.byteLength);
+	const view = new DataView(
+		header.buffer,
+		header.byteOffset,
+		header.byteLength
+	);
 	const width = view.getUint32(16);
 	const height = view.getUint32(20);
 

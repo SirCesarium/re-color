@@ -1,28 +1,35 @@
-import { validateRecolorConfig } from './config-schema.ts';
 import { createColorLookup } from './color/mapping/registry.ts';
 import { rgbToKey } from './color/metrics.ts';
-import { context2d, createCanvas, loadImage, readPixels, toBlobUrl } from './image/canvas.ts';
+import { validateRecolorConfig } from './config-schema.ts';
+import {
+	context2d,
+	createCanvas,
+	loadImage,
+	readPixels,
+	toBlobUrl
+} from './image/canvas.ts';
 import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, RecolorConfig, Rgb } from './types.ts';
 
 /**
  * Recolors a sprite with an explicit palette and processing configuration.
  *
- * The operation decodes the file, counts eligible source colors, asks the selected
- * mapping strategy for target colors, processes pixels in time-bounded chunks, and
- * encodes the result in the requested format. Original alpha values are preserved
- * when `config.transparency.preserveAlpha` is true.
+ * Decodes the file, counts the source colors, asks the selected mapping strategy
+ * for target colors, repaints the pixels in time-bounded chunks, and encodes the
+ * result in the requested format. Pixels below `transparency.minAlpha` and the
+ * ones in `excludedPixels` are left alone; original alpha survives when
+ * `config.transparency.preserveAlpha` is on.
  *
- * Progress callbacks receive the configured milestones and intermediate fractions
- * between `pixelsRead` and `processingComplete`. Cancellation is checked between
- * stages, chunks, and after encoding.
+ * Progress fires the configured milestones plus intermediate fractions between
+ * `pixelsRead` and `processingComplete`. Cancellation is honored between stages,
+ * between chunks, and once more after encoding.
  *
  * @param file Sprite image file to recolor.
- * @param palette Palette whose active colors are available to the mapping strategy.
- * @param config Complete mapping, transparency, scheduling, progress, cancellation,
- * canvas, and output settings. No processing options are inferred by this function.
- * @returns An object URL for the encoded image, or `null` when there are no active
- * colors, no eligible pixels, no mappings, or cancellation is requested.
+ * @param palette Palette whose active colors are offered to the mapping strategy.
+ * @param config Every setting the engine needs; nothing is inferred or defaulted here.
+ * @returns An object URL for the encoded image, or `null` when there is nothing
+ * to produce: no active colors, no eligible pixels, an empty mapping, or a
+ * cancellation request.
  * @throws {RangeError} If a numeric setting is outside its supported range.
  * @throws If image decoding, canvas access, the mapping strategy, or encoding fails.
  * @see {@link RecolorConfig}
@@ -36,9 +43,10 @@ export async function recolorSprite(
 	validateRecolorConfig(config);
 	await validateImageFile(file);
 
-	if (!palette.some((color) => color.active)) return null;
+	if (!palette.some(color => color.active)) return null;
 
-	const { onProgress, isCancelled, chunkDurationMs, progress, yieldToMain } = config.processing;
+	const { onProgress, isCancelled, chunkDurationMs, progress, yieldToMain } =
+		config.processing;
 
 	onProgress(progress.start);
 
@@ -68,7 +76,7 @@ export async function recolorSprite(
 		);
 		if (!counts || isCancelled()) return null;
 
-		const activePalette = palette.filter((color) => color.active);
+		const activePalette = palette.filter(color => color.active);
 
 		const lookup = await createColorLookup(
 			{
@@ -98,7 +106,14 @@ export async function recolorSprite(
 			const start = performance.now();
 
 			while (row < height && performance.now() - start < chunkDurationMs) {
-				applyRow(data, row, width, lookup, config.transparency, config.excludedPixels);
+				applyRow(
+					data,
+					row,
+					width,
+					lookup,
+					config.transparency,
+					config.excludedPixels
+				);
 				row++;
 			}
 
@@ -132,7 +147,7 @@ export async function recolorSprite(
 	}
 }
 
-/** Counts non-transparent source pixels without monopolizing the main thread. */
+/** Tallies the source colors, giving the main thread a break every so often. */
 async function countColors(
 	data: Uint8ClampedArray,
 	minAlpha: number,
@@ -148,7 +163,11 @@ async function countColors(
 
 		while (index < data.length && performance.now() - start < chunkDurationMs) {
 			if (data[index + 3] >= minAlpha) {
-				const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+				const key = rgbToKey({
+					r: data[index],
+					g: data[index + 1],
+					b: data[index + 2]
+				});
 				counts.set(key, (counts.get(key) ?? 0) + 1);
 			}
 
@@ -162,7 +181,7 @@ async function countColors(
 	return counts;
 }
 
-/** Replaces eligible pixel RGB values in one row, optionally normalizing alpha. */
+/** Repaints one row in place, forcing alpha to opaque unless we are preserving it. */
 function applyRow(
 	data: Uint8ClampedArray,
 	row: number,
@@ -178,7 +197,11 @@ function applyRow(
 		if (excludedPixels?.has(index / 4)) continue;
 		if (data[index + 3] < transparency.minAlpha) continue;
 
-		const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+		const key = rgbToKey({
+			r: data[index],
+			g: data[index + 1],
+			b: data[index + 2]
+		});
 		const target = lookup.get(key);
 
 		if (!target) continue;
@@ -191,7 +214,7 @@ function applyRow(
 	}
 }
 
-/** Rejects mask indexes that cannot refer to a pixel in the source image. */
+/** Throws when the exclusion mask names a pixel that does not exist. */
 function validateExcludedPixels(
 	excludedPixels: ReadonlySet<number> | undefined,
 	pixelCount: number
@@ -200,7 +223,9 @@ function validateExcludedPixels(
 
 	for (const index of excludedPixels) {
 		if (!Number.isInteger(index) || index < 0 || index >= pixelCount) {
-			throw new RangeError(`excludedPixels contains an invalid pixel index: ${index}`);
+			throw new RangeError(
+				`excludedPixels contains an invalid pixel index: ${index}`
+			);
 		}
 	}
 }

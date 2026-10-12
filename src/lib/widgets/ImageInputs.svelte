@@ -1,10 +1,10 @@
 <script lang="ts">
-	import DropZone from "#lib/components/DropZone.svelte";
 	import { t } from 'svelte-i18n';
+	import DropZone from '#lib/components/DropZone.svelte';
 
 	let {
 		palette = $bindable(null),
-		sprite = $bindable(null),
+		sprite = $bindable(null)
 	}: {
 		palette: File | null;
 		sprite: File | null;

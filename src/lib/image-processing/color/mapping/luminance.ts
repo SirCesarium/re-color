@@ -1,17 +1,20 @@
-import { keyToRgb, luminance } from '../metrics.ts';
 import type { ColorMappingInput, Rgb } from '../../types.ts';
+import { keyToRgb, luminance } from '../metrics.ts';
 import { fillUnmapped, pairByRank } from './shared.ts';
 
 /**
- * Maps source and palette colors by their ascending weighted luminance.
+ * Sorts source colors and palette by brightness and pairs them up, so the
+ * shading order of the sprite survives the swap.
  *
- * A single source color is mapped to the palette entry with the nearest luminance.
- * Missing rank matches use the configured fallback behavior.
+ * A single source color goes to the palette entry with the closest luminance.
+ * Ranks the pairing never reaches follow the configured fallback.
  *
  * @param input Source keys, active palette, luminance weights, and fallback policy.
  * @returns A mapping for matched keys, with fallback entries when configured.
  */
-export function mapByLuminance(input: ColorMappingInput): ReadonlyMap<number, Rgb> {
+export function mapByLuminance(
+	input: ColorMappingInput
+): ReadonlyMap<number, Rgb> {
 	const { keys, palette, config } = input;
 	const result = new Map<number, Rgb>();
 
@@ -23,7 +26,9 @@ export function mapByLuminance(input: ColorMappingInput): ReadonlyMap<number, Rg
 			luminance(keyToRgb(b), config.luminanceWeights)
 	);
 	const sortedPalette = [...palette].sort(
-		(a, b) => luminance(a, config.luminanceWeights) - luminance(b, config.luminanceWeights)
+		(a, b) =>
+			luminance(a, config.luminanceWeights) -
+			luminance(b, config.luminanceWeights)
 	);
 
 	if (sortedKeys.length === 1 && sortedPalette.length > 1) {

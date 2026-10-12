@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { t } from 'svelte-i18n';
 	import Link from '#lib/components/Link.svelte';
 	import Typography from '#lib/components/Typography.svelte';
-	import { t } from 'svelte-i18n';
+	import { resolve } from '$app/paths';
 </script>
 
 <svelte:head>

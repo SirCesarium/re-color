@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { t } from 'svelte-i18n';
 	import Typography from '#lib/components/Typography.svelte';
 	import { LocalizedError } from '#lib/i18n/localized-error.ts';
-	import { t } from 'svelte-i18n';
 	import { validateImageFile } from '#lib/image-processing/image/validation.ts';
 
 	let {
@@ -52,7 +52,10 @@
 			file = candidate;
 		} catch (cause) {
 			if (id !== selectionId) return;
-			error = cause instanceof LocalizedError ? cause.messageId : 'dropzone.readFailed';
+			error =
+				cause instanceof LocalizedError
+					? cause.messageId
+					: 'dropzone.readFailed';
 		}
 	}
 

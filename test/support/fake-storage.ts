@@ -1,6 +1,8 @@
-/** A `localStorage` stand-in backed by a map, since bun does not expose one in tests. */
-
-/** Provides an in-memory `localStorage` while the global is missing. */
+/**
+ * Installs an in-memory `localStorage` while the real global is missing, which
+ * is always under bun. Backed by a plain map; returns a cleanup that restores
+ * whatever was there before.
+ */
 export function installFakeLocalStorage(): () => void {
 	const globals = globalThis as Record<string, unknown>;
 	const previous = globals.localStorage;

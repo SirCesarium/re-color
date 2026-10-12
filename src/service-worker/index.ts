@@ -10,36 +10,36 @@ const CACHE = `${CACHE_PREFIX}${version}`;
 const toPathname = (path: string) => (path.startsWith('/') ? path : `/${path}`);
 
 const ASSETS = [
-	...immutable.map((file) => toPathname(file.path)),
-	...assets.map((file) => toPathname(file.path)),
-	...prerendered.map((page) => toPathname(page.path))
+	...immutable.map(file => toPathname(file.path)),
+	...assets.map(file => toPathname(file.path)),
+	...prerendered.map(page => toPathname(page.path))
 ];
 const PRECACHED_PATHS = new Set(ASSETS);
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
 	event.waitUntil(
 		caches
 			.open(CACHE)
-			.then((cache) => cache.addAll(ASSETS))
+			.then(cache => cache.addAll(ASSETS))
 			.then(() => self.skipWaiting())
 	);
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
 	event.waitUntil(
 		(async () => {
 			const keys = await caches.keys();
 			const previousCaches = keys.filter(
-				(key) => /^cache-\d+$/.test(key) && key !== CACHE
+				key => /^cache-\d+$/.test(key) && key !== CACHE
 			);
 
-			await Promise.all(previousCaches.map((key) => caches.delete(key)));
+			await Promise.all(previousCaches.map(key => caches.delete(key)));
 			await self.clients.claim();
 		})()
 	);
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
 	if (event.request.method !== 'GET') return;
 
 	const url = new URL(event.request.url);
@@ -62,7 +62,10 @@ self.addEventListener('fetch', (event) => {
 					: event.request;
 				const response = await fetch(request);
 
-				if (response.ok && !response.headers.get('cache-control')?.includes('no-store')) {
+				if (
+					response.ok &&
+					!response.headers.get('cache-control')?.includes('no-store')
+				) {
 					await cache.put(event.request, response.clone());
 				}
 

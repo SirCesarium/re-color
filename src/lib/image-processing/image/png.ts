@@ -28,15 +28,18 @@ export type DecodedPng = {
 	data: Uint8ClampedArray<ArrayBuffer>;
 };
 
-/** Returns whether the bytes begin with the PNG signature. */
+/** Whether the bytes start with the 8-byte PNG signature. */
 export function isPng(data: Uint8Array): boolean {
 	return SIGNATURE.every((byte, index) => data[index] === byte);
 }
 
 /**
- * Decodes PNG samples directly, bypassing browser color-profile and gamma conversion.
+ * Decodes a PNG into raw RGBA samples.
  *
- * Supports indexed, grayscale, truecolor, and alpha PNGs, including Adam7 interlacing.
+ * The file is parsed here instead of going through `createImageBitmap` or an
+ * `<img>` because browsers apply color-profile and gamma conversion on those
+ * paths, which would silently change the very pixels we want to measure.
+ * Indexed, grayscale, truecolor and alpha images all work, interlaced or not.
  */
 export function decodePng(data: Uint8Array): DecodedPng {
 	if (!isPng(data)) throw new TypeError('Input is not a PNG image');
@@ -55,12 +58,14 @@ export function decodePng(data: Uint8Array): DecodedPng {
 		const bodyOffset = offset + 8;
 		const nextOffset = bodyOffset + length + 4;
 
-		if (nextOffset > data.length) throw new Error('PNG chunk extends past the end of the file');
+		if (nextOffset > data.length)
+			throw new Error('PNG chunk extends past the end of the file');
 
 		const type = readChunkType(data, typeOffset);
 		const body = data.subarray(bodyOffset, bodyOffset + length);
 
-		if (!header && type !== 'IHDR') throw new Error('PNG header must be the first chunk');
+		if (!header && type !== 'IHDR')
+			throw new Error('PNG header must be the first chunk');
 
 		switch (type) {
 			case 'IHDR':
@@ -107,7 +112,10 @@ export function decodePng(data: Uint8Array): DecodedPng {
 
 	validateHeader(header, palette, transparency);
 
-	const compressedLength = compressed.reduce((total, part) => total + part.length, 0);
+	const compressedLength = compressed.reduce(
+		(total, part) => total + part.length,
+		0
+	);
 	const compressedData = new Uint8Array(compressedLength);
 	let compressedOffset = 0;
 	for (const part of compressed) {
@@ -117,10 +125,12 @@ export function decodePng(data: Uint8Array): DecodedPng {
 
 	const raw = unzlibSync(compressedData);
 	const outputSize = header.width * header.height * 4;
-	if (!Number.isSafeInteger(outputSize)) throw new RangeError('PNG dimensions are too large');
+	if (!Number.isSafeInteger(outputSize))
+		throw new RangeError('PNG dimensions are too large');
 	const rgba = new Uint8ClampedArray(outputSize);
 	const channels = channelCount(header.colorType);
-	const passes = header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
+	const passes =
+		header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
 	let rawOffset = 0;
 
 	for (const pass of passes) {
@@ -129,11 +139,15 @@ export function decodePng(data: Uint8Array): DecodedPng {
 		if (width === 0 || height === 0) continue;
 
 		const rowBytes = Math.ceil((width * channels * header.bitDepth) / 8);
-		const filterBytesPerPixel = Math.max(1, Math.ceil((channels * header.bitDepth) / 8));
+		const filterBytesPerPixel = Math.max(
+			1,
+			Math.ceil((channels * header.bitDepth) / 8)
+		);
 		let previous = new Uint8Array(rowBytes);
 
 		for (let rowIndex = 0; rowIndex < height; rowIndex++) {
-			if (rawOffset + rowBytes + 1 > raw.length) throw new Error('PNG pixel data is truncated');
+			if (rawOffset + rowBytes + 1 > raw.length)
+				throw new Error('PNG pixel data is truncated');
 
 			const filter = raw[rawOffset++];
 			const row = unfilterRow(
@@ -147,29 +161,26 @@ export function decodePng(data: Uint8Array): DecodedPng {
 			for (let column = 0; column < width; column++) {
 				const x = pass.x + column * pass.dx;
 				const y = pass.y + rowIndex * pass.dy;
-				writePixel(
-					row,
-					column,
-					x,
-					y,
-					header,
-					palette,
-					transparency,
-					rgba
-				);
+				writePixel(row, column, x, y, header, palette, transparency, rgba);
 			}
 
 			previous = row;
 		}
 	}
 
-	if (rawOffset !== raw.length) throw new Error('PNG contains unexpected decompressed pixel data');
+	if (rawOffset !== raw.length)
+		throw new Error('PNG contains unexpected decompressed pixel data');
 
 	return { width: header.width, height: header.height, data: rgba };
 }
 
 function readChunkType(data: Uint8Array, offset: number): string {
-	return String.fromCharCode(data[offset], data[offset + 1], data[offset + 2], data[offset + 3]);
+	return String.fromCharCode(
+		data[offset],
+		data[offset + 1],
+		data[offset + 2],
+		data[offset + 3]
+	);
 }
 
 function validateHeader(
@@ -186,15 +197,26 @@ function validateHeader(
 	};
 	const depths = legalDepths[header.colorType];
 
-	if (!header.width || !header.height || !Number.isSafeInteger(header.width * header.height)) {
+	if (
+		!header.width ||
+		!header.height ||
+		!Number.isSafeInteger(header.width * header.height)
+	) {
 		throw new RangeError('Invalid PNG dimensions');
 	}
 	if (header.width > MAX_IMAGE_WIDTH || header.height > MAX_IMAGE_HEIGHT) {
-		throw new RangeError('PNG dimensions exceed the supported 512 × 512 pixel limit');
+		throw new RangeError(
+			'PNG dimensions exceed the supported 512 × 512 pixel limit'
+		);
 	}
-	if (!depths?.includes(header.bitDepth)) throw new Error('Unsupported PNG color type or bit depth');
-	if (header.interlace !== 0 && header.interlace !== 1) throw new Error('Unsupported PNG interlace method');
-	if (header.colorType === 3 && (!palette || palette.length === 0 || palette.length % 3 !== 0)) {
+	if (!depths?.includes(header.bitDepth))
+		throw new Error('Unsupported PNG color type or bit depth');
+	if (header.interlace !== 0 && header.interlace !== 1)
+		throw new Error('Unsupported PNG interlace method');
+	if (
+		header.colorType === 3 &&
+		(!palette || palette.length === 0 || palette.length % 3 !== 0)
+	) {
 		throw new Error('Indexed PNG is missing a valid palette');
 	}
 	if (
@@ -207,7 +229,9 @@ function validateHeader(
 	if (
 		(transparency && header.colorType === 0 && transparency.length !== 2) ||
 		(transparency && header.colorType === 2 && transparency.length !== 6) ||
-		(transparency && header.colorType === 3 && (!palette || transparency.length > palette.length / 3)) ||
+		(transparency &&
+			header.colorType === 3 &&
+			(!palette || transparency.length > palette.length / 3)) ||
 		(transparency && (header.colorType === 4 || header.colorType === 6))
 	) {
 		throw new Error('Invalid PNG transparency chunk');
@@ -245,7 +269,8 @@ function unfilterRow(
 	for (let index = 0; index < row.length; index++) {
 		const left = index >= bytesPerPixel ? row[index - bytesPerPixel] : 0;
 		const above = previous[index] ?? 0;
-		const upperLeft = index >= bytesPerPixel ? (previous[index - bytesPerPixel] ?? 0) : 0;
+		const upperLeft =
+			index >= bytesPerPixel ? (previous[index - bytesPerPixel] ?? 0) : 0;
 
 		switch (filter) {
 			case 0:
@@ -276,14 +301,22 @@ function paeth(left: number, above: number, upperLeft: number): number {
 	const aboveDistance = Math.abs(estimate - above);
 	const upperLeftDistance = Math.abs(estimate - upperLeft);
 
-	if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) return left;
+	if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance)
+		return left;
 	return aboveDistance <= upperLeftDistance ? above : upperLeft;
 }
 
-function readSample(row: Uint8Array, pixel: number, component: number, channels: number, depth: number): number {
+function readSample(
+	row: Uint8Array,
+	pixel: number,
+	component: number,
+	channels: number,
+	depth: number
+): number {
 	const sampleIndex = pixel * channels + component;
 	if (depth === 8) return row[sampleIndex];
-	if (depth === 16) return (row[sampleIndex * 2] << 8) | row[sampleIndex * 2 + 1];
+	if (depth === 16)
+		return (row[sampleIndex * 2] << 8) | row[sampleIndex * 2 + 1];
 
 	const bitOffset = sampleIndex * depth;
 	const shift = 8 - depth - (bitOffset % 8);
@@ -318,7 +351,10 @@ function writePixel(
 	switch (colorType) {
 		case 0:
 			red = green = blue = toByte(first, bitDepth);
-			if (transparency?.length === 2 && first === ((transparency[0] << 8) | transparency[1])) {
+			if (
+				transparency?.length === 2 &&
+				first === ((transparency[0] << 8) | transparency[1])
+			) {
 				alpha = 0;
 			}
 			break;

@@ -11,7 +11,10 @@ addMessages('es', es);
 export function localeFromNavigator(): Locale {
 	if (typeof navigator === 'undefined') return DEFAULT_LOCALE;
 
-	for (const candidate of [navigator.language, ...(navigator.languages ?? [])]) {
+	for (const candidate of [
+		navigator.language,
+		...(navigator.languages ?? [])
+	]) {
 		const base = String(candidate).split('-')[0]?.toLowerCase();
 		if (isLocale(base)) return base;
 	}
@@ -28,7 +31,10 @@ function initialLocale(): Locale {
 	if (typeof localStorage === 'undefined') return DEFAULT_LOCALE;
 
 	try {
-		return parseAppSettings(localStorage.getItem(APP_SETTINGS_KEY), localeFromNavigator()).locale;
+		return parseAppSettings(
+			localStorage.getItem(APP_SETTINGS_KEY),
+			localeFromNavigator()
+		).locale;
 	} catch {
 		return DEFAULT_LOCALE;
 	}

@@ -1,14 +1,17 @@
 /**
- * Yields control to the browser between processing chunks.
+ * Hands the browser a chance to paint and run other work between processing
+ * chunks, so a long recolor never freezes the tab.
  *
- * Uses the Scheduler API when available and a zero-delay timer otherwise.
+ * Uses the Scheduler API where it exists, a zero-delay timer everywhere else.
  *
- * @returns A promise resolved after the browser has had an opportunity to run other work.
+ * @returns Resolves once the browser has had its turn.
  */
 export function yieldToBrowser(): Promise<void> {
-	const scheduler = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+	const scheduler = (
+		globalThis as { scheduler?: { yield?: () => Promise<void> } }
+	).scheduler;
 
 	if (scheduler?.yield) return scheduler.yield();
 
-	return new Promise((resolve) => setTimeout(resolve, 0));
+	return new Promise(resolve => setTimeout(resolve, 0));
 }

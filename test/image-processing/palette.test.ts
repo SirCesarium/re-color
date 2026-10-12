@@ -8,12 +8,12 @@ import {
 	TRANSPARENCY_CONFIG
 } from '../../src/lib/config/recolor.ts';
 import { recolorSprite } from '../../src/lib/image-processing/engine.ts';
-import { extractColorsFromFile } from '../../src/lib/image-processing/palette.ts';
 import { decodePng } from '../../src/lib/image-processing/image/png.ts';
 import {
 	MAX_IMAGE_BYTES,
 	validateImageFile
 } from '../../src/lib/image-processing/image/validation.ts';
+import { extractColorsFromFile } from '../../src/lib/image-processing/palette.ts';
 import {
 	chunk,
 	header,
@@ -39,7 +39,10 @@ test('extracts indexed PNG palette samples without applying gamma metadata', asy
 		[233, 176, 21]
 	];
 	const pixels = Array.from({ length: 256 }, (_, index) => (index * 9) % 10);
-	const png = makeIndexedPng(16, 16, palette, pixels, [0, ...Array(9).fill(255)]);
+	const png = makeIndexedPng(16, 16, palette, pixels, [
+		0,
+		...Array(9).fill(255)
+	]);
 
 	const colors = await extractColorsFromFile(
 		pngBlob(png),
@@ -49,7 +52,9 @@ test('extracts indexed PNG palette samples without applying gamma metadata', asy
 
 	expect(colors).toHaveLength(9);
 	expect(new Set(colors.map(({ r, g, b }) => `${r},${g},${b}`)).size).toBe(9);
-	expect(colors.some(({ r, g, b }) => r === 253 && g === 245 && b === 95)).toBe(true);
+	expect(colors.some(({ r, g, b }) => r === 253 && g === 245 && b === 95)).toBe(
+		true
+	);
 });
 
 test('decodes interlaced RGBA PNG pixels into their original row-major order', () => {
@@ -93,13 +98,25 @@ test('extracts packed 4-bit indexed PNG samples exactly', async () => {
 });
 
 test('accepts PNG images up to the configured dimensions', async () => {
-	const png = makeIndexedPng(512, 512, [[20, 40, 60]], Array(512 * 512).fill(0), [255]);
+	const png = makeIndexedPng(
+		512,
+		512,
+		[[20, 40, 60]],
+		Array(512 * 512).fill(0),
+		[255]
+	);
 
 	await expect(validateImageFile(pngBlob(png))).resolves.toBeUndefined();
 });
 
 test('yields to the event loop while extracting a maximum-size palette image', async () => {
-	const png = makeIndexedPng(512, 512, [[20, 40, 60]], Array(512 * 512).fill(0), [255]);
+	const png = makeIndexedPng(
+		512,
+		512,
+		[[20, 40, 60]],
+		Array(512 * 512).fill(0),
+		[255]
+	);
 	let timerRan = false;
 	setTimeout(() => {
 		timerRan = true;
@@ -115,9 +132,9 @@ test('yields to the event loop while extracting a maximum-size palette image', a
 });
 
 test('rejects non-PNG, oversized, and over-dimensioned uploads', async () => {
-	await expect(validateImageFile(new Blob(['not a png'], { type: 'image/png' }))).rejects.toThrow(
-		'validation.notPng'
-	);
+	await expect(
+		validateImageFile(new Blob(['not a png'], { type: 'image/png' }))
+	).rejects.toThrow('validation.notPng');
 	await expect(
 		validateImageFile(new Blob([new Uint8Array(MAX_IMAGE_BYTES + 1)]))
 	).rejects.toThrow('validation.tooLarge');
@@ -141,7 +158,9 @@ test('PNG decoder rejects excessive dimensions before inflating image data', () 
 });
 
 test('palette extraction and recoloring reject files that are not PNG', async () => {
-	const invalidFile = new File(['not a png'], 'sprite.png', { type: 'image/png' });
+	const invalidFile = new File(['not a png'], 'sprite.png', {
+		type: 'image/png'
+	});
 
 	await expect(
 		extractColorsFromFile(

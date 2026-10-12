@@ -1,57 +1,71 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import ButtonGroup from "#lib/components/ButtonGroup.svelte";
-	import Dropdown from "#lib/components/Dropdown.svelte";
-	import PixelSlider from "#lib/components/PixelSlider.svelte";
-	import SettingRow from "#lib/components/SettingRow.svelte";
-	import SwitchButton from "#lib/components/SwitchButton.svelte";
-	import Typography from "#lib/components/Typography.svelte";
-	import { MAPPING_OPTIONS, MAPPING_STORAGE_KEY } from "#lib/config/recolor.ts";
-	import { localeFromNavigator, setLocale } from "#lib/i18n/index.ts";
-	import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale, type MessageKey } from "#lib/i18n/locales.ts";
-	import { LocalizedError } from "#lib/i18n/localized-error.ts";
+	import { onMount } from 'svelte';
+	import { t } from 'svelte-i18n';
+	import ButtonGroup from '#lib/components/ButtonGroup.svelte';
+	import Dropdown from '#lib/components/Dropdown.svelte';
+	import PixelSlider from '#lib/components/PixelSlider.svelte';
+	import SettingRow from '#lib/components/SettingRow.svelte';
+	import SwitchButton from '#lib/components/SwitchButton.svelte';
+	import Typography from '#lib/components/Typography.svelte';
+	import { MAPPING_OPTIONS, MAPPING_STORAGE_KEY } from '#lib/config/recolor.ts';
+	import { localeFromNavigator, setLocale } from '#lib/i18n/index.ts';
+	import {
+		LOCALE_LABELS,
+		type Locale,
+		type MessageKey,
+		SUPPORTED_LOCALES
+	} from '#lib/i18n/locales.ts';
+	import { LocalizedError } from '#lib/i18n/localized-error.ts';
+	import type { AppSettings } from '#lib/state/app-settings.ts';
 	import {
 		APP_SETTINGS_KEY,
-		DEFAULT_APP_SETTINGS,
 		clearSavedAppData,
 		clearWorkspace,
+		DEFAULT_APP_SETTINGS,
 		exportAppSettings,
 		importAppSettings,
 		loadWorkspace,
 		parseAppSettings,
-		saveWorkspace,
-	} from "#lib/state/app-settings.ts";
-	import type { AppSettings } from "#lib/state/app-settings.ts";
-	import { hintsEnabled } from "#lib/state/hints.ts";
-	import { t } from "svelte-i18n";
+		saveWorkspace
+	} from '#lib/state/app-settings.ts';
+	import { hintsEnabled } from '#lib/state/hints.ts';
 
 	let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
-	let error = $state<{ id: MessageKey; values?: Record<string, string | number> } | null>(null);
+	let error = $state<{
+		id: MessageKey;
+		values?: Record<string, string | number>;
+	} | null>(null);
 	let loading = $state(true);
 
 	const mappingOptions = $derived(
-		MAPPING_OPTIONS.map((option) => ({ value: option.value, label: $t(option.labelKey) })),
+		MAPPING_OPTIONS.map(option => ({
+			value: option.value,
+			label: $t(option.labelKey)
+		}))
 	);
 	const localeOptions = $derived(
-		SUPPORTED_LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] })),
+		SUPPORTED_LOCALES.map(value => ({ value, label: LOCALE_LABELS[value] }))
 	);
 
 	onMount(() => {
 		try {
-			settings = parseAppSettings(localStorage.getItem(APP_SETTINGS_KEY), localeFromNavigator());
+			settings = parseAppSettings(
+				localStorage.getItem(APP_SETTINGS_KEY),
+				localeFromNavigator()
+			);
 		} catch (cause) {
-			console.error("Could not read saved app settings", cause);
-			error = { id: "settings.errorLoad" };
+			console.error('Could not read saved app settings', cause);
+			error = { id: 'settings.errorLoad' };
 		}
 
 		document.documentElement.classList.toggle(
-			"animations-disabled",
-			!settings.animationsEnabled,
+			'animations-disabled',
+			!settings.animationsEnabled
 		);
 		loading = false;
 
 		return () => {
-			document.documentElement.classList.remove("animations-disabled");
+			document.documentElement.classList.remove('animations-disabled');
 		};
 	});
 
@@ -60,8 +74,8 @@
 			localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings));
 			error = null;
 		} catch (cause) {
-			console.error("Could not save app settings", cause);
-			error = { id: "settings.errorSave" };
+			console.error('Could not save app settings', cause);
+			error = { id: 'settings.errorSave' };
 		}
 	}
 
@@ -73,10 +87,7 @@
 
 	function updateAnimations(enabled: boolean) {
 		settings.animationsEnabled = enabled;
-		document.documentElement.classList.toggle(
-			"animations-disabled",
-			!enabled,
-		);
+		document.documentElement.classList.toggle('animations-disabled', !enabled);
 		persistSettings();
 	}
 
@@ -101,10 +112,10 @@
 				error = null;
 			} catch (cause) {
 				console.error(
-					"Could not clear saved workspace after disabling persistence",
-					cause,
+					'Could not clear saved workspace after disabling persistence',
+					cause
 				);
-				error = { id: "settings.errorWorkspaceClear" };
+				error = { id: 'settings.errorWorkspaceClear' };
 			}
 		}
 	}
@@ -116,13 +127,13 @@
 
 	function exportSettings() {
 		const blob = new Blob([exportAppSettings(settings)], {
-			type: "application/json",
+			type: 'application/json'
 		});
 		const url = URL.createObjectURL(blob);
-		const link = document.createElement("a");
+		const link = document.createElement('a');
 
 		link.href = url;
-		link.download = "re-color-settings.json";
+		link.download = 're-color-settings.json';
 		link.click();
 
 		setTimeout(() => URL.revokeObjectURL(url), 0);
@@ -137,30 +148,28 @@
 			setLocale(importedSettings.locale);
 			hintsEnabled.set(importedSettings.hintsEnabled);
 			document.documentElement.classList.toggle(
-				"animations-disabled",
-				!importedSettings.animationsEnabled,
+				'animations-disabled',
+				!importedSettings.animationsEnabled
 			);
 			persistSettings();
 
 			if (!importedSettings.persistWorkspace) await clearWorkspace();
 		} catch (cause) {
-			console.error("Could not import settings file", cause);
+			console.error('Could not import settings file', cause);
 			error =
 				cause instanceof LocalizedError
 					? { id: cause.messageId, values: cause.values }
-					: { id: "settings.errorImport" };
+					: { id: 'settings.errorImport' };
 		}
 	}
 
 	function handleImportSelection(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		void importSettings(input.files?.[0]);
-		input.value = "";
+		input.value = '';
 	}
 
-	async function updateDefaultMapping(
-		mapping: AppSettings["defaultMapping"],
-	) {
+	async function updateDefaultMapping(mapping: AppSettings['defaultMapping']) {
 		settings.defaultMapping = mapping;
 		persistSettings();
 
@@ -169,10 +178,10 @@
 			if (workspace) await saveWorkspace({ ...workspace, mapping });
 		} catch (cause) {
 			console.error(
-				"Could not save default mapping to current workspace",
-				cause,
+				'Could not save default mapping to current workspace',
+				cause
 			);
-			error = { id: "settings.errorMappingSave" };
+			error = { id: 'settings.errorMappingSave' };
 		}
 	}
 
@@ -180,11 +189,11 @@
 		settings = { ...DEFAULT_APP_SETTINGS };
 		setLocale(DEFAULT_APP_SETTINGS.locale);
 		hintsEnabled.set(DEFAULT_APP_SETTINGS.hintsEnabled);
-		document.documentElement.classList.remove("animations-disabled");
+		document.documentElement.classList.remove('animations-disabled');
 	}
 
 	function resetSettings() {
-		if (!confirm($t("settings.resetConfirm"))) return;
+		if (!confirm($t('settings.resetConfirm'))) return;
 
 		applyDefaults();
 		localStorage.removeItem(MAPPING_STORAGE_KEY);
@@ -192,15 +201,15 @@
 	}
 
 	async function handleClearAppData() {
-		if (!confirm($t("settings.clearConfirm"))) return;
+		if (!confirm($t('settings.clearConfirm'))) return;
 
 		try {
 			await clearSavedAppData();
 			applyDefaults();
 			persistSettings();
 		} catch (cause) {
-			console.error("Could not clear saved app data", cause);
-			error = { id: "settings.errorClear" };
+			console.error('Could not clear saved app data', cause);
+			error = { id: 'settings.errorClear' };
 		}
 	}
 </script>

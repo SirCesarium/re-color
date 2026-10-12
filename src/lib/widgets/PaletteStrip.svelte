@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Hint from '#lib/components/Hint.svelte';
 	import { t } from 'svelte-i18n';
 	import { cssRgb, type PaletteColor } from '#lib';
+	import Hint from '#lib/components/Hint.svelte';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 
@@ -16,7 +16,15 @@
 	const MAX_HINTS = 2;
 	const HINT_LIFETIME = 4000;
 
-	const PLACEHOLDER = ['red', 'orange', 'yellow', 'green', 'aqua', 'blue', 'purple'];
+	const PLACEHOLDER = [
+		'red',
+		'orange',
+		'yellow',
+		'green',
+		'aqua',
+		'blue',
+		'purple'
+	];
 
 	onMount(() => {
 		const seen = Number(localStorage.getItem(HINT_KEY) ?? 0);

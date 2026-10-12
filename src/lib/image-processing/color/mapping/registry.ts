@@ -1,7 +1,11 @@
+import type {
+	ColorMappingConfig,
+	ColorMappingInput,
+	Rgb
+} from '../../types.ts';
 import { mapDominant } from './dominant.ts';
 import { mapByLuminance } from './luminance.ts';
 import { mapNearest } from './nearest.ts';
-import type { ColorMappingConfig, ColorMappingInput, Rgb } from '../../types.ts';
 
 const BUILT_IN_STRATEGIES = {
 	nearest: mapNearest,
@@ -10,12 +14,13 @@ const BUILT_IN_STRATEGIES = {
 };
 
 /**
- * Creates a source-color lookup using a built-in algorithm or an injected strategy.
+ * Builds the source-color lookup, either with a built-in algorithm or with the
+ * caller's injected strategy.
  *
- * @param input Prepared source keys, active palette colors, pixel counts, settings, and cancellation hook.
- * @param config Selects the built-in mode and optional custom strategy.
- * @returns A mapping table or a promise for a plugin-produced mapping table.
- * @throws Errors thrown or rejected by a custom strategy are propagated to the caller.
+ * @param input Prepared source keys, active palette, pixel counts, settings, and cancellation hook.
+ * @param config Selects the built-in mode and the optional custom strategy.
+ * @returns A mapping table, or a promise for one when a plugin produced it.
+ * @throws Errors thrown or rejected by a custom strategy are passed straight through.
  */
 export function createColorLookup(
 	input: ColorMappingInput,
