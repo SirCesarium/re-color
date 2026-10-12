@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Typography from '#lib/components/Typography.svelte';
+	import Typography from '#app/components/Typography.svelte';
 </script>
 
 <Typography as="h1" variant="wordmark">

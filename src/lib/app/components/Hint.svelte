@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { t } from 'svelte-i18n';
-	import Typography from '#lib/components/Typography.svelte';
+	import Typography from '#app/components/Typography.svelte';
 
 	let {
 		text = null,

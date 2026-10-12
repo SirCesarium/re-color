@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 // Registers the message catalogs and the locale so $t resolves real text.
-import '../src/lib/i18n/index.ts';
+import '../src/lib/app/i18n/index.ts';
 import DropZoneHarness from './support/DropZoneHarness.svelte';
 
 const textFile = new File(['plain text, not a png'], 'sprite.png', {

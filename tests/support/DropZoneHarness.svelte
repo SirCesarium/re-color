@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DropZone from '../../src/lib/components/DropZone.svelte';
+	import DropZone from '../../src/lib/app/components/DropZone.svelte';
 
 	let {
 		validate

@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { zlibSync } from 'fflate';
+import { recolorSprite } from '../../src/lib/core/image-processing/engine.ts';
+import { composeExcludedPixels } from '../../src/lib/core/image-processing/image/canvas.ts';
+import type {
+	PaletteColor,
+	RecolorConfig
+} from '../../src/lib/core/image-processing/types.ts';
 import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
 	OUTPUT_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
-} from '../../src/lib/config/recolor.ts';
-import { recolorSprite } from '../../src/lib/image-processing/engine.ts';
-import { composeExcludedPixels } from '../../src/lib/image-processing/image/canvas.ts';
-import type {
-	PaletteColor,
-	RecolorConfig
-} from '../../src/lib/image-processing/types.ts';
+} from '../../src/lib/core/recolor.ts';
 import {
 	installFakeCanvas,
 	readObjectUrlPixels,

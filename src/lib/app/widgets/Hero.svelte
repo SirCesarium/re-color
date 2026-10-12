@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
+	import Typography from '#app/components/Typography.svelte';
+	import Wordmark from '#app/components/Wordmark.svelte';
+	import PaletteStrip from '#app/widgets/PaletteStrip.svelte';
 	import type { PaletteColor } from '#lib';
-	import Typography from '#lib/components/Typography.svelte';
-	import Wordmark from '#lib/components/Wordmark.svelte';
-	import PaletteStrip from '#lib/widgets/PaletteStrip.svelte';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 </script>

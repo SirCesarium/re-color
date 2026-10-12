@@ -4,8 +4,8 @@
 	import {
 		fitImageInViewport,
 		pixelAtPoint
-	} from '#lib/geometry/pixel-coords.ts';
-	import { linePoints } from '#lib/geometry/stroke-line.ts';
+	} from '#core/geometry/pixel-coords.ts';
+	import { linePoints } from '#core/geometry/stroke-line.ts';
 
 	let {
 		imageUrl = null,

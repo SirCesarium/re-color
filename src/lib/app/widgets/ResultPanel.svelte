@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { t } from 'svelte-i18n';
-	import Button from '#lib/components/Button.svelte';
-	import Hint from '#lib/components/Hint.svelte';
-	import Typography from '#lib/components/Typography.svelte';
-	import { hintsEnabled } from '#lib/state/hints.ts';
-	import PixelCanvas from '#lib/widgets/PixelCanvas.svelte';
+	import Button from '#app/components/Button.svelte';
+	import Hint from '#app/components/Hint.svelte';
+	import Typography from '#app/components/Typography.svelte';
+	import { hintsEnabled } from '#app/state/hints.ts';
+	import PixelCanvas from '#app/widgets/PixelCanvas.svelte';
 
 	let {
 		imageUrl = null,

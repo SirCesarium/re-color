@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import Typography from '#lib/components/Typography.svelte';
+	import Typography from '#app/components/Typography.svelte';
 
 	let {
 		label,

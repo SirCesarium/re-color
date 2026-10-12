@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import Button from '#lib/components/Button.svelte';
-	import ButtonGroup from '#lib/components/ButtonGroup.svelte';
-	import Hint from '#lib/components/Hint.svelte';
-	import Typography from '#lib/components/Typography.svelte';
-	import { MAPPING_OPTIONS } from '#lib/config/recolor.ts';
-	import { hintsEnabled } from '#lib/state/hints.ts';
-	import { createRecolorWorkflow } from '#lib/state/workflow/store.svelte.ts';
-	import Hero from '#lib/widgets/Hero.svelte';
-	import ImageInputs from '#lib/widgets/ImageInputs.svelte';
-	import ResultPanel from '#lib/widgets/ResultPanel.svelte';
+	import Button from '#app/components/Button.svelte';
+	import ButtonGroup from '#app/components/ButtonGroup.svelte';
+	import Hint from '#app/components/Hint.svelte';
+	import Typography from '#app/components/Typography.svelte';
+	import { hintsEnabled } from '#app/state/hints.ts';
+	import { createRecolorWorkflow } from '#app/state/workflow/store.svelte.ts';
+	import Hero from '#app/widgets/Hero.svelte';
+	import ImageInputs from '#app/widgets/ImageInputs.svelte';
+	import ResultPanel from '#app/widgets/ResultPanel.svelte';
+	import { MAPPING_OPTIONS } from '#core/recolor.ts';
 
 	const workflow = createRecolorWorkflow();
 

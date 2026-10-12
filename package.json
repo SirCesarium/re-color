@@ -41,7 +41,9 @@
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",
-		"#lib/*": "./src/lib/*"
+		"#lib/*": "./src/lib/*",
+		"#app/*": "./src/lib/app/*",
+		"#core/*": "./src/lib/core/*"
 	},
 	"dependencies": {
 		"fflate": "^0.8.3",

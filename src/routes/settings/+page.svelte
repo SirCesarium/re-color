@@ -1,38 +1,38 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { t } from 'svelte-i18n';
-	import ButtonGroup from '#lib/components/ButtonGroup.svelte';
-	import Dropdown from '#lib/components/Dropdown.svelte';
-	import PixelSlider from '#lib/components/PixelSlider.svelte';
-	import SettingRow from '#lib/components/SettingRow.svelte';
-	import SwitchButton from '#lib/components/SwitchButton.svelte';
-	import Typography from '#lib/components/Typography.svelte';
-	import { MAPPING_OPTIONS, MAPPING_STORAGE_KEY } from '#lib/config/recolor.ts';
-	import { localeFromNavigator, setLocale } from '#lib/i18n/index.ts';
+	import ButtonGroup from '#app/components/ButtonGroup.svelte';
+	import Dropdown from '#app/components/Dropdown.svelte';
+	import PixelSlider from '#app/components/PixelSlider.svelte';
+	import SettingRow from '#app/components/SettingRow.svelte';
+	import SwitchButton from '#app/components/SwitchButton.svelte';
+	import Typography from '#app/components/Typography.svelte';
+	import { localeFromNavigator, setLocale } from '#app/i18n/index.ts';
 	import {
 		LOCALE_LABELS,
 		type Locale,
 		type MessageKey,
 		SUPPORTED_LOCALES
-	} from '#lib/i18n/locales.ts';
-	import { LocalizedError } from '#lib/i18n/localized-error.ts';
-	import { hintsEnabled } from '#lib/state/hints.ts';
+	} from '#app/i18n/locales.ts';
+	import { LocalizedError } from '#app/i18n/localized-error.ts';
+	import { hintsEnabled } from '#app/state/hints.ts';
 	import {
 		type AppSettings,
 		DEFAULT_APP_SETTINGS
-	} from '#lib/state/settings/model.ts';
+	} from '#app/state/settings/model.ts';
 	import {
 		APP_SETTINGS_KEY,
 		clearSavedAppData,
 		exportAppSettings,
 		importAppSettings,
 		parseAppSettings
-	} from '#lib/state/settings/repository.ts';
+	} from '#app/state/settings/repository.ts';
 	import {
 		clearWorkspace,
 		loadWorkspace,
 		saveWorkspace
-	} from '#lib/state/workspace.ts';
+	} from '#app/state/workspace.ts';
+	import { MAPPING_OPTIONS, MAPPING_STORAGE_KEY } from '#core/recolor.ts';
 
 	let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
 	let error = $state<{

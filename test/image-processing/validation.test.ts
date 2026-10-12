@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import {
 	MAX_IMAGE_BYTES,
 	validateImageFile
-} from '../../src/lib/image-processing/image/validation.ts';
+} from '../../src/lib/core/image-processing/image/validation.ts';
 import {
 	chunk,
 	header,

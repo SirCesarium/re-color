@@ -1,10 +1,10 @@
 import { z } from 'zod';
+import type { MappingMode } from '#core/image-processing/index.ts';
 import {
 	DEFAULT_LOCALE,
 	LOCALE_SCHEMA,
 	type Locale
 } from '../../i18n/locales.ts';
-import type { MappingMode } from '../../image-processing/index.ts';
 
 export type AppSettings = {
 	animationsEnabled: boolean;

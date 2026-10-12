@@ -1,14 +1,14 @@
 import { expect, test } from 'bun:test';
+import { recolorSprite } from '../../src/lib/core/image-processing/engine.ts';
+import { extractColorsFromFile } from '../../src/lib/core/image-processing/palette.ts';
+import type { RecolorConfig } from '../../src/lib/core/image-processing/types.ts';
 import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
 	OUTPUT_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
-} from '../../src/lib/config/recolor.ts';
-import { recolorSprite } from '../../src/lib/image-processing/engine.ts';
-import { extractColorsFromFile } from '../../src/lib/image-processing/palette.ts';
-import type { RecolorConfig } from '../../src/lib/image-processing/types.ts';
+} from '../../src/lib/core/recolor.ts';
 
 const invalidFile = new File(['x'], 'sprite.png', { type: 'image/png' });
 const canvasConfig = { willReadFrequently: true, colorSpace: 'srgb' as const };

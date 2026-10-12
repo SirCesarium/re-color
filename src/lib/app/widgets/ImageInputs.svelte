@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
+	import DropZone from '#app/components/DropZone.svelte';
+	import type { MessageKey } from '#app/i18n/locales.ts';
 	import {
 		type ValidationCode,
 		ValidationError,
 		validateImageFile
 	} from '#lib';
-	import DropZone from '#lib/components/DropZone.svelte';
-	import type { MessageKey } from '#lib/i18n/locales.ts';
 
 	let {
 		palette = $bindable(null),

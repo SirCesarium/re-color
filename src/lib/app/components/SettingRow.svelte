@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import Typography from '#lib/components/Typography.svelte';
+	import Typography from '#app/components/Typography.svelte';
 
 	let {
 		title,

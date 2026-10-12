@@ -1,5 +1,5 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
-import type { MappingMode } from '../image-processing/index.ts';
+import type { MappingMode } from '#core/image-processing/index.ts';
 
 export type PersistedWorkspace = {
 	palette: { name: string; blob: Blob } | null;

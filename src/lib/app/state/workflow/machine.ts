@@ -1,8 +1,8 @@
-import type { MessageKey } from '../../i18n/locales.ts';
 import type {
 	MappingMode,
 	PaletteColor
-} from '../../image-processing/index.ts';
+} from '#core/image-processing/index.ts';
+import type { MessageKey } from '../../i18n/locales.ts';
 
 /**
  * The recolor workflow's decision logic, extracted from the reactive closure so

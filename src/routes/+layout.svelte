@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import '../app.css';
-	import SiteFooter from '#lib/widgets/SiteFooter.svelte';
+	import SiteFooter from '#app/widgets/SiteFooter.svelte';
 
 	let { children } = $props();
 

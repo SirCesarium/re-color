@@ -6,7 +6,7 @@ import {
 	type RecolorConfig,
 	type TransparencyConfig,
 	yieldToBrowser
-} from '../image-processing/index.ts';
+} from '#core/image-processing/index.ts';
 
 export const MAPPING_STORAGE_KEY = 'recolor.mapping';
 

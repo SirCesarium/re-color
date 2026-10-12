@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import Link from '#lib/components/Link.svelte';
+	import Link from '#app/components/Link.svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 

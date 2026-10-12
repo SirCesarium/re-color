@@ -1,5 +1,13 @@
 import { onDestroy, onMount, untrack } from 'svelte';
 import {
+	composeExcludedPixels,
+	extractColorsFromFile,
+	type MappingMode,
+	type PaletteColor,
+	type RecolorConfig,
+	recolorSprite
+} from '#core/image-processing/index.ts';
+import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
 	MAPPING_STORAGE_KEY,
@@ -8,17 +16,9 @@ import {
 	PALETTE_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
-} from '../../config/recolor.ts';
+} from '#core/recolor.ts';
 import { localeFromNavigator } from '../../i18n/index.ts';
 import type { MessageKey } from '../../i18n/locales.ts';
-import {
-	composeExcludedPixels,
-	extractColorsFromFile,
-	type MappingMode,
-	type PaletteColor,
-	type RecolorConfig,
-	recolorSprite
-} from '../../image-processing/index.ts';
 import {
 	type AppSettings,
 	DEFAULT_APP_SETTINGS,

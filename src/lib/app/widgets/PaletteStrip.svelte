@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { t } from 'svelte-i18n';
+	import Hint from '#app/components/Hint.svelte';
+	import { hintsEnabled } from '#app/state/hints.ts';
 	import { cssRgb, type PaletteColor } from '#lib';
-	import Hint from '#lib/components/Hint.svelte';
-	import { hintsEnabled } from '#lib/state/hints.ts';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 
