@@ -29,11 +29,34 @@ import {
 	parseAppSettings
 } from './app-settings.ts';
 import {
+	buttonHint as deriveButtonHint,
+	exclusionSignature,
+	isErrorHint,
+	mappingSignature,
+	shouldAutoRecolor,
+	shouldRecomposeExclusions,
+	shouldRunInitialRecolor,
+	type WorkflowSnapshot
+} from './workflow/machine.ts';
+import {
 	clearWorkspace,
 	loadWorkspace,
 	type PersistedWorkspace,
 	saveWorkspace
 } from './workspace.ts';
+
+/** A snapshot where every field is neutral; guards ignore the ones they don't read. */
+const IDLE_SNAPSHOT: WorkflowSnapshot = {
+	ready: false,
+	busy: false,
+	noActiveColors: false,
+	autoRecolor: false,
+	hasResult: false,
+	resultMappingSignature: null,
+	resultExclusionSignature: null,
+	paletteColorsLoaded: false,
+	workspaceLoaded: false
+};
 
 type WorkflowState = {
 	palette: File | null;
@@ -55,16 +78,6 @@ type WorkflowState = {
 	progress: number;
 	hint: MessageKey | null;
 };
-
-/** Hints that report a failure: they show up even with help hints turned off. */
-const ERROR_HINT_KEYS = new Set<MessageKey>([
-	'workflow.restoreFailed',
-	'workflow.saveSettingsFailed',
-	'workflow.saveDataFailed',
-	'workflow.recolorFailed',
-	'workflow.exclusionFailed',
-	'workflow.paletteFailed'
-]);
 
 /** Sets up the reactive state and lifecycle effects for one recolor page. */
 export function createRecolorWorkflow() {
@@ -89,29 +102,26 @@ export function createRecolorWorkflow() {
 		state.colors.filter(color => color.active).length
 	);
 	const noActiveColors = $derived(activeColors === 0);
-	const mappingSig = $derived(
-		`${state.mapping}:${state.colors.map(color => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`).join(';')}`
-	);
-	const exclusionSig = $derived(
-		[...state.excludedPixels].sort((a, b) => a - b).join(',')
-	);
+	const mappingSig = $derived(mappingSignature(state.mapping, state.colors));
+	const exclusionSig = $derived(exclusionSignature(state.excludedPixels));
 	const buttonHint = $derived.by<MessageKey | null>(() => {
-		if (ready && noActiveColors) return 'workflow.noColors';
+		const result = state.result;
 
-		if (
-			ready &&
-			state.result &&
-			!state.busy &&
-			state.result.mappingSignature !== mappingSig &&
-			!state.settings.autoRecolor
-		) {
-			return 'workflow.applyChanges';
-		}
-		return state.hint;
+		return deriveButtonHint(
+			{
+				...IDLE_SNAPSHOT,
+				ready,
+				busy: state.busy,
+				noActiveColors,
+				autoRecolor: state.settings.autoRecolor,
+				hasResult: result !== null,
+				resultMappingSignature: result?.mappingSignature ?? null
+			},
+			mappingSig,
+			state.hint
+		);
 	});
-	const hintIsError = $derived(
-		buttonHint !== null && ERROR_HINT_KEYS.has(buttonHint)
-	);
+	const hintIsError = $derived(isErrorHint(buttonHint));
 
 	let runId = 0;
 	let compositionId = 0;
@@ -518,26 +528,39 @@ export function createRecolorWorkflow() {
 		const autoRecolor = state.settings.autoRecolor;
 
 		untrack(() => {
-			if (
-				signature &&
-				result &&
-				result.mappingSignature !== signature &&
-				autoRecolor
-			) {
-				void startRecolor();
-			}
+			const fires = shouldAutoRecolor(
+				{
+					...IDLE_SNAPSHOT,
+					autoRecolor,
+					hasResult: result !== null,
+					resultMappingSignature: result?.mappingSignature ?? null
+				},
+				signature
+			);
+
+			if (fires) void startRecolor();
 		});
 	});
 
 	$effect(() => {
-		const canRunInitial =
-			ready && state.paletteColorsLoaded && state.workspaceLoaded;
-		const hasResult = state.result !== null;
+		const isReady = ready;
+		const hasColors = noActiveColors;
+		const paletteReady = state.paletteColorsLoaded;
+		const workspaceReady = state.workspaceLoaded;
+		const result = state.result;
 
 		untrack(() => {
-			if (canRunInitial && !hasResult && !state.busy && !noActiveColors) {
-				void startRecolor();
-			}
+			const fires = shouldRunInitialRecolor({
+				...IDLE_SNAPSHOT,
+				ready: isReady,
+				noActiveColors: hasColors,
+				paletteColorsLoaded: paletteReady,
+				workspaceLoaded: workspaceReady,
+				hasResult: result !== null,
+				busy: state.busy
+			});
+
+			if (fires) void startRecolor();
 		});
 	});
 
@@ -546,9 +569,16 @@ export function createRecolorWorkflow() {
 		const result = state.result;
 
 		untrack(() => {
-			if (!result || result.exclusionSignature === signature) {
-				return;
-			}
+			const fires = shouldRecomposeExclusions(
+				{
+					...IDLE_SNAPSHOT,
+					hasResult: result !== null,
+					resultExclusionSignature: result?.exclusionSignature ?? null
+				},
+				signature
+			);
+
+			if (!result || !fires) return;
 
 			const id = ++compositionId;
 			void updateResultExclusions(result, id);
