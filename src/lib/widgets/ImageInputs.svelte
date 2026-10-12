@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
 	import DropZone from '#lib/components/DropZone.svelte';
+	import { validateImageFile } from '#lib/image-processing/image/validation.ts';
 
 	let {
 		palette = $bindable(null),
@@ -19,12 +20,14 @@
 		label={$t('inputs.palette')}
 		hint={$t('inputs.paletteHint')}
 		variant="ref"
+		validate={validateImageFile}
 		bind:file={palette}
 	/>
 	<DropZone
 		label={$t('inputs.sprite')}
 		hint={$t('inputs.spriteHint')}
 		variant="base"
+		validate={validateImageFile}
 		bind:file={sprite}
 	/>
 </section>
