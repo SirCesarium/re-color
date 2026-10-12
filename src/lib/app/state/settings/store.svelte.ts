@@ -96,12 +96,13 @@ export function replaceSettings(next: AppSettings): boolean {
 	return persist();
 }
 
-/** Restores factory defaults while keeping the chosen language. */
+/** Restores factory defaults, clearing the legacy mapping key so it can't re-migrate. */
 export function resetSettings(): boolean {
-	return replaceSettings({
-		...DEFAULT_APP_SETTINGS,
-		locale: settings.locale
-	});
+	if (typeof localStorage !== 'undefined') {
+		localStorage.removeItem(MAPPING_STORAGE_KEY);
+	}
+
+	return replaceSettings({ ...DEFAULT_APP_SETTINGS });
 }
 
 /** Current settings as an export-ready JSON document. */
