@@ -48,7 +48,7 @@
 >
 	{#if variant === 'primary'}
 		<span class="fill absolute inset-y-0 left-0" style:width="{fill}%"></span>
-		<span class="label relative z-[1]">
+		<span class="label relative z-1">
 			{#if busy}
 				<span class="processing-label">{busyLabel ?? $t('button.processing')}</span>
 				{#if cancelOnBusy}<span class="cancel-label">{cancelLabel ?? $t('button.cancel')}</span>{/if}
