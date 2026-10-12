@@ -20,15 +20,17 @@
 	import {
 		APP_SETTINGS_KEY,
 		clearSavedAppData,
-		clearWorkspace,
 		DEFAULT_APP_SETTINGS,
 		exportAppSettings,
 		importAppSettings,
-		loadWorkspace,
-		parseAppSettings,
-		saveWorkspace
+		parseAppSettings
 	} from '#lib/state/app-settings.ts';
 	import { hintsEnabled } from '#lib/state/hints.ts';
+	import {
+		clearWorkspace,
+		loadWorkspace,
+		saveWorkspace
+	} from '#lib/state/workspace.ts';
 
 	let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
 	let error = $state<{

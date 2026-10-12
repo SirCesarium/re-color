@@ -21,16 +21,19 @@ import type {
 	PaletteColor,
 	RecolorConfig
 } from '../image-processing/types.ts';
-import type { AppSettings, PersistedWorkspace } from './app-settings.ts';
+import type { AppSettings } from './app-settings.ts';
 import {
 	APP_SETTINGS_KEY,
-	clearWorkspace,
 	DEFAULT_APP_SETTINGS,
 	isMappingMode,
-	loadWorkspace,
-	parseAppSettings,
-	saveWorkspace
+	parseAppSettings
 } from './app-settings.ts';
+import {
+	clearWorkspace,
+	loadWorkspace,
+	type PersistedWorkspace,
+	saveWorkspace
+} from './workspace.ts';
 
 type WorkflowState = {
 	palette: File | null;

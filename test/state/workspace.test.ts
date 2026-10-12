@@ -4,13 +4,15 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 import {
 	APP_SETTINGS_KEY,
 	clearSavedAppData,
-	clearWorkspace,
 	HINT_STORAGE_KEYS,
+	resetHints
+} from '../../src/lib/state/app-settings.ts';
+import {
+	clearWorkspace,
 	loadWorkspace,
 	type PersistedWorkspace,
-	resetHints,
 	saveWorkspace
-} from '../../src/lib/state/app-settings.ts';
+} from '../../src/lib/state/workspace.ts';
 import { installFakeLocalStorage } from '../support/fake-storage.ts';
 
 let uninstallStorage: (() => void) | undefined;
