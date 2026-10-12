@@ -94,9 +94,9 @@ test('rejects an output quality outside zero and one', async () => {
 
 test('accepts the default processing configuration', async () => {
 	// The invalid file proves the config passed validation: decoding fails next.
-	await expect(recolorSprite(invalidFile, [], baseConfig())).rejects.toThrow(
-		'validation.notPng'
-	);
+	await expect(
+		recolorSprite(invalidFile, [], baseConfig())
+	).rejects.toMatchObject({ code: 'notPng' });
 });
 
 test('rejects invalid palette extraction values', async () => {
@@ -162,7 +162,7 @@ test('accepts a zero maximum palette size', async () => {
 			{ maxColors: 0, alphaThreshold: 128 },
 			canvasConfig
 		)
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 });
 
 test('accepts progress milestones that repeat', async () => {
@@ -174,7 +174,7 @@ test('accepts progress milestones that repeat', async () => {
 		pixelsRead: 0
 	};
 
-	await expect(recolorSprite(invalidFile, [], config)).rejects.toThrow(
-		'validation.notPng'
-	);
+	await expect(recolorSprite(invalidFile, [], config)).rejects.toMatchObject({
+		code: 'notPng'
+	});
 });

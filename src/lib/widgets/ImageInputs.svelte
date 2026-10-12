@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import { validateImageFile } from '#lib';
+	import {
+		type ValidationCode,
+		ValidationError,
+		validateImageFile
+	} from '#lib';
 	import DropZone from '#lib/components/DropZone.svelte';
-	import { LocalizedError } from '#lib/i18n/localized-error.ts';
+	import type { MessageKey } from '#lib/i18n/locales.ts';
 
 	let {
 		palette = $bindable(null),
@@ -12,16 +16,25 @@
 		sprite: File | null;
 	} = $props();
 
-	// The domain rejects with a message key; the widget translates any failure
-	// into the key DropZone should render, so the component stays dumb.
+	// The domain reports why an upload failed as a plain code; turning codes
+	// into words is this layer's job, so the table lives here, not down there.
+	const VALIDATION_KEYS: Record<ValidationCode, MessageKey> = {
+		tooLarge: 'validation.tooLarge',
+		notPng: 'validation.notPng',
+		empty: 'validation.empty',
+		tooBig: 'validation.tooBig'
+	};
+
+	// DropZone renders whatever key we hand back, so the widget owns the
+	// translation of domain failures into a message.
 	async function acceptImage(candidate: File): Promise<string | null> {
 		try {
 			await validateImageFile(candidate);
 
 			return null;
 		} catch (cause) {
-			return cause instanceof LocalizedError
-				? cause.messageId
+			return cause instanceof ValidationError
+				? VALIDATION_KEYS[cause.code]
 				: 'dropzone.readFailed';
 		}
 	}
