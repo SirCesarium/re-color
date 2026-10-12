@@ -10,8 +10,12 @@ import {
 
 export const MAPPING_STORAGE_KEY = 'recolor.mapping';
 
-export const PALETTE_CONFIG: PaletteExtractionConfig = {
-	maxColors: 256,
+/**
+ * Palette extraction defaults. The color cap is deliberately absent: it is
+ * user-owned (`settings.maxPaletteColors`), so a second default here would be
+ * a ghost value that never reaches the engine.
+ */
+export const PALETTE_CONFIG: Omit<PaletteExtractionConfig, 'maxColors'> = {
 	alphaThreshold: 128
 };
 
