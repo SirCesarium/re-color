@@ -21,7 +21,7 @@
 	--color-shadow: var(--shadow);
 	--color-pop: var(--pop);
 	--color-ref: var(--ref);
-	--color-sprite-base: var(--base);
+	--color-sprite-base: var(--sprite-base);
 	--color-ok: var(--ok);
 	--color-btn-bg: var(--btn-bg);
 	--color-btn-fg: var(--btn-fg);
@@ -43,7 +43,7 @@
 	--shadow: #d5c4a1;
 	--pop: #af3a03;
 	--ref: #076678;
-	--base: #8f3f71;
+	--sprite-base: #8f3f71;
 	--ok: #79740e;
 	--btn-bg: #79740e;
 	--btn-fg: #fbf1c7;
@@ -74,7 +74,7 @@
 		--shadow: #1d2021;
 		--pop: #fe8019;
 		--ref: #83a598;
-		--base: #d3869b;
+		--sprite-base: #d3869b;
 		--ok: #b8bb26;
 		--btn-bg: #b8bb26;
 		--btn-fg: #282828;
