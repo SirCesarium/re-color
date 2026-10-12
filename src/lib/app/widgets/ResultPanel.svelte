@@ -40,6 +40,10 @@
 	$effect(() => {
 		if (!imageUrl || !helpReady || helpSeen) return;
 
+		// Same rule as the palette strip: a hidden help bubble must not mark
+		// itself consumed, or re-enabling hints would find it already spent.
+		if (!$hintsEnabled) return;
+
 		helpSeen = true;
 		helpVisible = true;
 		localStorage.setItem(HELP_STORAGE_KEY, 'true');

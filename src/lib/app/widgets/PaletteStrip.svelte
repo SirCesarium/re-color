@@ -35,6 +35,10 @@
 	$effect(() => {
 		if (colors.length === 0 || hintConsumed || !hintAllowed) return;
 
+		// With the preference off the bubble never renders, so the budget it
+		// would spend must stay untouched until hints are allowed again.
+		if (!$hintsEnabled) return;
+
 		hintConsumed = true;
 
 		const seen = Number(localStorage.getItem(HINT_KEY) ?? 0);
