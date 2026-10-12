@@ -5,6 +5,7 @@
 	import Hint from '#lib/components/Hint.svelte';
 	import Typography from '#lib/components/Typography.svelte';
 	import { MAPPING_OPTIONS } from '#lib/config/recolor.ts';
+	import { hintsEnabled } from '#lib/state/hints.ts';
 	import { createRecolorWorkflow } from '#lib/state/recolor-workflow.svelte.ts';
 	import Hero from '#lib/widgets/Hero.svelte';
 	import ImageInputs from '#lib/widgets/ImageInputs.svelte';
@@ -79,6 +80,7 @@
 		</Button>
 		<Hint
 		error={workflow.buttonHintIsError}
+		hintsEnabled={$hintsEnabled}
 		text={workflow.buttonHint ? $t(workflow.buttonHint) : null}
 	/>
 	</div>

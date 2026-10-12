@@ -2,13 +2,13 @@
 	import { fade } from 'svelte/transition';
 	import { t } from 'svelte-i18n';
 	import Typography from '#lib/components/Typography.svelte';
-	import { hintsEnabled } from '#lib/state/hints.ts';
 
 	let {
 		text = null,
 		placement = 'flow',
 		arrow = 'up',
 		error = false,
+		hintsEnabled = true,
 		onDismiss,
 		class: className = ''
 	}: {
@@ -16,12 +16,14 @@
 		placement?: 'above' | 'flow';
 		arrow?: 'up' | 'down';
 		error?: boolean;
+		hintsEnabled?: boolean;
 		onDismiss?: () => void;
 		class?: string;
 	} = $props();
 
-	// Errors are status feedback, so they ignore the help-hints preference.
-	const visible = $derived(Boolean(text) && (error || $hintsEnabled));
+	// The widget wires in the help-hints preference; errors are status feedback,
+	// so they show even when help hints are off.
+	const visible = $derived(Boolean(text) && (error || hintsEnabled));
 </script>
 
 {#if visible}

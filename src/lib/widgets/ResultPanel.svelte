@@ -4,6 +4,7 @@
 	import Button from '#lib/components/Button.svelte';
 	import Hint from '#lib/components/Hint.svelte';
 	import Typography from '#lib/components/Typography.svelte';
+	import { hintsEnabled } from '#lib/state/hints.ts';
 	import PixelCanvas from '#lib/widgets/PixelCanvas.svelte';
 
 	let {
@@ -73,6 +74,7 @@
 					<Hint
 						class="pixel-help"
 						arrow="down"
+						hintsEnabled={$hintsEnabled}
 						text={$t('result.pixelHelp')}
 						onDismiss={dismissHelp}
 					/>

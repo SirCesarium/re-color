@@ -3,6 +3,7 @@
 	import { t } from 'svelte-i18n';
 	import { cssRgb, type PaletteColor } from '#lib';
 	import Hint from '#lib/components/Hint.svelte';
+	import { hintsEnabled } from '#lib/state/hints.ts';
 
 	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
 
@@ -96,7 +97,11 @@
 			{/each}
 		</div>
 
-		<Hint placement="above" text={hintVisible ? $t('palette.toggleHint') : null} />
+		<Hint
+			placement="above"
+			hintsEnabled={$hintsEnabled}
+			text={hintVisible ? $t('palette.toggleHint') : null}
+		/>
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}
