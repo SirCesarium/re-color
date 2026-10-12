@@ -7,7 +7,7 @@ on:
 
 jobs:
   ci:
-    name: check, test, build
+    name: check, lint, test, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -21,6 +21,9 @@ jobs:
 
       - name: Type check
         run: bun run check
+
+      - name: Lint
+        run: bun run lint
 
       - name: Test (domain, no DOM)
         run: bun run test
