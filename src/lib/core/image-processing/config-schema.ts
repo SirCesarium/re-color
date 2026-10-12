@@ -11,6 +11,12 @@ const WEIGHTS_MESSAGE = (name: string, index: number) =>
 	`${name}[${index}] must be non-negative`;
 const QUALITY_MESSAGE = 'output.quality must be between zero and one';
 const MAX_COLORS_MESSAGE = 'maxColors must be a non-negative integer';
+const PRESERVE_ALPHA_MESSAGE = 'transparency.preserveAlpha must be a boolean';
+const CANVAS_FLAG_MESSAGE = 'canvas.willReadFrequently must be a boolean';
+const COLOR_SPACE_MESSAGE = 'canvas.colorSpace must be srgb or display-p3';
+const SIGNAL_MESSAGE = 'processing.signal must be an AbortSignal';
+const EXCLUDED_PIXELS_MESSAGE =
+	'excludedPixels entries must be non-negative integers';
 
 /**
  * Runs the schema and, on failure, throws the first issue's message as a
@@ -62,6 +68,15 @@ function weightsField(name: string) {
 	});
 }
 
+/** Only real functions pass; the engine awaits and invokes these directly. */
+function functionField(name: string) {
+	const message = `${name} must be a function`;
+
+	return z.custom<unknown>(value => typeof value === 'function', {
+		error: message
+	});
+}
+
 const PROGRESS_SCHEMA = z
 	.object({
 		start: z.number({ error: PROGRESS_MESSAGE }),
@@ -90,30 +105,57 @@ const PROGRESS_SCHEMA = z
 const MAPPING_MODES = ['nearest', 'luminance', 'dominant'] as const;
 const MAPPING_MODE_MESSAGE =
 	'mapping.mode must be one of nearest, luminance, dominant';
+const MAPPING_FALLBACKS = ['first-active', 'unmapped'] as const;
+const FALLBACK_MESSAGE =
+	'mapping.fallback must be one of first-active, unmapped';
+const OUTPUT_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
+const MIME_TYPE_MESSAGE =
+	'output.mimeType must be one of image/png, image/jpeg, image/webp';
 
 const RECOLOR_CONFIG_SCHEMA = z.object({
+	canvas: z.object({
+		willReadFrequently: z.boolean({ error: CANVAS_FLAG_MESSAGE }),
+		colorSpace: z.enum(['srgb', 'display-p3'], { error: COLOR_SPACE_MESSAGE })
+	}),
 	transparency: z.object({
 		minAlpha: byteField('transparency.minAlpha'),
-		opaqueAlpha: byteField('transparency.opaqueAlpha')
+		opaqueAlpha: byteField('transparency.opaqueAlpha'),
+		preserveAlpha: z.boolean({ error: PRESERVE_ALPHA_MESSAGE })
 	}),
 	processing: z.object({
 		chunkDurationMs: z
 			.number({ error: CHUNK_DURATION_MESSAGE })
 			.refine(value => value > 0, CHUNK_DURATION_MESSAGE),
-		progress: PROGRESS_SCHEMA
+		progress: PROGRESS_SCHEMA,
+		onProgress: functionField('processing.onProgress'),
+		yieldToMain: functionField('processing.yieldToMain'),
+		signal: z.instanceof(AbortSignal, { error: SIGNAL_MESSAGE })
 	}),
 	mapping: z.object({
 		mode: z.enum(MAPPING_MODES, { error: MAPPING_MODE_MESSAGE }),
+		fallback: z.enum(MAPPING_FALLBACKS, { error: FALLBACK_MESSAGE }),
 		distanceWeights: weightsField('mapping.distanceWeights'),
 		luminanceWeights: weightsField('mapping.luminanceWeights')
 	}),
 	output: z.object({
+		mimeType: z.enum(OUTPUT_MIME_TYPES, { error: MIME_TYPE_MESSAGE }),
 		quality: z
 			.number({ error: QUALITY_MESSAGE })
 			.min(0, QUALITY_MESSAGE)
 			.max(1, QUALITY_MESSAGE)
 			.optional()
-	})
+	}),
+	// Bounds against the decoded image live in the engine, which knows the
+	// dimensions; the schema only insists the entries are whole and in range.
+	excludedPixels: z
+		.set(
+			z
+				.number({ error: EXCLUDED_PIXELS_MESSAGE })
+				.int(EXCLUDED_PIXELS_MESSAGE)
+				.min(0, EXCLUDED_PIXELS_MESSAGE),
+			{ error: 'excludedPixels must be a set of pixel indices' }
+		)
+		.optional()
 });
 
 const PALETTE_EXTRACTION_SCHEMA = z.object({

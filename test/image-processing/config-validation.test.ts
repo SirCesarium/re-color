@@ -15,7 +15,9 @@ const canvasConfig = { willReadFrequently: true, colorSpace: 'srgb' as const };
 
 function baseConfig(): RecolorConfig {
 	return {
-		canvas: CANVAS_CONFIG,
+		// Copied, not referenced: a test poisons `willReadFrequently` and must
+		// not leak that into every later config through the shared constant.
+		canvas: { ...CANVAS_CONFIG },
 		mapping: { ...MAPPING_CONFIG },
 		transparency: { ...TRANSPARENCY_CONFIG },
 		processing: {
@@ -177,4 +179,58 @@ test('accepts progress milestones that repeat', async () => {
 	await expect(recolorSprite(invalidFile, [], config)).rejects.toMatchObject({
 		code: 'notPng'
 	});
+});
+
+test('rejects an unknown mapping fallback strategy', async () => {
+	await expectRejectedConfig(config => {
+		(config.mapping as { fallback: string }).fallback = 'darkest';
+	}, 'mapping.fallback must be one of first-active, unmapped');
+});
+
+test('rejects a non-boolean transparency preserve flag', async () => {
+	await expectRejectedConfig(config => {
+		(
+			config.transparency as unknown as { preserveAlpha: string }
+		).preserveAlpha = 'yes';
+	}, 'transparency.preserveAlpha must be a boolean');
+});
+
+test('rejects an unknown output mime type', async () => {
+	await expectRejectedConfig(config => {
+		(config.output as { mimeType: string }).mimeType = 'image/gif';
+	}, 'output.mimeType must be one of image/png, image/jpeg, image/webp');
+});
+
+test('rejects canvas settings that are not the declared shapes', async () => {
+	await expectRejectedConfig(config => {
+		(
+			config.canvas as unknown as { willReadFrequently: string }
+		).willReadFrequently = 'yes';
+	}, 'canvas.willReadFrequently must be a boolean');
+	await expectRejectedConfig(config => {
+		(config.canvas as { colorSpace: string }).colorSpace = 'p3';
+	}, 'canvas.colorSpace must be srgb or display-p3');
+});
+
+test('rejects processing hooks that are not callable or signal-shaped', async () => {
+	await expectRejectedConfig(config => {
+		(config.processing as unknown as { onProgress: string }).onProgress =
+			'noop';
+	}, 'processing.onProgress must be a function');
+	await expectRejectedConfig(config => {
+		(config.processing as unknown as { yieldToMain: string }).yieldToMain =
+			'noop';
+	}, 'processing.yieldToMain must be a function');
+	await expectRejectedConfig(config => {
+		(config.processing as { signal: object }).signal = { aborted: false };
+	}, 'processing.signal must be an AbortSignal');
+});
+
+test('rejects excluded pixels that are not whole non-negative indices', async () => {
+	await expectRejectedConfig(config => {
+		config.excludedPixels = new Set([-1]);
+	}, 'excludedPixels entries must be non-negative integers');
+	await expectRejectedConfig(config => {
+		config.excludedPixels = new Set([1.5]);
+	}, 'excludedPixels entries must be non-negative integers');
 });
