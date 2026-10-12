@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
 	import Typography from '#lib/components/Typography.svelte';
-	import { LocalizedError } from '#lib/i18n/localized-error.ts';
 
 	let {
 		label,
@@ -13,7 +12,7 @@
 		label: string;
 		hint: string;
 		variant: 'ref' | 'base';
-		validate: (candidate: File) => Promise<void>;
+		validate: (candidate: File) => Promise<string | null>;
 		file: File | null;
 	} = $props();
 
@@ -40,26 +39,27 @@
 		error = null;
 	});
 
-	// The widget injects the acceptance rules; this zone only runs them and
-	// surfaces the rejection, keeping the error UI next to the drop target.
+	// The widget injects the acceptance rules and translates any failure into a
+	// message key; this zone only runs the check and renders the outcome.
 	async function load(candidate: File | undefined) {
 		if (!candidate) return;
 
 		const id = ++selectionId;
 		error = null;
 
-		try {
-			await validate(candidate);
-			if (id !== selectionId) return;
+		let messageKey: string | null;
 
-			file = candidate;
-		} catch (cause) {
-			if (id !== selectionId) return;
-			error =
-				cause instanceof LocalizedError
-					? cause.messageId
-					: 'dropzone.readFailed';
+		try {
+			messageKey = await validate(candidate);
+		} catch {
+			messageKey = 'dropzone.readFailed';
 		}
+
+		if (id !== selectionId) return;
+
+		error = messageKey;
+
+		if (messageKey === null) file = candidate;
 	}
 
 	function onInput(event: Event) {

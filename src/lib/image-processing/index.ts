@@ -8,6 +8,8 @@ export type { CanvasConfig } from './image/canvas.ts';
 export { composeExcludedPixels } from './image/canvas.ts';
 /** Hands the browser a break between processing chunks. */
 export { yieldToBrowser } from './image/scheduler.ts';
+/** Checks an upload against the size, PNG-signature, and dimension limits. */
+export { validateImageFile } from './image/validation.ts';
 /** Picks the most frequent colors of an image as a palette. */
 /** Same, but from a file, reading PNG samples raw to dodge color management. */
 export { extractColors, extractColorsFromFile } from './palette.ts';
