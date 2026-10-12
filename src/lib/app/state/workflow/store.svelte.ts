@@ -32,6 +32,7 @@ import {
 	shouldRunInitialRecolor,
 	type WorkflowSnapshot
 } from './machine.ts';
+import { createOperationScope } from './operations.ts';
 import { watchPaletteColors } from './palette-effects.svelte.ts';
 
 /** A snapshot where every field is neutral; guards ignore the ones they don't read. */
@@ -111,8 +112,10 @@ export function createRecolorWorkflow() {
 	});
 	const hintIsError = $derived(isErrorHint(buttonHint));
 
-	let runId = 0;
-	let compositionId = 0;
+	// One owner of "what is current": claiming a lane aborts its predecessor,
+	// so no async path can start without invalidating the one it replaced.
+	const scope = createOperationScope();
+
 	let workspaceSaveTimer: ReturnType<typeof setTimeout> | undefined;
 	let workspaceRestoreCancelled = false;
 
@@ -226,7 +229,7 @@ export function createRecolorWorkflow() {
 		state.result = null;
 	}
 
-	function createConfig(id: number): RecolorConfig {
+	function createConfig(signal: AbortSignal): RecolorConfig {
 		return {
 			canvas: CANVAS_CONFIG,
 			mapping: {
@@ -237,9 +240,9 @@ export function createRecolorWorkflow() {
 			processing: {
 				...PROCESSING_CONFIG,
 				onProgress: (fraction: number) => {
-					if (id === runId) state.progress = fraction;
+					if (!signal.aborted) state.progress = fraction;
 				},
-				isCancelled: () => id !== runId
+				isCancelled: () => signal.aborted
 			},
 			output: OUTPUT_CONFIG
 		};
@@ -298,8 +301,8 @@ export function createRecolorWorkflow() {
 	}
 
 	function clearFormData() {
-		runId++;
-		compositionId++;
+		scope.abortAll();
+
 		workspaceRestoreCancelled = true;
 		clearResult();
 		state.palette = null;
@@ -317,8 +320,11 @@ export function createRecolorWorkflow() {
 
 		if (!file) return;
 
-		const id = ++runId;
-		compositionId++;
+		// Claim both lanes: the run owns progress and the result, and a fresh
+		// run invalidates any composition still working from the old exclusions.
+		const signal = scope.claimRun();
+
+		scope.abortComposition();
 
 		const signature = mappingSig;
 		const previous = state.result;
@@ -334,9 +340,13 @@ export function createRecolorWorkflow() {
 
 		try {
 			if (!previewUrl) {
-				previewUrl = await recolorSprite(file, state.colors, createConfig(id));
+				previewUrl = await recolorSprite(
+					file,
+					state.colors,
+					createConfig(signal)
+				);
 
-				if (id !== runId || previewUrl === null) {
+				if (signal.aborted || previewUrl === null) {
 					releaseResult(previewUrl);
 					return;
 				}
@@ -347,7 +357,7 @@ export function createRecolorWorkflow() {
 			const composition = await composeForCurrentExclusions(
 				previewUrl,
 				file,
-				() => id !== runId
+				() => signal.aborted
 			);
 
 			if (!composition) {
@@ -378,9 +388,9 @@ export function createRecolorWorkflow() {
 			releaseResult(createdResultUrl);
 			console.error(error);
 
-			if (id === runId) state.hint = 'workflow.recolorFailed';
+			if (!signal.aborted) state.hint = 'workflow.recolorFailed';
 		} finally {
-			if (id === runId) {
+			if (!signal.aborted) {
 				state.busy = false;
 				state.progress = 0;
 			}
@@ -389,8 +399,8 @@ export function createRecolorWorkflow() {
 
 	function handleRecolor() {
 		if (state.busy) {
-			runId++;
-			compositionId++;
+			scope.abortAll();
+
 			state.busy = false;
 			state.progress = 0;
 			state.hint = null;
@@ -426,7 +436,7 @@ export function createRecolorWorkflow() {
 
 	async function updateResultExclusions(
 		result: NonNullable<WorkflowState['result']>,
-		id: number
+		signal: AbortSignal
 	) {
 		const file = state.sprite;
 		if (!file) return;
@@ -435,11 +445,10 @@ export function createRecolorWorkflow() {
 			const composition = await composeForCurrentExclusions(
 				result.previewUrl,
 				file,
-				() =>
-					id !== compositionId || state.result?.previewUrl !== result.previewUrl
+				() => signal.aborted || state.result?.previewUrl !== result.previewUrl
 			);
 
-			if (!composition || id !== compositionId) return;
+			if (!composition || signal.aborted) return;
 
 			const currentResult = state.result;
 
@@ -463,7 +472,7 @@ export function createRecolorWorkflow() {
 		} catch (error) {
 			console.error(error);
 
-			if (id === compositionId) state.hint = 'workflow.exclusionFailed';
+			if (!signal.aborted) state.hint = 'workflow.exclusionFailed';
 		}
 	}
 
@@ -476,7 +485,7 @@ export function createRecolorWorkflow() {
 		void state.sprite;
 
 		untrack(() => {
-			runId++;
+			scope.abortRun();
 			clearResult();
 			state.busy = false;
 			state.progress = 0;
@@ -552,8 +561,8 @@ export function createRecolorWorkflow() {
 
 			if (!result || !fires) return;
 
-			const id = ++compositionId;
-			void updateResultExclusions(result, id);
+			const signal = scope.claimComposition();
+			void updateResultExclusions(result, signal);
 		});
 	});
 
@@ -563,7 +572,7 @@ export function createRecolorWorkflow() {
 
 	// ── Teardown ──────────────────────────────────────────────────────────
 	onDestroy(() => {
-		runId++;
+		scope.abortAll();
 		clearTimeout(workspaceSaveTimer);
 		clearResult();
 		if (typeof document !== 'undefined') {
