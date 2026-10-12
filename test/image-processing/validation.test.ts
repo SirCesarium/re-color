@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import {
 	MAX_IMAGE_BYTES,
 	validateImageFile
-} from '../../src/lib/image-processing/image/validation.ts';
+} from '../../src/lib/core/image-processing/image/validation.ts';
 import {
 	chunk,
 	header,
@@ -14,19 +14,19 @@ import {
 test('rejects an empty upload', async () => {
 	await expect(
 		validateImageFile(new Blob([], { type: 'image/png' }))
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 });
 
 test('rejects blobs that cannot hold a signature and an IHDR header', async () => {
 	// 23 bytes: one short of the 24 bytes the validator reads.
 	await expect(
 		validateImageFile(new Blob([new Uint8Array(23)]))
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 
 	// Exactly 24 bytes but without the PNG signature.
 	await expect(
 		validateImageFile(new Blob([new Uint8Array(24)]))
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 });
 
 test('rejects a valid signature whose IHDR does not start at byte 12', async () => {
@@ -37,9 +37,9 @@ test('rejects a valid signature whose IHDR does not start at byte 12', async () 
 	view.set([0, 0, 0, 13], 8);
 	view.set([73, 72, 68, 83], 12);
 
-	await expect(validateImageFile(new Blob([view]))).rejects.toThrow(
-		'validation.notPng'
-	);
+	await expect(validateImageFile(new Blob([view]))).rejects.toMatchObject({
+		code: 'notPng'
+	});
 });
 
 test('rejects an IHDR whose declared length is not 13', async () => {
@@ -49,9 +49,9 @@ test('rejects an IHDR whose declared length is not 13', async () => {
 	view.set([0, 0, 0, 12], 8);
 	view.set([73, 72, 68, 82], 12);
 
-	await expect(validateImageFile(new Blob([view]))).rejects.toThrow(
-		'validation.notPng'
-	);
+	await expect(validateImageFile(new Blob([view]))).rejects.toMatchObject({
+		code: 'notPng'
+	});
 });
 
 test('accepts a file of exactly 2 MiB when its header is valid', async () => {
@@ -67,9 +67,9 @@ test('rejects a 2 MiB file plus one byte', async () => {
 	const png = makeIndexedPng(1, 1, [[20, 40, 60]], [0], [255]);
 	body.set(png.subarray(0, Math.min(png.length, body.length)), 0);
 
-	await expect(validateImageFile(new Blob([body]))).rejects.toThrow(
-		'validation.tooLarge'
-	);
+	await expect(validateImageFile(new Blob([body]))).rejects.toMatchObject({
+		code: 'tooLarge'
+	});
 });
 
 test('reports zero dimensions as an empty image', async () => {
@@ -78,9 +78,9 @@ test('reports zero dimensions as an empty image', async () => {
 		chunk('IEND', new Uint8Array())
 	]);
 
-	await expect(validateImageFile(pngBlob(png))).rejects.toThrow(
-		'validation.empty'
-	);
+	await expect(validateImageFile(pngBlob(png))).rejects.toMatchObject({
+		code: 'empty'
+	});
 
 	// A single zero dimension is empty too, not oversized.
 	const flat = makePng([
@@ -88,9 +88,9 @@ test('reports zero dimensions as an empty image', async () => {
 		chunk('IEND', new Uint8Array())
 	]);
 
-	await expect(validateImageFile(pngBlob(flat))).rejects.toThrow(
-		'validation.empty'
-	);
+	await expect(validateImageFile(pngBlob(flat))).rejects.toMatchObject({
+		code: 'empty'
+	});
 });
 
 test('accepts the largest supported dimensions', async () => {

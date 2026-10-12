@@ -1,0 +1,594 @@
+import { onDestroy, onMount, untrack } from 'svelte';
+import {
+	composeExcludedPixels,
+	type MappingMode,
+	type PaletteColor,
+	type RecolorConfig,
+	recolorSprite
+} from '#core/image-processing/index.ts';
+import {
+	CANVAS_CONFIG,
+	MAPPING_CONFIG,
+	OUTPUT_CONFIG,
+	OUTPUT_EXTENSIONS,
+	PROCESSING_CONFIG,
+	TRANSPARENCY_CONFIG
+} from '#core/recolor.ts';
+import type { MessageKey } from '../../i18n/locales.ts';
+import { settings, updateSetting } from '../settings/store.svelte.ts';
+import {
+	clearWorkspace,
+	loadWorkspace,
+	type PersistedWorkspace,
+	saveWorkspace
+} from '../workspace.ts';
+import {
+	buttonHint as deriveButtonHint,
+	exclusionSignature,
+	isErrorHint,
+	mappingSignature,
+	shouldAutoRecolor,
+	shouldRecomposeExclusions,
+	shouldRunInitialRecolor,
+	type WorkflowSnapshot
+} from './machine.ts';
+import { watchPaletteColors } from './palette-effects.svelte.ts';
+
+/** A snapshot where every field is neutral; guards ignore the ones they don't read. */
+const IDLE_SNAPSHOT: WorkflowSnapshot = {
+	ready: false,
+	busy: false,
+	noActiveColors: false,
+	autoRecolor: false,
+	hasResult: false,
+	resultMappingSignature: null,
+	resultExclusionSignature: null,
+	paletteColorsLoaded: false,
+	workspaceLoaded: false
+};
+
+type WorkflowState = {
+	palette: File | null;
+	sprite: File | null;
+	colors: PaletteColor[];
+	mapping: MappingMode;
+	/** True once onMount has restored saved settings and seeded `state.mapping`. */
+	settingsLoaded: boolean;
+	workspaceLoaded: boolean;
+	paletteColorsLoaded: boolean;
+	result: {
+		url: string;
+		previewUrl: string;
+		mappingSignature: string;
+		exclusionSignature: string;
+	} | null;
+	excludedPixels: number[];
+	busy: boolean;
+	progress: number;
+	hint: MessageKey | null;
+};
+
+/** Sets up the reactive state and lifecycle effects for one recolor page. */
+export function createRecolorWorkflow() {
+	const state = $state<WorkflowState>({
+		palette: null,
+		sprite: null,
+		colors: [],
+		mapping: 'luminance',
+		settingsLoaded: false,
+		workspaceLoaded: false,
+		paletteColorsLoaded: false,
+		result: null,
+		excludedPixels: [],
+		busy: false,
+		progress: 0,
+		hint: null
+	});
+
+	const ready = $derived(state.palette !== null && state.sprite !== null);
+	const activeColors = $derived(
+		state.colors.filter(color => color.active).length
+	);
+	const noActiveColors = $derived(activeColors === 0);
+	const mappingSig = $derived(mappingSignature(state.mapping, state.colors));
+	const exclusionSig = $derived(exclusionSignature(state.excludedPixels));
+	const buttonHint = $derived.by<MessageKey | null>(() => {
+		const result = state.result;
+
+		return deriveButtonHint(
+			{
+				...IDLE_SNAPSHOT,
+				ready,
+				busy: state.busy,
+				noActiveColors,
+				autoRecolor: settings.autoRecolor,
+				hasResult: result !== null,
+				resultMappingSignature: result?.mappingSignature ?? null
+			},
+			mappingSig,
+			state.hint
+		);
+	});
+	const hintIsError = $derived(isErrorHint(buttonHint));
+
+	let runId = 0;
+	let compositionId = 0;
+	let workspaceSaveTimer: ReturnType<typeof setTimeout> | undefined;
+	let workspaceRestoreCancelled = false;
+
+	// ── Restore ──────────────────────────────────────────────────────────
+	onMount(() => {
+		let disposed = false;
+
+		// The settings store loads preferences at import; seed the live mapping
+		// from the saved default and mark restore done so the mapping-sync
+		// effect below only starts tracking changes from here on.
+		state.mapping = settings.defaultMapping;
+		state.settingsLoaded = true;
+
+		void (async () => {
+			try {
+				if (!settings.persistWorkspace) {
+					await clearWorkspace();
+					return;
+				}
+
+				const workspace = await loadWorkspace();
+
+				if (disposed || workspaceRestoreCancelled) return;
+
+				if (workspace) {
+					state.palette = workspace.palette
+						? new File([workspace.palette.blob], workspace.palette.name, {
+								type: 'image/png'
+							})
+						: null;
+					state.sprite = workspace.sprite
+						? new File([workspace.sprite.blob], workspace.sprite.name, {
+								type: 'image/png'
+							})
+						: null;
+					state.colors = workspace.colors.map(color => ({ ...color }));
+					state.excludedPixels = workspace.excludedPixels;
+				}
+			} catch (error) {
+				console.error('Could not restore saved app workspace', error);
+				state.hint = 'workflow.restoreFailed';
+			} finally {
+				if (!disposed) state.workspaceLoaded = true;
+			}
+		})();
+
+		return () => {
+			disposed = true;
+		};
+	});
+
+	// ── Live mapping → saved default ──────────────────────────────────────
+
+	// The home page edits `state.mapping` directly; mirror it into the saved
+	// default so the last-used mapping becomes the startup one. Gated on
+	// restore so an early flush cannot clobber the saved choice, and the
+	// default is read untracked so a settings-page change cannot feed back.
+	$effect(() => {
+		if (!state.settingsLoaded) return;
+
+		const mapping = state.mapping;
+
+		untrack(() => {
+			if (mapping !== settings.defaultMapping) {
+				updateSetting('defaultMapping', mapping);
+			}
+		});
+	});
+
+	// ── Workspace persistence ─────────────────────────────────────────────
+	$effect(() => {
+		if (!state.workspaceLoaded || !settings.persistWorkspace) return;
+
+		const workspace: PersistedWorkspace = {
+			palette: state.palette
+				? {
+						name: state.palette.name,
+						blob: state.palette.slice(0, state.palette.size, 'image/png')
+					}
+				: null,
+			sprite: state.sprite
+				? {
+						name: state.sprite.name,
+						blob: state.sprite.slice(0, state.sprite.size, 'image/png')
+					}
+				: null,
+			mapping: state.mapping,
+			colors: state.colors.map(({ r, g, b, active }) => ({ r, g, b, active })),
+			excludedPixels: [...state.excludedPixels]
+		};
+
+		clearTimeout(workspaceSaveTimer);
+		workspaceSaveTimer = setTimeout(() => {
+			void saveWorkspace(workspace).catch((error: unknown) => {
+				console.error('Could not save app workspace', error);
+				state.hint = 'workflow.saveDataFailed';
+			});
+		}, 350);
+
+		return () => clearTimeout(workspaceSaveTimer);
+	});
+
+	// ── Result & config helpers ───────────────────────────────────────────
+	function clearResult() {
+		if (state.result) {
+			for (const url of new Set([state.result.url, state.result.previewUrl])) {
+				URL.revokeObjectURL(url);
+			}
+		}
+
+		state.result = null;
+	}
+
+	function createConfig(id: number): RecolorConfig {
+		return {
+			canvas: CANVAS_CONFIG,
+			mapping: {
+				...MAPPING_CONFIG,
+				mode: state.mapping
+			},
+			transparency: TRANSPARENCY_CONFIG,
+			processing: {
+				...PROCESSING_CONFIG,
+				onProgress: (fraction: number) => {
+					if (id === runId) state.progress = fraction;
+				},
+				isCancelled: () => id !== runId
+			},
+			output: OUTPUT_CONFIG
+		};
+	}
+
+	function releaseResult(
+		url: string | null,
+		retainedUrls: ReadonlySet<string> = new Set()
+	) {
+		if (url && !retainedUrls.has(url)) URL.revokeObjectURL(url);
+	}
+
+	async function composeForCurrentExclusions(
+		previewUrl: string,
+		file: File,
+		isStale: () => boolean
+	): Promise<{ url: string; exclusionSignature: string } | null> {
+		while (!isStale()) {
+			const signature = exclusionSig;
+			const pixels = [...state.excludedPixels];
+			let url = previewUrl;
+
+			if (pixels.length > 0) {
+				url = await composeExcludedPixels(
+					previewUrl,
+					file,
+					new Set(pixels),
+					CANVAS_CONFIG,
+					OUTPUT_CONFIG
+				);
+			}
+
+			if (isStale()) {
+				releaseResult(url, new Set([previewUrl]));
+				return null;
+			}
+
+			if (signature === exclusionSig)
+				return { url, exclusionSignature: signature };
+
+			releaseResult(url, new Set([previewUrl]));
+		}
+
+		return null;
+	}
+
+	function downloadResult() {
+		if (!state.result || !state.sprite) return;
+
+		const name = state.sprite.name.replace(/\.[^.]+$/, '') || 'sprite';
+		const link = document.createElement('a');
+
+		link.href = state.result.url;
+		link.download = `${name}-recolored.${OUTPUT_EXTENSIONS[OUTPUT_CONFIG.mimeType]}`;
+		link.click();
+	}
+
+	function clearFormData() {
+		runId++;
+		compositionId++;
+		workspaceRestoreCancelled = true;
+		clearResult();
+		state.palette = null;
+		state.sprite = null;
+		state.colors = [];
+		state.excludedPixels = [];
+		state.busy = false;
+		state.progress = 0;
+		state.hint = null;
+	}
+
+	// ── Recolor pipeline & actions ────────────────────────────────────────
+	async function startRecolor() {
+		const file = state.sprite;
+
+		if (!file) return;
+
+		const id = ++runId;
+		compositionId++;
+
+		const signature = mappingSig;
+		const previous = state.result;
+
+		let previewUrl =
+			previous?.mappingSignature === signature ? previous.previewUrl : null;
+		let createdPreviewUrl: string | null = null;
+		let createdResultUrl: string | null = null;
+
+		state.busy = true;
+		state.progress = 0;
+		state.hint = null;
+
+		try {
+			if (!previewUrl) {
+				previewUrl = await recolorSprite(file, state.colors, createConfig(id));
+
+				if (id !== runId || previewUrl === null) {
+					releaseResult(previewUrl);
+					return;
+				}
+
+				createdPreviewUrl = previewUrl;
+			}
+
+			const composition = await composeForCurrentExclusions(
+				previewUrl,
+				file,
+				() => id !== runId
+			);
+
+			if (!composition) {
+				releaseResult(createdPreviewUrl);
+				return;
+			}
+
+			const { url, exclusionSignature } = composition;
+			createdResultUrl = url === previewUrl ? null : url;
+
+			const nextResult = {
+				url,
+				previewUrl,
+				mappingSignature: signature,
+				exclusionSignature
+			};
+			const retainedUrls = new Set([nextResult.url, nextResult.previewUrl]);
+
+			if (previous) {
+				for (const oldUrl of new Set([previous.url, previous.previewUrl])) {
+					releaseResult(oldUrl, retainedUrls);
+				}
+			}
+
+			state.result = nextResult;
+		} catch (error) {
+			releaseResult(createdPreviewUrl);
+			releaseResult(createdResultUrl);
+			console.error(error);
+
+			if (id === runId) state.hint = 'workflow.recolorFailed';
+		} finally {
+			if (id === runId) {
+				state.busy = false;
+				state.progress = 0;
+			}
+		}
+	}
+
+	function handleRecolor() {
+		if (state.busy) {
+			runId++;
+			compositionId++;
+			state.busy = false;
+			state.progress = 0;
+			state.hint = null;
+
+			return;
+		}
+
+		if (!ready || noActiveColors) return;
+
+		void startRecolor();
+	}
+
+	function toggleExcludedPixel(index: number) {
+		if (!Number.isInteger(index) || index < 0) return;
+
+		state.excludedPixels = state.excludedPixels.includes(index)
+			? state.excludedPixels.filter(pixel => pixel !== index)
+			: [...state.excludedPixels, index];
+	}
+
+	function setPixelExclusion(indexes: readonly number[], excluded: boolean) {
+		const next = new Set(state.excludedPixels);
+
+		for (const index of indexes) {
+			if (!Number.isInteger(index) || index < 0) continue;
+
+			if (excluded) next.add(index);
+			else next.delete(index);
+		}
+
+		state.excludedPixels = [...next];
+	}
+
+	async function updateResultExclusions(
+		result: NonNullable<WorkflowState['result']>,
+		id: number
+	) {
+		const file = state.sprite;
+		if (!file) return;
+
+		try {
+			const composition = await composeForCurrentExclusions(
+				result.previewUrl,
+				file,
+				() =>
+					id !== compositionId || state.result?.previewUrl !== result.previewUrl
+			);
+
+			if (!composition || id !== compositionId) return;
+
+			const currentResult = state.result;
+
+			if (!currentResult || currentResult.previewUrl !== result.previewUrl) {
+				releaseResult(composition.url, new Set([result.previewUrl]));
+				return;
+			}
+
+			const updatedResult = {
+				...currentResult,
+				url: composition.url,
+				exclusionSignature: composition.exclusionSignature
+			};
+
+			state.result = updatedResult;
+
+			releaseResult(
+				currentResult.url,
+				new Set([updatedResult.url, updatedResult.previewUrl])
+			);
+		} catch (error) {
+			console.error(error);
+
+			if (id === compositionId) state.hint = 'workflow.exclusionFailed';
+		}
+	}
+
+	// ── Reactive effects ──────────────────────────────────────────────────
+
+	// New inputs arrived: any in-flight run is stale and the old result no
+	// longer matches, so invalidate it and reset the run-to-idle surface.
+	$effect(() => {
+		void state.palette;
+		void state.sprite;
+
+		untrack(() => {
+			runId++;
+			clearResult();
+			state.busy = false;
+			state.progress = 0;
+			state.hint = null;
+		});
+	});
+
+	// Excluded pixels are indexes into the previous sprite, so a new sprite
+	// invalidates them — the fresh one starts with nothing excluded.
+	$effect(() => {
+		void state.sprite;
+
+		untrack(() => {
+			state.excludedPixels = [];
+		});
+	});
+
+	$effect(() => {
+		const signature = mappingSig;
+		const result = state.result;
+		const autoRecolor = settings.autoRecolor;
+
+		untrack(() => {
+			const fires = shouldAutoRecolor(
+				{
+					...IDLE_SNAPSHOT,
+					autoRecolor,
+					hasResult: result !== null,
+					resultMappingSignature: result?.mappingSignature ?? null
+				},
+				signature
+			);
+
+			if (fires) void startRecolor();
+		});
+	});
+
+	$effect(() => {
+		const isReady = ready;
+		const hasColors = noActiveColors;
+		const paletteReady = state.paletteColorsLoaded;
+		const workspaceReady = state.workspaceLoaded;
+		const result = state.result;
+
+		untrack(() => {
+			const fires = shouldRunInitialRecolor({
+				...IDLE_SNAPSHOT,
+				ready: isReady,
+				noActiveColors: hasColors,
+				paletteColorsLoaded: paletteReady,
+				workspaceLoaded: workspaceReady,
+				hasResult: result !== null,
+				busy: state.busy
+			});
+
+			if (fires) void startRecolor();
+		});
+	});
+
+	$effect(() => {
+		const signature = exclusionSig;
+		const result = state.result;
+
+		untrack(() => {
+			const fires = shouldRecomposeExclusions(
+				{
+					...IDLE_SNAPSHOT,
+					hasResult: result !== null,
+					resultExclusionSignature: result?.exclusionSignature ?? null
+				},
+				signature
+			);
+
+			if (!result || !fires) return;
+
+			const id = ++compositionId;
+			void updateResultExclusions(result, id);
+		});
+	});
+
+	// Re-extract the palette colors when the image or its cap changes; the
+	// module owns its own state slice, so it registers its own effect here.
+	watchPaletteColors(state);
+
+	// ── Teardown ──────────────────────────────────────────────────────────
+	onDestroy(() => {
+		runId++;
+		clearTimeout(workspaceSaveTimer);
+		clearResult();
+		if (typeof document !== 'undefined') {
+			document.documentElement.classList.remove('animations-disabled');
+		}
+	});
+
+	return {
+		state,
+		get ready() {
+			return ready;
+		},
+		get noActiveColors() {
+			return noActiveColors;
+		},
+		get buttonHint() {
+			return buttonHint;
+		},
+		get buttonHintIsError() {
+			return hintIsError;
+		},
+		clearFormData,
+		handleRecolor,
+		toggleExcludedPixel,
+		setPixelExclusion,
+		downloadResult
+	};
+}

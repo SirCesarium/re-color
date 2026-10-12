@@ -22,8 +22,11 @@ jobs:
       - name: Type check
         run: bun run check
 
-      - name: Test
-        run: bun test
+      - name: Test (domain, no DOM)
+        run: bun run test
+
+      - name: Test (frontend, jsdom)
+        run: bun run test:ui
 
       - name: Build
         run: bun run build

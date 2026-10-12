@@ -1,41 +1,41 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { t } from 'svelte-i18n';
-	import ButtonGroup from '#lib/components/ButtonGroup.svelte';
-	import Dropdown from '#lib/components/Dropdown.svelte';
-	import PixelSlider from '#lib/components/PixelSlider.svelte';
-	import SettingRow from '#lib/components/SettingRow.svelte';
-	import SwitchButton from '#lib/components/SwitchButton.svelte';
-	import Typography from '#lib/components/Typography.svelte';
-	import { MAPPING_OPTIONS, MAPPING_STORAGE_KEY } from '#lib/config/recolor.ts';
-	import { localeFromNavigator, setLocale } from '#lib/i18n/index.ts';
+	import ButtonGroup from '#app/components/ButtonGroup.svelte';
+	import Dropdown from '#app/components/Dropdown.svelte';
+	import PixelSlider from '#app/components/PixelSlider.svelte';
+	import SettingRow from '#app/components/SettingRow.svelte';
+	import SwitchButton from '#app/components/SwitchButton.svelte';
+	import Typography from '#app/components/Typography.svelte';
 	import {
 		LOCALE_LABELS,
 		type Locale,
 		type MessageKey,
 		SUPPORTED_LOCALES
-	} from '#lib/i18n/locales.ts';
-	import { LocalizedError } from '#lib/i18n/localized-error.ts';
-	import type { AppSettings } from '#lib/state/app-settings.ts';
+	} from '#app/i18n/locales.ts';
+	import { LocalizedError } from '#app/i18n/localized-error.ts';
+	import { type AppSettings } from '#app/state/settings/model.ts';
 	import {
-		APP_SETTINGS_KEY,
 		clearSavedAppData,
+		importAppSettings
+	} from '#app/state/settings/repository.ts';
+	import {
+		replaceSettings,
+		resetSettings as restoreDefaults,
+		serializeSettings,
+		settings,
+		updateSetting
+	} from '#app/state/settings/store.svelte.ts';
+	import {
 		clearWorkspace,
-		DEFAULT_APP_SETTINGS,
-		exportAppSettings,
-		importAppSettings,
 		loadWorkspace,
-		parseAppSettings,
 		saveWorkspace
-	} from '#lib/state/app-settings.ts';
-	import { hintsEnabled } from '#lib/state/hints.ts';
+	} from '#app/state/workspace.ts';
+	import { MAPPING_OPTIONS } from '#core/recolor.ts';
 
-	let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
 	let error = $state<{
 		id: MessageKey;
 		values?: Record<string, string | number>;
 	} | null>(null);
-	let loading = $state(true);
 
 	const mappingOptions = $derived(
 		MAPPING_OPTIONS.map(option => ({
@@ -47,86 +47,50 @@
 		SUPPORTED_LOCALES.map(value => ({ value, label: LOCALE_LABELS[value] }))
 	);
 
-	onMount(() => {
+	/** Clears the banner after a successful save, or reports a failed one. */
+	function saveOrReport(saved: boolean): void {
+		error = saved ? null : { id: 'settings.errorSave' };
+	}
+
+	function updateLocale(locale: Locale): void {
+		saveOrReport(updateSetting('locale', locale));
+	}
+
+	function updateAnimations(enabled: boolean): void {
+		saveOrReport(updateSetting('animationsEnabled', enabled));
+	}
+
+	function updateHints(enabled: boolean): void {
+		saveOrReport(updateSetting('hintsEnabled', enabled));
+	}
+
+	function updateAutoRecolor(enabled: boolean): void {
+		saveOrReport(updateSetting('autoRecolor', enabled));
+	}
+
+	async function updatePersistWorkspace(enabled: boolean): Promise<void> {
+		saveOrReport(updateSetting('persistWorkspace', enabled));
+
+		if (enabled) return;
+
 		try {
-			settings = parseAppSettings(
-				localStorage.getItem(APP_SETTINGS_KEY),
-				localeFromNavigator()
-			);
-		} catch (cause) {
-			console.error('Could not read saved app settings', cause);
-			error = { id: 'settings.errorLoad' };
-		}
-
-		document.documentElement.classList.toggle(
-			'animations-disabled',
-			!settings.animationsEnabled
-		);
-		loading = false;
-
-		return () => {
-			document.documentElement.classList.remove('animations-disabled');
-		};
-	});
-
-	function persistSettings() {
-		try {
-			localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings));
+			await clearWorkspace();
 			error = null;
 		} catch (cause) {
-			console.error('Could not save app settings', cause);
-			error = { id: 'settings.errorSave' };
+			console.error(
+				'Could not clear saved workspace after disabling persistence',
+				cause
+			);
+			error = { id: 'settings.errorWorkspaceClear' };
 		}
 	}
 
-	function updateLocale(locale: Locale) {
-		settings.locale = locale;
-		setLocale(locale);
-		persistSettings();
+	function updateMaxPaletteColors(maxColors: number): void {
+		saveOrReport(updateSetting('maxPaletteColors', maxColors));
 	}
 
-	function updateAnimations(enabled: boolean) {
-		settings.animationsEnabled = enabled;
-		document.documentElement.classList.toggle('animations-disabled', !enabled);
-		persistSettings();
-	}
-
-	function updateHints(enabled: boolean) {
-		settings.hintsEnabled = enabled;
-		hintsEnabled.set(enabled);
-		persistSettings();
-	}
-
-	function updateAutoRecolor(enabled: boolean) {
-		settings.autoRecolor = enabled;
-		persistSettings();
-	}
-
-	async function updatePersistWorkspace(enabled: boolean) {
-		settings.persistWorkspace = enabled;
-		persistSettings();
-
-		if (!enabled) {
-			try {
-				await clearWorkspace();
-				error = null;
-			} catch (cause) {
-				console.error(
-					'Could not clear saved workspace after disabling persistence',
-					cause
-				);
-				error = { id: 'settings.errorWorkspaceClear' };
-			}
-		}
-	}
-
-	function updateMaxPaletteColors(maxColors: number) {
-		settings.maxPaletteColors = maxColors;
-		persistSettings();
-	}
-
-	function exportSettings() {
-		const blob = new Blob([exportAppSettings(settings)], {
+	function exportSettings(): void {
+		const blob = new Blob([serializeSettings()], {
 			type: 'application/json'
 		});
 		const url = URL.createObjectURL(blob);
@@ -139,19 +103,13 @@
 		setTimeout(() => URL.revokeObjectURL(url), 0);
 	}
 
-	async function importSettings(file: File | undefined) {
+	async function importSettings(file: File | undefined): Promise<void> {
 		if (!file) return;
 
 		try {
 			const importedSettings = importAppSettings(await file.text());
-			settings = importedSettings;
-			setLocale(importedSettings.locale);
-			hintsEnabled.set(importedSettings.hintsEnabled);
-			document.documentElement.classList.toggle(
-				'animations-disabled',
-				!importedSettings.animationsEnabled
-			);
-			persistSettings();
+
+			saveOrReport(replaceSettings(importedSettings));
 
 			if (!importedSettings.persistWorkspace) await clearWorkspace();
 		} catch (cause) {
@@ -169,9 +127,10 @@
 		input.value = '';
 	}
 
-	async function updateDefaultMapping(mapping: AppSettings['defaultMapping']) {
-		settings.defaultMapping = mapping;
-		persistSettings();
+	async function updateDefaultMapping(
+		mapping: AppSettings['defaultMapping']
+	): Promise<void> {
+		saveOrReport(updateSetting('defaultMapping', mapping));
 
 		try {
 			const workspace = await loadWorkspace();
@@ -185,28 +144,18 @@
 		}
 	}
 
-	function applyDefaults() {
-		settings = { ...DEFAULT_APP_SETTINGS };
-		setLocale(DEFAULT_APP_SETTINGS.locale);
-		hintsEnabled.set(DEFAULT_APP_SETTINGS.hintsEnabled);
-		document.documentElement.classList.remove('animations-disabled');
-	}
-
-	function resetSettings() {
+	function resetSettings(): void {
 		if (!confirm($t('settings.resetConfirm'))) return;
 
-		applyDefaults();
-		localStorage.removeItem(MAPPING_STORAGE_KEY);
-		persistSettings();
+		saveOrReport(restoreDefaults());
 	}
 
-	async function handleClearAppData() {
+	async function handleClearAppData(): Promise<void> {
 		if (!confirm($t('settings.clearConfirm'))) return;
 
 		try {
 			await clearSavedAppData();
-			applyDefaults();
-			persistSettings();
+			saveOrReport(restoreDefaults());
 		} catch (cause) {
 			console.error('Could not clear saved app data', cause);
 			error = { id: 'settings.errorClear' };
@@ -224,159 +173,157 @@
 </svelte:head>
 
 <main class="box-border flex w-full flex-1 flex-col items-center gap-8 px-3 py-12 sm:px-4">
-	{#if !loading}
-		<section class="flex w-full max-w-[860px] flex-col gap-8" aria-labelledby="settings-title">
-			<Typography id="settings-title" as="h1" variant="page-title" class="m-0">
-				{$t("settings.title")}
-			</Typography>
+	<section class="flex w-full max-w-[860px] flex-col gap-8" aria-labelledby="settings-title">
+		<Typography id="settings-title" as="h1" variant="page-title" class="m-0">
+			{$t("settings.title")}
+		</Typography>
 
-			<div class="grid gap-8">
-				<div class="grid gap-2">
-					<Typography as="h2" variant="section-label" class="m-0">
-						{$t("settings.groupInterface")}
-					</Typography>
-					<div class="grid">
-						<SettingRow title={$t("settings.languageTitle")} hint={$t("settings.languageDesc")}>
-							{#snippet control()}
-								<Dropdown
-									class="w-full min-[640px]:w-[200px]"
-									value={settings.locale}
-									options={localeOptions}
-									label={$t("settings.languageAria")}
-									onchange={updateLocale}
-								/>
-							{/snippet}
-						</SettingRow>
-						<SettingRow title={$t("settings.animationsTitle")} hint={$t("settings.animationsDesc")}>
-							{#snippet control()}
-								<SwitchButton
-									checked={settings.animationsEnabled}
-									label={$t("settings.animationsTitle")}
-									onchange={updateAnimations}
-								/>
-							{/snippet}
-						</SettingRow>
-						<SettingRow title={$t("settings.hintsTitle")} hint={$t("settings.hintsDesc")}>
-							{#snippet control()}
-								<SwitchButton
-									checked={settings.hintsEnabled}
-									label={$t("settings.hintsTitle")}
-									onchange={updateHints}
-								/>
-							{/snippet}
-						</SettingRow>
-					</div>
-				</div>
-
-				<div class="grid gap-2">
-					<Typography as="h2" variant="section-label" class="m-0">
-						{$t("settings.groupRecolor")}
-					</Typography>
-					<div class="grid">
-						<SettingRow title={$t("settings.autoRecolorTitle")} hint={$t("settings.autoRecolorDesc")}>
-							{#snippet control()}
-								<SwitchButton
-									checked={settings.autoRecolor}
-									label={$t("settings.autoRecolorTitle")}
-									onchange={updateAutoRecolor}
-								/>
-							{/snippet}
-						</SettingRow>
-						<SettingRow
-							stacked
-							title={$t("settings.maxColorsTitle")}
-							hint={$t("settings.maxColorsDesc")}
-						>
-							{#snippet control()}
-								<PixelSlider
-									value={settings.maxPaletteColors}
-									min={1}
-									max={256}
-									label={$t("settings.maxColorsTitle")}
-									showLabel={false}
-									onchange={updateMaxPaletteColors}
-								/>
-							{/snippet}
-						</SettingRow>
-						<SettingRow stacked title={$t("settings.mappingTitle")} hint={$t("settings.mappingDesc")}>
-							{#snippet control()}
-								<ButtonGroup
-									value={settings.defaultMapping}
-									options={mappingOptions}
-									label={$t("settings.mappingAria")}
-									onchange={updateDefaultMapping}
-								/>
-							{/snippet}
-						</SettingRow>
-					</div>
-				</div>
-
-				<div class="grid gap-2">
-					<Typography as="h2" variant="section-label" class="m-0">
-						{$t("settings.groupData")}
-					</Typography>
-					<div class="grid">
-						<SettingRow title={$t("settings.persistTitle")} hint={$t("settings.persistDesc")}>
-							{#snippet control()}
-								<SwitchButton
-									checked={settings.persistWorkspace}
-									label={$t("settings.persistTitle")}
-									onchange={updatePersistWorkspace}
-								/>
-							{/snippet}
-						</SettingRow>
-						<SettingRow stacked title={$t("settings.backupTitle")} hint={$t("settings.backupDesc")}>
-							{#snippet control()}
-								<div class="flex flex-wrap gap-3">
-									<button
-										class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
-										type="button"
-										onclick={exportSettings}
-									>
-										{$t("settings.export")}
-									</button>
-									<label
-										class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)]"
-									>
-										{$t("settings.import")}
-										<input
-											class="sr-only"
-											type="file"
-											accept="application/json,.json"
-											aria-label={$t("settings.importAria")}
-											onchange={handleImportSelection}
-										/>
-									</label>
-								</div>
-							{/snippet}
-						</SettingRow>
-						<SettingRow title={$t("settings.resetTitle")} hint={$t("settings.resetDesc")}>
-							{#snippet control()}
-								<button
-									class="min-h-11 cursor-pointer border-2 border-btn-edge bg-panel px-3 py-2 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
-									type="button"
-									onclick={resetSettings}
-								>
-									{$t("settings.resetBtn")}
-								</button>
-							{/snippet}
-						</SettingRow>
-						<SettingRow title={$t("settings.clearTitle")} hint={$t("settings.clearDesc")}>
-							{#snippet control()}
-								<button
-									class="min-h-11 cursor-pointer border-2 border-[var(--sw-red)] bg-panel px-3 py-2 text-base text-[var(--sw-red)] shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-[var(--sw-red)] hover:text-panel"
-									type="button"
-									onclick={handleClearAppData}
-								>
-									{$t("settings.clearBtn")}
-								</button>
-							{/snippet}
-						</SettingRow>
-					</div>
+		<div class="grid gap-8">
+			<div class="grid gap-2">
+				<Typography as="h2" variant="section-label" class="m-0">
+					{$t("settings.groupInterface")}
+				</Typography>
+				<div class="grid">
+					<SettingRow title={$t("settings.languageTitle")} hint={$t("settings.languageDesc")}>
+						{#snippet control()}
+							<Dropdown
+								class="w-full min-[640px]:w-[200px]"
+								value={settings.locale}
+								options={localeOptions}
+								label={$t("settings.languageAria")}
+								onchange={updateLocale}
+							/>
+						{/snippet}
+					</SettingRow>
+					<SettingRow title={$t("settings.animationsTitle")} hint={$t("settings.animationsDesc")}>
+						{#snippet control()}
+							<SwitchButton
+								checked={settings.animationsEnabled}
+								label={$t("settings.animationsTitle")}
+								onchange={updateAnimations}
+							/>
+						{/snippet}
+					</SettingRow>
+					<SettingRow title={$t("settings.hintsTitle")} hint={$t("settings.hintsDesc")}>
+						{#snippet control()}
+							<SwitchButton
+								checked={settings.hintsEnabled}
+								label={$t("settings.hintsTitle")}
+								onchange={updateHints}
+							/>
+						{/snippet}
+					</SettingRow>
 				</div>
 			</div>
-		</section>
-	{/if}
+
+			<div class="grid gap-2">
+				<Typography as="h2" variant="section-label" class="m-0">
+					{$t("settings.groupRecolor")}
+				</Typography>
+				<div class="grid">
+					<SettingRow title={$t("settings.autoRecolorTitle")} hint={$t("settings.autoRecolorDesc")}>
+						{#snippet control()}
+							<SwitchButton
+								checked={settings.autoRecolor}
+								label={$t("settings.autoRecolorTitle")}
+								onchange={updateAutoRecolor}
+							/>
+						{/snippet}
+					</SettingRow>
+					<SettingRow
+						stacked
+						title={$t("settings.maxColorsTitle")}
+						hint={$t("settings.maxColorsDesc")}
+					>
+						{#snippet control()}
+							<PixelSlider
+								value={settings.maxPaletteColors}
+								min={1}
+								max={256}
+								label={$t("settings.maxColorsTitle")}
+								showLabel={false}
+								onchange={updateMaxPaletteColors}
+							/>
+						{/snippet}
+					</SettingRow>
+					<SettingRow stacked title={$t("settings.mappingTitle")} hint={$t("settings.mappingDesc")}>
+						{#snippet control()}
+							<ButtonGroup
+								value={settings.defaultMapping}
+								options={mappingOptions}
+								label={$t("settings.mappingAria")}
+								onchange={updateDefaultMapping}
+							/>
+						{/snippet}
+					</SettingRow>
+				</div>
+			</div>
+
+			<div class="grid gap-2">
+				<Typography as="h2" variant="section-label" class="m-0">
+					{$t("settings.groupData")}
+				</Typography>
+				<div class="grid">
+					<SettingRow title={$t("settings.persistTitle")} hint={$t("settings.persistDesc")}>
+						{#snippet control()}
+							<SwitchButton
+								checked={settings.persistWorkspace}
+								label={$t("settings.persistTitle")}
+								onchange={updatePersistWorkspace}
+							/>
+						{/snippet}
+					</SettingRow>
+					<SettingRow stacked title={$t("settings.backupTitle")} hint={$t("settings.backupDesc")}>
+						{#snippet control()}
+							<div class="flex flex-wrap gap-3">
+								<button
+									class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
+									type="button"
+									onclick={exportSettings}
+								>
+									{$t("settings.export")}
+								</button>
+								<label
+									class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)]"
+								>
+									{$t("settings.import")}
+									<input
+										class="sr-only"
+										type="file"
+										accept="application/json,.json"
+										aria-label={$t("settings.importAria")}
+										onchange={handleImportSelection}
+									/>
+								</label>
+							</div>
+						{/snippet}
+					</SettingRow>
+					<SettingRow title={$t("settings.resetTitle")} hint={$t("settings.resetDesc")}>
+						{#snippet control()}
+							<button
+								class="min-h-11 cursor-pointer border-2 border-btn-edge bg-panel px-3 py-2 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
+								type="button"
+								onclick={resetSettings}
+							>
+								{$t("settings.resetBtn")}
+							</button>
+						{/snippet}
+					</SettingRow>
+					<SettingRow title={$t("settings.clearTitle")} hint={$t("settings.clearDesc")}>
+						{#snippet control()}
+							<button
+								class="min-h-11 cursor-pointer border-2 border-[var(--sw-red)] bg-panel px-3 py-2 text-base text-[var(--sw-red)] shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-[var(--sw-red)] hover:text-panel"
+								type="button"
+								onclick={handleClearAppData}
+							>
+								{$t("settings.clearBtn")}
+							</button>
+						{/snippet}
+					</SettingRow>
+				</div>
+			</div>
+		</div>
+	</section>
 
 	{#if error}
 		<Typography

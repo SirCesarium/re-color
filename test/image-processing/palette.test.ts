@@ -1,19 +1,19 @@
 import { expect, test } from 'bun:test';
 import { zlibSync } from 'fflate';
+import { recolorSprite } from '../../src/lib/core/image-processing/engine.ts';
+import { decodePng } from '../../src/lib/core/image-processing/image/png.ts';
+import {
+	MAX_IMAGE_BYTES,
+	validateImageFile
+} from '../../src/lib/core/image-processing/image/validation.ts';
+import { extractColorsFromFile } from '../../src/lib/core/image-processing/palette.ts';
 import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
 	OUTPUT_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
-} from '../../src/lib/config/recolor.ts';
-import { recolorSprite } from '../../src/lib/image-processing/engine.ts';
-import { decodePng } from '../../src/lib/image-processing/image/png.ts';
-import {
-	MAX_IMAGE_BYTES,
-	validateImageFile
-} from '../../src/lib/image-processing/image/validation.ts';
-import { extractColorsFromFile } from '../../src/lib/image-processing/palette.ts';
+} from '../../src/lib/core/recolor.ts';
 import {
 	chunk,
 	header,
@@ -134,15 +134,15 @@ test('yields to the event loop while extracting a maximum-size palette image', a
 test('rejects non-PNG, oversized, and over-dimensioned uploads', async () => {
 	await expect(
 		validateImageFile(new Blob(['not a png'], { type: 'image/png' }))
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 	await expect(
 		validateImageFile(new Blob([new Uint8Array(MAX_IMAGE_BYTES + 1)]))
-	).rejects.toThrow('validation.tooLarge');
+	).rejects.toMatchObject({ code: 'tooLarge' });
 
 	const oversized = makeIndexedPng(513, 1, [[20, 40, 60]], [0], [255]);
-	await expect(validateImageFile(pngBlob(oversized))).rejects.toThrow(
-		'validation.tooBig'
-	);
+	await expect(validateImageFile(pngBlob(oversized))).rejects.toMatchObject({
+		code: 'tooBig'
+	});
 });
 
 test('PNG decoder rejects excessive dimensions before inflating image data', () => {
@@ -168,7 +168,7 @@ test('palette extraction and recoloring reject files that are not PNG', async ()
 			{ maxColors: 64, alphaThreshold: 128 },
 			canvasConfig
 		)
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 
 	await expect(
 		recolorSprite(invalidFile, [], {
@@ -182,5 +182,5 @@ test('palette extraction and recoloring reject files that are not PNG', async ()
 			},
 			output: OUTPUT_CONFIG
 		})
-	).rejects.toThrow('validation.notPng');
+	).rejects.toMatchObject({ code: 'notPng' });
 });

@@ -1,25 +1,25 @@
 import { expect, test } from 'bun:test';
-import { mapDominant } from '../../src/lib/image-processing/color/mapping/dominant.ts';
-import { mapByLuminance } from '../../src/lib/image-processing/color/mapping/luminance.ts';
-import { mapNearest } from '../../src/lib/image-processing/color/mapping/nearest.ts';
-import { createColorLookup } from '../../src/lib/image-processing/color/mapping/registry.ts';
+import { mapDominant } from '../../src/lib/core/image-processing/color/mapping/dominant.ts';
+import { mapByLuminance } from '../../src/lib/core/image-processing/color/mapping/luminance.ts';
+import { mapNearest } from '../../src/lib/core/image-processing/color/mapping/nearest.ts';
+import { createColorLookup } from '../../src/lib/core/image-processing/color/mapping/registry.ts';
 import {
 	fillUnmapped,
 	pairByRank
-} from '../../src/lib/image-processing/color/mapping/shared.ts';
+} from '../../src/lib/core/image-processing/color/mapping/shared.ts';
 import {
 	keyToRgb,
 	luminance,
 	rgbToKey,
 	weightedDistance
-} from '../../src/lib/image-processing/color/metrics.ts';
+} from '../../src/lib/core/image-processing/color/metrics.ts';
 import type {
 	ColorMappingConfig,
 	ColorMappingInput,
 	MappingMode,
 	Rgb,
 	RgbWeights
-} from '../../src/lib/image-processing/types.ts';
+} from '../../src/lib/core/image-processing/types.ts';
 
 const BLACK: Rgb = { r: 0, g: 0, b: 0 };
 const WHITE: Rgb = { r: 255, g: 255, b: 255 };

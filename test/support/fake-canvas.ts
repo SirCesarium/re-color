@@ -1,5 +1,5 @@
 import { zlibSync } from 'fflate';
-import { decodePng } from '../../src/lib/image-processing/image/png.ts';
+import { decodePng } from '../../src/lib/core/image-processing/image/png.ts';
 import { chunk, header, makePng } from './png-fixtures.ts';
 
 /**

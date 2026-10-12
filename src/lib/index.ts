@@ -1,1 +1,1 @@
-export * from './image-processing/index.ts';
+export * from './core/image-processing/index.ts';

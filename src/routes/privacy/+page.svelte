@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import Link from '#lib/components/Link.svelte';
-	import Typography from '#lib/components/Typography.svelte';
+	import Link from '#app/components/Link.svelte';
+	import Typography from '#app/components/Typography.svelte';
 	import { resolve } from '$app/paths';
 </script>
 
