@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
 
+	import {
+		fitImageInViewport,
+		pixelAtPoint
+	} from '#lib/geometry/pixel-coords.ts';
+	import { linePoints } from '#lib/geometry/stroke-line.ts';
+
 	let {
 		imageUrl = null,
 		spriteFile = null,
@@ -141,16 +147,8 @@
 		if (!viewport || !dimensions) return null;
 
 		const bounds = viewport.getBoundingClientRect();
-		const scale = Math.min(
-			bounds.width / dimensions.width,
-			bounds.height / dimensions.height
-		);
 
-		return {
-			left: (bounds.width - dimensions.width * scale) / 2,
-			top: (bounds.height - dimensions.height * scale) / 2,
-			scale
-		};
+		return fitImageInViewport(bounds, dimensions);
 	}
 
 	function getPixelAt(clientX: number, clientY: number) {
@@ -159,19 +157,14 @@
 		const bounds = viewport.getBoundingClientRect();
 		const imageRect = getImageRect();
 
-		if (!imageRect || imageRect.scale <= 0) return null;
+		if (!imageRect) return null;
 
-		const x = Math.floor(
-			(clientX - bounds.left - imageRect.left) / imageRect.scale
+		return pixelAtPoint(
+			{ x: clientX, y: clientY },
+			bounds,
+			imageRect,
+			dimensions
 		);
-		const y = Math.floor(
-			(clientY - bounds.top - imageRect.top) / imageRect.scale
-		);
-
-		if (x < 0 || y < 0 || x >= dimensions.width || y >= dimensions.height)
-			return null;
-
-		return { x, y, index: y * dimensions.width + x };
 	}
 
 	function getHoverStyle() {
@@ -261,41 +254,22 @@
 	function addStrokeSegment(pixel: { x: number; y: number; index: number }) {
 		if (!pointerStroke || !dimensions) return;
 
-		let x0 = pointerStroke.lastPixel.x;
-		let y0 = pointerStroke.lastPixel.y;
-		const x1 = pixel.x;
-		const y1 = pixel.y;
-		const dx = Math.abs(x1 - x0);
-		const sx = x0 < x1 ? 1 : -1;
-		const dy = -Math.abs(y1 - y0);
-		const sy = y0 < y1 ? 1 : -1;
-		let error = dx + dy;
-		const segment: number[] = [];
+		const size = dimensions;
+		const stroke = pointerStroke;
 
-		while (true) {
-			const index = y0 * dimensions.width + x0;
-			pointerStroke.indexes.add(index);
-			segment.push(index);
+		// Every pixel between the last point and this one, so a fast drag
+		// leaves no gaps in the stroke.
+		const segment = linePoints(stroke.lastPixel, pixel).map(point => {
+			const index = point.y * size.width + point.x;
+			stroke.indexes.add(index);
 
-			if (x0 === x1 && y0 === y1) break;
+			return index;
+		});
 
-			const doubledError = 2 * error;
+		stroke.lastPixel = { x: pixel.x, y: pixel.y };
 
-			if (doubledError >= dy) {
-				error += dy;
-				x0 += sx;
-			}
-
-			if (doubledError <= dx) {
-				error += dx;
-				y0 += sy;
-			}
-		}
-
-		pointerStroke.lastPixel = { x: x1, y: y1 };
-
-		if (pointerStroke.dragging) {
-			const image = pointerStroke.excluded ? originalSprite : sourceImage;
+		if (stroke.dragging) {
+			const image = stroke.excluded ? originalSprite : sourceImage;
 			paintPixels(segment, image);
 		}
 	}
