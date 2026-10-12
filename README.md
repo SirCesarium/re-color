@@ -30,9 +30,9 @@ Extract a color palette from a reference sprite and __re-colorize__ another one.
 
 ### Three ways to map colors
 
-- **Nearest color** — direct RGB nearest-neighbor.
-- **Luminance order** — sorts both sprite and palette by brightness and pairs them, so shading survives the swap.
-- **Dominant color** — finds your sprite's most-used color and pins it to the palette's dominant, then fills in the rest.
+- **Nearest color**: direct RGB nearest-neighbor.
+- **Luminance order**: sorts both sprite and palette by brightness and pairs them, so shading survives the swap.
+- **Dominant color**: finds your sprite's most-used color and pins it to the palette's dominant, then fills in the rest.
 
 <img width="512" height="129" alt="image" src="https://github.com/user-attachments/assets/1fcdcf29-0cac-46c4-aee5-4ef3a0cc2003" />
 
@@ -44,7 +44,7 @@ Tap any pixel in the live preview to exclude it from the recolor.
 
 ### Download the result
 
-Export the recolored sprite as a PNG — same dimensions as your input, named `<name>-recolored.png`.
+Export the recolored sprite as a PNG, same dimensions as your input, named `<name>-recolored.png`.
 
 ### Your session survives a reload
 
@@ -54,7 +54,7 @@ The current palette, sprite, mapping mode and pixel exclusions are saved locally
 
 ### Preferences that stick
 
-Auto-apply the result, maximum palette colors, default mapping mode, animations and help hints — all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
+Auto-apply the result, maximum palette colors, default mapping mode, animations and help hints, all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
 
 <img width="973" height="818" alt="image" src="https://github.com/user-attachments/assets/250f99df-8096-4e60-83c5-341a633067b9" />
 
@@ -87,15 +87,15 @@ Review the [license](./LICENSE) or the [privacy section](https://recolor.pages.d
 
 ## Under the hood
 
-- **Web Worker** — PNG decoding and palette counting run off the main thread, so the UI stays responsive.
-- **Service worker** — the whole app is precached: it works offline after the first load, and updates install themselves in the background.
-- **Security headers** — `nosniff`, `no-referrer` and `X-Frame-Options: DENY` on every response.
+- **Web Worker**: PNG decoding and palette counting run off the main thread, so the UI stays responsive.
+- **Service worker**: the whole app is precached: it works offline after the first load, and updates install themselves in the background.
+- **Security headers**: `nosniff`, `no-referrer` and `X-Frame-Options: DENY` on every response.
 
 ## For devs
 
 ### Checks
 
-The CI runs these three commands on every push and pull request — run them before opening one:
+The CI runs these three commands on every push and pull request. Run them before opening one:
 
 ```bash
 bun run check   # svelte-check

@@ -1,7 +1,9 @@
 import type { Rgb } from '../../types.ts';
 
 /**
- * Pairs sorted source keys with target colors distributed across their ranks.
+ * Spreads the sorted source keys across the sorted target colors by rank: the
+ * first key gets the first color, the last key the last one, and the ones in
+ * between are spread evenly.
  *
  * @param keys Source RGB keys, ordered by the caller.
  * @param colors Target palette colors, ordered by the caller.
@@ -16,19 +18,22 @@ export function pairByRank(
 
 	for (let index = 0; index < keys.length; index++) {
 		const colorIndex =
-			keys.length === 1 ? 0 : Math.round((index * (colors.length - 1)) / (keys.length - 1));
+			keys.length === 1
+				? 0
+				: Math.round((index * (colors.length - 1)) / (keys.length - 1));
 
 		result.set(keys[index], colors[colorIndex]);
 	}
 }
 
 /**
- * Assigns the first palette color to keys not already mapped.
+ * Gives every still-unmapped key the first palette color, unless the fallback
+ * says to leave them alone (unmapped keys keep their original pixels).
  *
  * @param result Mapping table to complete.
  * @param keys All source RGB keys that may need a target.
  * @param palette Active palette colors in original order.
- * @param fallback Whether to fill missing keys or leave them unchanged.
+ * @param fallback `'first-active'` fills the gaps, `'unmapped'` leaves them empty.
  */
 export function fillUnmapped(
 	result: Map<number, Rgb>,

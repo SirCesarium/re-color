@@ -1,26 +1,26 @@
 <script lang="ts">
-	import Hero from "#lib/widgets/Hero.svelte";
-	import ImageInputs from "#lib/widgets/ImageInputs.svelte";
-	import ResultPanel from "#lib/widgets/ResultPanel.svelte";
-	import Button from "#lib/components/Button.svelte";
-	import ButtonGroup from "#lib/components/ButtonGroup.svelte";
-	import Hint from "#lib/components/Hint.svelte";
-	import Typography from "#lib/components/Typography.svelte";
-	import { MAPPING_OPTIONS } from "#lib/config/recolor.ts";
-	import { createRecolorWorkflow } from "#lib/state/recolor-workflow.svelte.ts";
-	import { t } from "svelte-i18n";
+	import { t } from 'svelte-i18n';
+	import Button from '#lib/components/Button.svelte';
+	import ButtonGroup from '#lib/components/ButtonGroup.svelte';
+	import Hint from '#lib/components/Hint.svelte';
+	import Typography from '#lib/components/Typography.svelte';
+	import { MAPPING_OPTIONS } from '#lib/config/recolor.ts';
+	import { createRecolorWorkflow } from '#lib/state/recolor-workflow.svelte.ts';
+	import Hero from '#lib/widgets/Hero.svelte';
+	import ImageInputs from '#lib/widgets/ImageInputs.svelte';
+	import ResultPanel from '#lib/widgets/ResultPanel.svelte';
 
 	const workflow = createRecolorWorkflow();
 
 	const mappingOptions = $derived(
-		MAPPING_OPTIONS.map((option) => ({
+		MAPPING_OPTIONS.map(option => ({
 			value: option.value,
-			label: $t(option.labelKey),
-		})),
+			label: $t(option.labelKey)
+		}))
 	);
 
 	function confirmClearFormData() {
-		if (confirm($t("home.clearFormConfirm"))) {
+		if (confirm($t('home.clearFormConfirm'))) {
 			workflow.clearFormData();
 		}
 	}

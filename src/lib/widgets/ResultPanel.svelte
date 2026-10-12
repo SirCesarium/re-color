@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { t } from 'svelte-i18n';
 	import Button from '#lib/components/Button.svelte';
 	import Hint from '#lib/components/Hint.svelte';
 	import Typography from '#lib/components/Typography.svelte';
 	import PixelCanvas from '#lib/widgets/PixelCanvas.svelte';
-	import { t } from 'svelte-i18n';
 
 	let {
 		imageUrl = null,
@@ -18,7 +18,10 @@
 		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
 		onTogglePixel?: (pixelIndex: number) => void;
-		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
+		onSetPixelExclusion?: (
+			pixelIndexes: readonly number[],
+			excluded: boolean
+		) => void;
 		onDownload?: () => void;
 	} = $props();
 

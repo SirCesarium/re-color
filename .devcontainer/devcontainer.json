@@ -5,9 +5,7 @@
 		"dockerfile": "Dockerfile"
 	},
 	// vite.config.ts listens on 0.0.0.0:5173
-	"forwardPorts": [
-		5173
-	],
+	"forwardPorts": [5173],
 	"portsAttributes": {
 		"5173": {
 			"label": "Vite dev server",

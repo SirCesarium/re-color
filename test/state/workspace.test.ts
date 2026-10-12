@@ -3,13 +3,13 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import {
 	APP_SETTINGS_KEY,
-	HINT_STORAGE_KEYS,
 	clearSavedAppData,
 	clearWorkspace,
+	HINT_STORAGE_KEYS,
 	loadWorkspace,
+	type PersistedWorkspace,
 	resetHints,
-	saveWorkspace,
-	type PersistedWorkspace
+	saveWorkspace
 } from '../../src/lib/state/app-settings.ts';
 import { installFakeLocalStorage } from '../support/fake-storage.ts';
 
@@ -66,8 +66,14 @@ test('clears the saved workspace', async () => {
 test('roundtrips image blobs with their names', async () => {
 	const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
 	const withImages: PersistedWorkspace = {
-		palette: { name: 'palette.png', blob: new Blob([bytes], { type: 'image/png' }) },
-		sprite: { name: 'sprite.png', blob: new Blob([bytes], { type: 'image/png' }) },
+		palette: {
+			name: 'palette.png',
+			blob: new Blob([bytes], { type: 'image/png' })
+		},
+		sprite: {
+			name: 'sprite.png',
+			blob: new Blob([bytes], { type: 'image/png' })
+		},
 		mapping: 'dominant',
 		colors: [],
 		excludedPixels: []
@@ -77,11 +83,14 @@ test('roundtrips image blobs with their names', async () => {
 	const restored = await loadWorkspace();
 
 	expect(restored).not.toBeNull();
-	expect(restored?.palette?.name).toBe('palette.png');
-	expect(restored?.palette?.blob.type).toBe('image/png');
-	expect([...new Uint8Array(await (restored?.palette?.blob as Blob).arrayBuffer())]).toEqual([
-		...bytes
-	]);
+	if (!restored?.palette) {
+		throw new Error('expected the restored workspace to include a palette');
+	}
+	expect(restored.palette.name).toBe('palette.png');
+	expect(restored.palette.blob.type).toBe('image/png');
+	expect([
+		...new Uint8Array(await restored.palette.blob.arrayBuffer())
+	]).toEqual([...bytes]);
 	expect(restored?.sprite?.name).toBe('sprite.png');
 	expect(restored?.mapping).toBe('dominant');
 });
@@ -106,7 +115,11 @@ test('clearing saved app data removes settings, hints, legacy keys, and the work
 	await clearSavedAppData();
 
 	expect(await loadWorkspace()).toBeNull();
-	for (const key of [APP_SETTINGS_KEY, 'recolor.mapping', ...HINT_STORAGE_KEYS]) {
+	for (const key of [
+		APP_SETTINGS_KEY,
+		'recolor.mapping',
+		...HINT_STORAGE_KEYS
+	]) {
 		expect(localStorage.getItem(key)).toBeNull();
 	}
 });
@@ -117,7 +130,8 @@ test('resetting hints keeps the saved settings untouched', async () => {
 
 	resetHints();
 
-	for (const key of HINT_STORAGE_KEYS) expect(localStorage.getItem(key)).toBeNull();
+	for (const key of HINT_STORAGE_KEYS)
+		expect(localStorage.getItem(key)).toBeNull();
 	expect(localStorage.getItem(APP_SETTINGS_KEY)).toBe('{"maxPaletteColors":8}');
 
 	localStorage.removeItem(APP_SETTINGS_KEY);

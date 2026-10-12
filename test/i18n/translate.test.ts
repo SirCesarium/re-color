@@ -22,9 +22,9 @@ test('translates messages when the locale changes', () => {
 
 test('interpolates values into localized errors', () => {
 	locale.set('es');
-	expect(format()('settings.importBadVersion', { values: { version: '2' } })).toBe(
-		'Versión de archivo de ajustes no admitida: 2.'
-	);
+	expect(
+		format()('settings.importBadVersion', { values: { version: '2' } })
+	).toBe('Versión de archivo de ajustes no admitida: 2.');
 });
 
 test('returns unknown keys unchanged', () => {

@@ -52,7 +52,10 @@ export const OUTPUT_CONFIG: RecolorConfig['output'] = {
 	mimeType: 'image/png'
 };
 
-export const OUTPUT_EXTENSIONS: Record<RecolorConfig['output']['mimeType'], string> = {
+export const OUTPUT_EXTENSIONS: Record<
+	RecolorConfig['output']['mimeType'],
+	string
+> = {
 	'image/png': 'png',
 	'image/jpeg': 'jpg',
 	'image/webp': 'webp'

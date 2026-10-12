@@ -7,16 +7,19 @@ import {
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
 } from '../../src/lib/config/recolor.ts';
-import { composeExcludedPixels } from '../../src/lib/image-processing/image/canvas.ts';
 import { recolorSprite } from '../../src/lib/image-processing/engine.ts';
-import type { PaletteColor, RecolorConfig } from '../../src/lib/image-processing/types.ts';
-import { chunk, header, makePng } from '../support/png-fixtures.ts';
+import { composeExcludedPixels } from '../../src/lib/image-processing/image/canvas.ts';
+import type {
+	PaletteColor,
+	RecolorConfig
+} from '../../src/lib/image-processing/types.ts';
 import {
 	installFakeCanvas,
 	readObjectUrlPixels,
 	rgbaFile,
 	rgbaPixels
 } from '../support/fake-canvas.ts';
+import { chunk, header, makePng } from '../support/png-fixtures.ts';
 
 let uninstall: (() => void) | undefined;
 
@@ -35,7 +38,7 @@ function config(overrides: Partial<RecolorConfig> = {}): RecolorConfig {
 		transparency: TRANSPARENCY_CONFIG,
 		processing: {
 			...PROCESSING_CONFIG,
-			onProgress: () => { },
+			onProgress: () => {},
 			isCancelled: () => false
 		},
 		output: OUTPUT_CONFIG,
@@ -61,7 +64,10 @@ test('recolors every eligible pixel to the active palette color', async () => {
 			return [r, g, b, a];
 		})
 	);
-	const palette: PaletteColor[] = [GREEN, { r: 99, g: 99, b: 99, active: false }];
+	const palette: PaletteColor[] = [
+		GREEN,
+		{ r: 99, g: 99, b: 99, active: false }
+	];
 
 	const url = await recolorSprite(file, palette, config());
 
@@ -71,12 +77,18 @@ test('recolors every eligible pixel to the active palette color', async () => {
 	expect(output.height).toBe(2);
 	// The inactive palette color never appears; everything maps to green.
 	for (let pixel = 0; pixel < 4; pixel++) {
-		expect(output.data.slice(pixel * 4, pixel * 4 + 4)).toEqual([0, 200, 0, 255]);
+		expect(output.data.slice(pixel * 4, pixel * 4 + 4)).toEqual([
+			0, 200, 0, 255
+		]);
 	}
 });
 
 test('emits ordered progress from start to completion', async () => {
-	const file = rgbaFile(32, 32, rgbaPixels(32, 32, (x) => [x * 8, 40, 80, 255]));
+	const file = rgbaFile(
+		32,
+		32,
+		rgbaPixels(32, 32, x => [x * 8, 40, 80, 255])
+	);
 	const fractions: number[] = [];
 	const realNow = performance.now;
 
@@ -85,15 +97,19 @@ test('emits ordered progress from start to completion', async () => {
 	performance.now = () => (clock += 0.1);
 
 	try {
-		const url = await recolorSprite(file, [GREEN], config({
-			processing: {
-				...PROCESSING_CONFIG,
-				chunkDurationMs: 0.25,
-				onProgress: (fraction) => fractions.push(fraction),
-				isCancelled: () => false,
-				yieldToMain: async () => { }
-			}
-		}));
+		const url = await recolorSprite(
+			file,
+			[GREEN],
+			config({
+				processing: {
+					...PROCESSING_CONFIG,
+					chunkDurationMs: 0.25,
+					onProgress: fraction => fractions.push(fraction),
+					isCancelled: () => false,
+					yieldToMain: async () => {}
+				}
+			})
+		);
 
 		expect(url).not.toBeNull();
 	} finally {
@@ -108,11 +124,17 @@ test('emits ordered progress from start to completion', async () => {
 	// A multi-chunk image reports intermediate fractions between the milestones:
 	// the three milestones, one report per two-row chunk, then the last two.
 	expect(fractions).toHaveLength(3 + 16 + 2);
-	expect(fractions.some((fraction) => fraction > 0.1 && fraction < 0.9)).toBe(true);
+	expect(fractions.some(fraction => fraction > 0.1 && fraction < 0.9)).toBe(
+		true
+	);
 });
 
 test('returns no result and revokes the URL when cancelled after encoding', async () => {
-	const file = rgbaFile(4, 4, rgbaPixels(4, 4, () => [10, 20, 30, 255]));
+	const file = rgbaFile(
+		4,
+		4,
+		rgbaPixels(4, 4, () => [10, 20, 30, 255])
+	);
 	const revoked: string[] = [];
 	const revoke = URL.revokeObjectURL.bind(URL);
 	let cancelled = false;
@@ -123,16 +145,21 @@ test('returns no result and revokes the URL when cancelled after encoding', asyn
 	};
 
 	try {
-		const url = await recolorSprite(file, [GREEN], config({
-			processing: {
-				...PROCESSING_CONFIG,
-				onProgress: (fraction) => {
-					// Cancelling once the result is encoded must discard the object URL.
-					if (fraction >= PROCESSING_CONFIG.progress.complete) cancelled = true;
-				},
-				isCancelled: () => cancelled
-			}
-		}));
+		const url = await recolorSprite(
+			file,
+			[GREEN],
+			config({
+				processing: {
+					...PROCESSING_CONFIG,
+					onProgress: fraction => {
+						// Cancelling once the result is encoded must discard the object URL.
+						if (fraction >= PROCESSING_CONFIG.progress.complete)
+							cancelled = true;
+					},
+					isCancelled: () => cancelled
+				}
+			})
+		);
 
 		expect(url).toBeNull();
 		expect(revoked).toHaveLength(1);
@@ -142,19 +169,28 @@ test('returns no result and revokes the URL when cancelled after encoding', asyn
 });
 
 test('skips encoding when cancelled at the last processing milestone', async () => {
-	const file = rgbaFile(4, 4, rgbaPixels(4, 4, () => [10, 20, 30, 255]));
+	const file = rgbaFile(
+		4,
+		4,
+		rgbaPixels(4, 4, () => [10, 20, 30, 255])
+	);
 	let cancelled = false;
 
-	const url = await recolorSprite(file, [GREEN], config({
-		processing: {
-			...PROCESSING_CONFIG,
-			onProgress: (fraction) => {
-				// The pixel loop reports processingComplete right after its final chunk.
-				if (fraction >= PROCESSING_CONFIG.progress.processingComplete) cancelled = true;
-			},
-			isCancelled: () => cancelled
-		}
-	}));
+	const url = await recolorSprite(
+		file,
+		[GREEN],
+		config({
+			processing: {
+				...PROCESSING_CONFIG,
+				onProgress: fraction => {
+					// The pixel loop reports processingComplete right after its final chunk.
+					if (fraction >= PROCESSING_CONFIG.progress.processingComplete)
+						cancelled = true;
+				},
+				isCancelled: () => cancelled
+			}
+		})
+	);
 
 	// No URL is ever produced, so there is nothing to revoke.
 	expect(url).toBeNull();
@@ -164,7 +200,7 @@ test('preserves or normalizes alpha according to the transparency config', async
 	const file = rgbaFile(
 		2,
 		1,
-		rgbaPixels(2, 1, (x) => (x === 0 ? [200, 0, 0, 200] : [0, 0, 255, 0]))
+		rgbaPixels(2, 1, x => (x === 0 ? [200, 0, 0, 200] : [0, 0, 255, 0]))
 	);
 
 	const kept = await readObjectUrlPixels(
@@ -174,9 +210,13 @@ test('preserves or normalizes alpha according to the transparency config', async
 	expect(kept.data).toEqual([0, 200, 0, 200, 0, 0, 255, 0]);
 
 	const normalized = await readObjectUrlPixels(
-		(await recolorSprite(file, [GREEN], config({
-			transparency: { ...TRANSPARENCY_CONFIG, preserveAlpha: false }
-		}))) as string
+		(await recolorSprite(
+			file,
+			[GREEN],
+			config({
+				transparency: { ...TRANSPARENCY_CONFIG, preserveAlpha: false }
+			})
+		)) as string
 	);
 	expect(normalized.data).toEqual([0, 200, 0, 255, 0, 0, 255, 0]);
 });
@@ -185,17 +225,25 @@ test('leaves excluded pixels untouched while recoloring the rest', async () => {
 	const file = rgbaFile(
 		2,
 		1,
-		rgbaPixels(2, 1, (x) => (x === 0 ? [255, 0, 0, 255] : [0, 0, 255, 255]))
+		rgbaPixels(2, 1, x => (x === 0 ? [255, 0, 0, 255] : [0, 0, 255, 255]))
 	);
 
-	const url = await recolorSprite(file, [GREEN], config({ excludedPixels: new Set([0]) }));
+	const url = await recolorSprite(
+		file,
+		[GREEN],
+		config({ excludedPixels: new Set([0]) })
+	);
 	const output = await readObjectUrlPixels(url as string);
 
 	expect(output.data).toEqual([255, 0, 0, 255, 0, 200, 0, 255]);
 });
 
 test('rejects exclusion indexes that fall outside the image', async () => {
-	const file = rgbaFile(2, 1, rgbaPixels(2, 1, () => [5, 5, 5, 255]));
+	const file = rgbaFile(
+		2,
+		1,
+		rgbaPixels(2, 1, () => [5, 5, 5, 255])
+	);
 
 	await expect(
 		recolorSprite(file, [GREEN], config({ excludedPixels: new Set([2]) }))
@@ -203,23 +251,39 @@ test('rejects exclusion indexes that fall outside the image', async () => {
 });
 
 test('produces no result without an active palette color', async () => {
-	const file = rgbaFile(1, 1, rgbaPixels(1, 1, () => [5, 5, 5, 255]));
+	const file = rgbaFile(
+		1,
+		1,
+		rgbaPixels(1, 1, () => [5, 5, 5, 255])
+	);
 
-	const url = await recolorSprite(file, [{ r: 1, g: 2, b: 3, active: false }], config());
+	const url = await recolorSprite(
+		file,
+		[{ r: 1, g: 2, b: 3, active: false }],
+		config()
+	);
 
 	expect(url).toBeNull();
 });
 
 test('produces no result when the mapping strategy matches nothing', async () => {
-	const file = rgbaFile(1, 1, rgbaPixels(1, 1, () => [5, 5, 5, 255]));
+	const file = rgbaFile(
+		1,
+		1,
+		rgbaPixels(1, 1, () => [5, 5, 5, 255])
+	);
 	const strategy = {
 		id: 'test/empty',
 		createLookup: () => new Map<number, { r: number; g: number; b: number }>()
 	};
 
-	const url = await recolorSprite(file, [GREEN], config({
-		mapping: { ...MAPPING_CONFIG, strategy }
-	}));
+	const url = await recolorSprite(
+		file,
+		[GREEN],
+		config({
+			mapping: { ...MAPPING_CONFIG, strategy }
+		})
+	);
 
 	expect(url).toBeNull();
 });
@@ -228,7 +292,7 @@ test('composes excluded pixels back over an already recolored image', async () =
 	const file = rgbaFile(
 		2,
 		1,
-		rgbaPixels(2, 1, (x) => (x === 0 ? [255, 0, 0, 255] : [0, 0, 255, 255]))
+		rgbaPixels(2, 1, x => (x === 0 ? [255, 0, 0, 255] : [0, 0, 255, 255]))
 	);
 	const previewUrl = await recolorSprite(file, [GREEN], config());
 
@@ -245,7 +309,11 @@ test('composes excluded pixels back over an already recolored image', async () =
 });
 
 test('composing nothing keeps the recolored image unchanged', async () => {
-	const file = rgbaFile(2, 1, rgbaPixels(2, 1, () => [9, 9, 9, 255]));
+	const file = rgbaFile(
+		2,
+		1,
+		rgbaPixels(2, 1, () => [9, 9, 9, 255])
+	);
 	const previewUrl = await recolorSprite(file, [GREEN], config());
 
 	const composedUrl = await composeExcludedPixels(
@@ -261,8 +329,16 @@ test('composing nothing keeps the recolored image unchanged', async () => {
 });
 
 test('composing rejects mismatched dimensions', async () => {
-	const base = rgbaFile(2, 2, rgbaPixels(2, 2, () => [9, 9, 9, 255]));
-	const smaller = rgbaFile(1, 1, rgbaPixels(1, 1, () => [9, 9, 9, 255]));
+	const base = rgbaFile(
+		2,
+		2,
+		rgbaPixels(2, 2, () => [9, 9, 9, 255])
+	);
+	const smaller = rgbaFile(
+		1,
+		1,
+		rgbaPixels(1, 1, () => [9, 9, 9, 255])
+	);
 	const previewUrl = await recolorSprite(base, [GREEN], config());
 
 	await expect(
@@ -277,7 +353,11 @@ test('composing rejects mismatched dimensions', async () => {
 });
 
 test('composing rejects exclusion indexes outside the image', async () => {
-	const file = rgbaFile(2, 1, rgbaPixels(2, 1, () => [9, 9, 9, 255]));
+	const file = rgbaFile(
+		2,
+		1,
+		rgbaPixels(2, 1, () => [9, 9, 9, 255])
+	);
 	const previewUrl = await recolorSprite(file, [GREEN], config());
 
 	await expect(
@@ -292,7 +372,11 @@ test('composing rejects exclusion indexes outside the image', async () => {
 });
 
 test('composing surfaces decode failures of the original file', async () => {
-	const file = rgbaFile(2, 1, rgbaPixels(2, 1, () => [9, 9, 9, 255]));
+	const file = rgbaFile(
+		2,
+		1,
+		rgbaPixels(2, 1, () => [9, 9, 9, 255])
+	);
 	const previewUrl = await recolorSprite(file, [GREEN], config());
 	// Passes upload validation (signature and header) but never inflates into pixels.
 	const truncated = new File(

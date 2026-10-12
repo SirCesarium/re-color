@@ -67,7 +67,9 @@ export function rgbaFile(
 	rgba: Uint8ClampedArray | Uint8Array,
 	name = 'sprite.png'
 ): File {
-	return new File([encodeRgbaPng(width, height, rgba)], name, { type: 'image/png' });
+	return new File([encodeRgbaPng(width, height, rgba)], name, {
+		type: 'image/png'
+	});
 }
 
 /** Collects the pixels behind an object URL by decoding its PNG payload. */
@@ -76,11 +78,16 @@ export async function readObjectUrlPixels(
 ): Promise<{ width: number; height: number; data: number[] }> {
 	const response = await fetch(url);
 
-	if (!response.ok) throw new Error(`readObjectUrlPixels: could not read ${url}`);
+	if (!response.ok)
+		throw new Error(`readObjectUrlPixels: could not read ${url}`);
 
 	const decoded = decodePng(new Uint8Array(await response.arrayBuffer()));
 
-	return { width: decoded.width, height: decoded.height, data: [...decoded.data] };
+	return {
+		width: decoded.width,
+		height: decoded.height,
+		data: [...decoded.data]
+	};
 }
 
 /** Stands in for the `ImageData` constructor, which bun does not provide. */
@@ -111,7 +118,9 @@ class FakeCanvasContext {
 
 	putImageData(imageData: FakeImageData, dx = 0, dy = 0): void {
 		if (dx !== 0 || dy !== 0) {
-			throw new Error('FakeCanvasContext: only full-frame putImageData is supported');
+			throw new Error(
+				'FakeCanvasContext: only full-frame putImageData is supported'
+			);
 		}
 
 		this.#frame = {
@@ -123,17 +132,23 @@ class FakeCanvasContext {
 
 	getImageData(sx: number, sy: number, sw: number, sh: number): FakeImageData {
 		if (sx !== 0 || sy !== 0 || !this.#frame) {
-			throw new Error('FakeCanvasContext: getImageData requires a full-frame putImageData first');
+			throw new Error(
+				'FakeCanvasContext: getImageData requires a full-frame putImageData first'
+			);
 		}
 		if (sw !== this.#frame.width || sh !== this.#frame.height) {
-			throw new Error('FakeCanvasContext: only the full frame can be read back');
+			throw new Error(
+				'FakeCanvasContext: only the full frame can be read back'
+			);
 		}
 
 		return new FakeImageData(new Uint8ClampedArray(this.#frame.data), sw, sh);
 	}
 
 	drawImage(): never {
-		throw new Error('FakeCanvasContext: drawImage is not supported; decode PNG files instead');
+		throw new Error(
+			'FakeCanvasContext: drawImage is not supported; decode PNG files instead'
+		);
 	}
 
 	/** Encodes the stored frame as a real PNG blob, like the browser encoder. */
@@ -152,7 +167,9 @@ class FakeCanvasContext {
 		const height = this.#frame?.height ?? 0;
 		const rgba = this.#frame?.data ?? new Uint8ClampedArray(0);
 
-		callback(new Blob([encodeRgbaPng(width, height, rgba)], { type: 'image/png' }));
+		callback(
+			new Blob([encodeRgbaPng(width, height, rgba)], { type: 'image/png' })
+		);
 	}
 }
 
@@ -189,7 +206,8 @@ export function installFakeCanvas(): () => void {
 	if (previousDocument === undefined) {
 		globals.document = {
 			createElement(tag: string): FakeCanvas {
-				if (tag !== 'canvas') throw new Error(`installFakeCanvas: unsupported element <${tag}>`);
+				if (tag !== 'canvas')
+					throw new Error(`installFakeCanvas: unsupported element <${tag}>`);
 
 				return new FakeCanvas();
 			}

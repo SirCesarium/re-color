@@ -19,7 +19,8 @@ self.addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
 		self.postMessage(response, [pixels]);
 	} catch (error) {
 		const response: DecodeResponse = {
-			error: error instanceof Error ? error.message : 'Could not decode PNG image.'
+			error:
+				error instanceof Error ? error.message : 'Could not decode PNG image.'
 		};
 
 		self.postMessage(response);

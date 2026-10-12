@@ -1,11 +1,14 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 import { z } from 'zod';
-import { LocalizedError } from '../i18n/localized-error.ts';
 import { DEFAULT_LOCALE, LOCALE_SCHEMA, type Locale } from '../i18n/locales.ts';
+import { LocalizedError } from '../i18n/localized-error.ts';
 import type { MappingMode } from '../image-processing/types.ts';
 
 export const APP_SETTINGS_KEY = 'recolor.settings';
-export const HINT_STORAGE_KEYS = ['recolor.hintSeen', 'recolor.resultPixelHelpSeen'] as const;
+export const HINT_STORAGE_KEYS = [
+	'recolor.hintSeen',
+	'recolor.resultPixelHelpSeen'
+] as const;
 export const SETTINGS_EXPORT_FORMAT = 're-color-settings';
 export const SETTINGS_EXPORT_VERSION = 1;
 
@@ -29,7 +32,11 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 	locale: DEFAULT_LOCALE
 };
 
-const MAPPING_MODES = ['nearest', 'luminance', 'dominant'] as const satisfies readonly MappingMode[];
+const MAPPING_MODES = [
+	'nearest',
+	'luminance',
+	'dominant'
+] as const satisfies readonly MappingMode[];
 const MAPPING_MODE_SCHEMA = z.enum(MAPPING_MODES);
 const APP_SETTING_KEYS = [
 	'animationsEnabled',
@@ -42,9 +49,10 @@ const APP_SETTING_KEYS = [
 ] as const satisfies readonly (keyof AppSettings)[];
 
 /**
- * Strict schema applied to settings documents.
+ * The schema for imported settings documents.
  *
- * `locale` and `hintsEnabled` are optional so older version 1 exports still import.
+ * `locale` and `hintsEnabled` are optional so that version 1 exports, which
+ * predate them, still import.
  */
 const APP_SETTINGS_SCHEMA = z.object({
 	animationsEnabled: z.boolean(),
@@ -56,21 +64,30 @@ const APP_SETTINGS_SCHEMA = z.object({
 	locale: LOCALE_SCHEMA.optional()
 });
 
-/** Lenient schema for stored settings: invalid or missing fields fall back individually. */
+/**
+ * The same fields, but for settings we read back from storage: anything
+ * missing or corrupt falls back to its own default instead of blowing up.
+ */
 function storedAppSettingsSchema(localeFallback: Locale) {
 	return z
 		.object({
-			animationsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.animationsEnabled),
+			animationsEnabled: z
+				.boolean()
+				.catch(DEFAULT_APP_SETTINGS.animationsEnabled),
 			hintsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.hintsEnabled),
 			autoRecolor: z.boolean().catch(DEFAULT_APP_SETTINGS.autoRecolor),
-			persistWorkspace: z.boolean().catch(DEFAULT_APP_SETTINGS.persistWorkspace),
+			persistWorkspace: z
+				.boolean()
+				.catch(DEFAULT_APP_SETTINGS.persistWorkspace),
 			maxPaletteColors: z
 				.number()
 				.int()
 				.min(1)
 				.max(256)
 				.catch(DEFAULT_APP_SETTINGS.maxPaletteColors),
-			defaultMapping: MAPPING_MODE_SCHEMA.catch(DEFAULT_APP_SETTINGS.defaultMapping),
+			defaultMapping: MAPPING_MODE_SCHEMA.catch(
+				DEFAULT_APP_SETTINGS.defaultMapping
+			),
 			locale: LOCALE_SCHEMA.catch(localeFallback)
 		})
 		.catch({ ...DEFAULT_APP_SETTINGS, locale: localeFallback });
@@ -85,7 +102,9 @@ export function exportAppSettings(settings: AppSettings): string {
 		{
 			format: SETTINGS_EXPORT_FORMAT,
 			version: SETTINGS_EXPORT_VERSION,
-			settings: Object.fromEntries(APP_SETTING_KEYS.map((key) => [key, settings[key]]))
+			settings: Object.fromEntries(
+				APP_SETTING_KEYS.map(key => [key, settings[key]])
+			)
 		},
 		null,
 		2
@@ -106,11 +125,15 @@ export function importAppSettings(json: string): AppSettings {
 	}
 
 	const document = candidate as Record<string, unknown>;
+
 	if (document.format !== SETTINGS_EXPORT_FORMAT) {
 		throw new LocalizedError('settings.importWrongFormat');
 	}
+
 	if (document.version !== SETTINGS_EXPORT_VERSION) {
-		throw new LocalizedError('settings.importBadVersion', { version: String(document.version) });
+		throw new LocalizedError('settings.importBadVersion', {
+			version: String(document.version)
+		});
 	}
 
 	const parsed = APP_SETTINGS_SCHEMA.safeParse(document.settings);
@@ -163,14 +186,14 @@ interface WorkspaceDatabase extends DBSchema {
 
 let databasePromise: Promise<IDBPDatabase<WorkspaceDatabase>> | undefined;
 
-/** Reuses one connection, reopening after failures or an upgrade in another tab. */
+/** One shared connection; it reopens after a failure or an upgrade in another tab. */
 function openDatabase(): Promise<IDBPDatabase<WorkspaceDatabase>> {
 	databasePromise ??= openDB<WorkspaceDatabase>(DATABASE, DATABASE_VERSION, {
 		upgrade(database) {
 			database.createObjectStore(STORE);
 		}
 	}).then(
-		(database) => {
+		database => {
 			database.addEventListener('versionchange', () => {
 				database.close();
 				databasePromise = undefined;
@@ -178,7 +201,7 @@ function openDatabase(): Promise<IDBPDatabase<WorkspaceDatabase>> {
 
 			return database;
 		},
-		(error) => {
+		error => {
 			databasePromise = undefined;
 			throw error;
 		}
@@ -194,7 +217,9 @@ export async function loadWorkspace(): Promise<PersistedWorkspace | null> {
 	return workspace ?? null;
 }
 
-export async function saveWorkspace(workspace: PersistedWorkspace): Promise<void> {
+export async function saveWorkspace(
+	workspace: PersistedWorkspace
+): Promise<void> {
 	const database = await openDatabase();
 
 	await database.put(STORE, workspace, WORKSPACE_KEY);
@@ -209,7 +234,11 @@ export async function clearWorkspace(): Promise<void> {
 export async function clearSavedAppData(): Promise<void> {
 	await clearWorkspace();
 
-	for (const key of [APP_SETTINGS_KEY, 'recolor.mapping', ...HINT_STORAGE_KEYS]) {
+	for (const key of [
+		APP_SETTINGS_KEY,
+		'recolor.mapping',
+		...HINT_STORAGE_KEYS
+	]) {
 		localStorage.removeItem(key);
 	}
 }

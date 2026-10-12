@@ -1,10 +1,18 @@
 import { expect, test } from 'bun:test';
-import { keyToRgb, luminance, rgbToKey, weightedDistance } from '../../src/lib/image-processing/color/metrics.ts';
 import { mapDominant } from '../../src/lib/image-processing/color/mapping/dominant.ts';
 import { mapByLuminance } from '../../src/lib/image-processing/color/mapping/luminance.ts';
 import { mapNearest } from '../../src/lib/image-processing/color/mapping/nearest.ts';
 import { createColorLookup } from '../../src/lib/image-processing/color/mapping/registry.ts';
-import { fillUnmapped, pairByRank } from '../../src/lib/image-processing/color/mapping/shared.ts';
+import {
+	fillUnmapped,
+	pairByRank
+} from '../../src/lib/image-processing/color/mapping/shared.ts';
+import {
+	keyToRgb,
+	luminance,
+	rgbToKey,
+	weightedDistance
+} from '../../src/lib/image-processing/color/metrics.ts';
 import type {
 	ColorMappingConfig,
 	ColorMappingInput,
@@ -38,7 +46,7 @@ function mappingInput(
 	keys: readonly number[],
 	palette: readonly Rgb[],
 	overrides: Partial<Omit<ColorMappingConfig, 'strategy'>> = {},
-	counts: ReadonlyMap<number, number> = new Map(keys.map((entry) => [entry, 1]))
+	counts: ReadonlyMap<number, number> = new Map(keys.map(entry => [entry, 1]))
 ): ColorMappingInput {
 	return {
 		keys,
@@ -72,12 +80,16 @@ test('weightedDistance is symmetric and zero for identical colors', () => {
 	const b: Rgb = { r: 200, g: 10, b: 250 };
 
 	expect(weightedDistance(a, a, NEUTRAL_WEIGHTS)).toBe(0);
-	expect(weightedDistance(a, b, [2, 4, 3])).toBe(weightedDistance(b, a, [2, 4, 3]));
+	expect(weightedDistance(a, b, [2, 4, 3])).toBe(
+		weightedDistance(b, a, [2, 4, 3])
+	);
 	expect(weightedDistance(a, b, [0, 0, 0])).toBe(0);
 });
 
 test('luminance applies its weights and vanishes when every weight is zero', () => {
-	expect(luminance({ r: 255, g: 0, b: 0 }, LUMA_WEIGHTS)).toBeCloseTo(255 * 0.2126);
+	expect(luminance({ r: 255, g: 0, b: 0 }, LUMA_WEIGHTS)).toBeCloseTo(
+		255 * 0.2126
+	);
 	expect(luminance({ r: 255, g: 255, b: 255 }, LUMA_WEIGHTS)).toBeCloseTo(255);
 	expect(luminance({ r: 13, g: 200, b: 99 }, [0, 0, 0])).toBe(0);
 });
@@ -85,9 +97,14 @@ test('luminance applies its weights and vanishes when every weight is zero', () 
 test('mapNearest maps every source key to its closest palette color', () => {
 	const nearRed: Rgb = { r: 250, g: 5, b: 5 };
 	const nearBlue: Rgb = { r: 5, g: 5, b: 250 };
-	const palette: Rgb[] = [{ r: 255, g: 0, b: 0 }, { r: 0, g: 0, b: 255 }];
+	const palette: Rgb[] = [
+		{ r: 255, g: 0, b: 0 },
+		{ r: 0, g: 0, b: 255 }
+	];
 
-	const lookup = mapNearest(mappingInput([key(nearRed), key(nearBlue)], palette));
+	const lookup = mapNearest(
+		mappingInput([key(nearRed), key(nearBlue)], palette)
+	);
 
 	expect(lookup.size).toBe(2);
 	expect(lookup.get(key(nearRed))).toEqual(palette[0]);
@@ -112,19 +129,25 @@ test('mapNearest decides by the channels its weights emphasize', () => {
 
 	// Red alone: both candidates are equally distant, order breaks the tie.
 	const redOnly = mapNearest(
-		mappingInput([key(source)], [greenish, blueish], { distanceWeights: [1, 0, 0] })
+		mappingInput([key(source)], [greenish, blueish], {
+			distanceWeights: [1, 0, 0]
+		})
 	);
 	expect(redOnly.get(key(source))).toEqual(greenish);
 
 	// Green alone: blueish matches the source's zero green channel.
 	const greenOnly = mapNearest(
-		mappingInput([key(source)], [greenish, blueish], { distanceWeights: [0, 1, 0] })
+		mappingInput([key(source)], [greenish, blueish], {
+			distanceWeights: [0, 1, 0]
+		})
 	);
 	expect(greenOnly.get(key(source))).toEqual(blueish);
 
 	// Blue alone: greenish matches the source's zero blue channel.
 	const blueOnly = mapNearest(
-		mappingInput([key(source)], [greenish, blueish], { distanceWeights: [0, 0, 1] })
+		mappingInput([key(source)], [greenish, blueish], {
+			distanceWeights: [0, 0, 1]
+		})
 	);
 	expect(blueOnly.get(key(source))).toEqual(greenish);
 });
@@ -139,7 +162,10 @@ test('mapByLuminance pairs source and palette colors by ascending luminance', ()
 	const lightest: Rgb = { r: 240, g: 240, b: 240 };
 	// Source order is scrambled; only luminance decides the pairing.
 	const lookup = mapByLuminance(
-		mappingInput([key(lightest), key(darkest), key(middle)], [lightest, darkest, middle])
+		mappingInput(
+			[key(lightest), key(darkest), key(middle)],
+			[lightest, darkest, middle]
+		)
 	);
 
 	expect(lookup.get(key(darkest))).toEqual(darkest);
@@ -152,7 +178,9 @@ test('mapByLuminance picks the nearest luminance for a single source color', () 
 	const darkGray: Rgb = { r: 40, g: 40, b: 40 };
 	const lightGray: Rgb = { r: 200, g: 200, b: 200 };
 
-	const toLight = mapByLuminance(mappingInput([key(lightGray)], [BLACK, WHITE]));
+	const toLight = mapByLuminance(
+		mappingInput([key(lightGray)], [BLACK, WHITE])
+	);
 	expect(toLight.get(key(lightGray))).toEqual(WHITE);
 
 	// The palette order must not influence the choice either.
@@ -180,7 +208,11 @@ test('mapDominant sends the most frequent source color to the first palette colo
 	const background: Rgb = { r: 200, g: 200, b: 200 };
 	const accent: Rgb = { r: 250, g: 100, b: 0 };
 	const shadow: Rgb = { r: 30, g: 30, b: 30 };
-	const palette: Rgb[] = [{ r: 0, g: 128, b: 255 }, { r: 255, g: 255, b: 0 }, { r: 9, g: 9, b: 9 }];
+	const palette: Rgb[] = [
+		{ r: 0, g: 128, b: 255 },
+		{ r: 255, g: 255, b: 0 },
+		{ r: 9, g: 9, b: 9 }
+	];
 	const counts = new Map([
 		[key(accent), 50],
 		[key(background), 5],
@@ -188,7 +220,12 @@ test('mapDominant sends the most frequent source color to the first palette colo
 	]);
 
 	const lookup = mapDominant(
-		mappingInput([key(background), key(accent), key(shadow)], palette, {}, counts)
+		mappingInput(
+			[key(background), key(accent), key(shadow)],
+			palette,
+			{},
+			counts
+		)
 	);
 
 	expect(lookup.get(key(accent))).toEqual(palette[0]);
@@ -204,9 +241,14 @@ test('mapDominant resolves frequency ties by source key order', () => {
 		[key(first), 5],
 		[key(second), 5]
 	]);
-	const palette: Rgb[] = [{ r: 1, g: 2, b: 3 }, { r: 4, g: 5, b: 6 }];
+	const palette: Rgb[] = [
+		{ r: 1, g: 2, b: 3 },
+		{ r: 4, g: 5, b: 6 }
+	];
 
-	const lookup = mapDominant(mappingInput([key(first), key(second)], palette, {}, counts));
+	const lookup = mapDominant(
+		mappingInput([key(first), key(second)], palette, {}, counts)
+	);
 
 	expect(lookup.get(key(first))).toEqual(palette[0]);
 	expect(lookup.get(key(second))).toEqual(palette[1]);
@@ -222,7 +264,9 @@ test('mapDominant fills unmatched keys when the palette holds a single color', (
 	for (const entry of keys) expect(filled.get(entry)).toEqual(only);
 
 	// The unmapped fallback keeps the non-dominant keys out of the lookup.
-	const partial = mapDominant(mappingInput(keys, [only], { fallback: 'unmapped' }, counts));
+	const partial = mapDominant(
+		mappingInput(keys, [only], { fallback: 'unmapped' }, counts)
+	);
 	expect(partial.size).toBe(1);
 	expect(partial.get(keys[0])).toEqual(only);
 });
@@ -277,7 +321,10 @@ test('createColorLookup routes each mode to its built-in strategy', () => {
 	const modes: MappingMode[] = ['nearest', 'luminance', 'dominant'];
 
 	for (const mode of modes) {
-		const lookup = createColorLookup(mappingInput(keys, palette, { mode }), mappingConfig({ mode }));
+		const lookup = createColorLookup(
+			mappingInput(keys, palette, { mode }),
+			mappingConfig({ mode })
+		);
 
 		expect(lookup).toBeInstanceOf(Map);
 		expect((lookup as Map<number, Rgb>).size).toBe(2);
@@ -356,7 +403,10 @@ test('createColorLookup propagates synchronous and asynchronous plugin failures'
 	};
 
 	expect(() =>
-		createColorLookup(mappingInput([key(BLACK)], [WHITE]), { ...mappingConfig(), strategy: syncFailure })
+		createColorLookup(mappingInput([key(BLACK)], [WHITE]), {
+			...mappingConfig(),
+			strategy: syncFailure
+		})
 	).toThrow('plugin failed');
 
 	const asyncFailure = {

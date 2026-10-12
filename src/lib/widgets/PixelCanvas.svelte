@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
+
 	let {
 		imageUrl = null,
 		spriteFile = null,
@@ -12,7 +13,10 @@
 		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
 		onTogglePixel?: (pixelIndex: number) => void;
-		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
+		onSetPixelExclusion?: (
+			pixelIndexes: readonly number[],
+			excluded: boolean
+		) => void;
 		onInteract?: () => void;
 	} = $props();
 
@@ -51,7 +55,9 @@
 
 		image.onerror = () => {
 			if (!cancelled) {
-				console.error('Could not load the original sprite for live pixel exclusion');
+				console.error(
+					'Could not load the original sprite for live pixel exclusion'
+				);
 				previewError = true;
 			}
 		};
@@ -135,7 +141,10 @@
 		if (!viewport || !dimensions) return null;
 
 		const bounds = viewport.getBoundingClientRect();
-		const scale = Math.min(bounds.width / dimensions.width, bounds.height / dimensions.height);
+		const scale = Math.min(
+			bounds.width / dimensions.width,
+			bounds.height / dimensions.height
+		);
 
 		return {
 			left: (bounds.width - dimensions.width * scale) / 2,
@@ -159,7 +168,8 @@
 			(clientY - bounds.top - imageRect.top) / imageRect.scale
 		);
 
-		if (x < 0 || y < 0 || x >= dimensions.width || y >= dimensions.height) return null;
+		if (x < 0 || y < 0 || x >= dimensions.width || y >= dimensions.height)
+			return null;
 
 		return { x, y, index: y * dimensions.width + x };
 	}
@@ -188,7 +198,8 @@
 		const size = dimensions;
 
 		if (lastPixel && size) {
-			const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
+			const lastIndex =
+				pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
 
 			if (lastPixel.index !== lastIndex) {
 				pointerStroke.dragging = true;
@@ -237,7 +248,8 @@
 
 		if (!pixel || !size || pointerStroke?.pointerId !== event.pointerId) return;
 
-		const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
+		const lastIndex =
+			pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
 
 		if (!pointerStroke.dragging && pixel.index !== lastIndex) {
 			pointerStroke.dragging = true;
@@ -288,7 +300,10 @@
 		}
 	}
 
-	function paintPixels(indexes: readonly number[], image: HTMLImageElement | null) {
+	function paintPixels(
+		indexes: readonly number[],
+		image: HTMLImageElement | null
+	) {
 		if (!canvas || !image || !dimensions || indexes.length === 0) return;
 
 		const context = canvas.getContext('2d');

@@ -1,21 +1,5 @@
 import { onDestroy, onMount, untrack } from 'svelte';
 import {
-	APP_SETTINGS_KEY,
-	DEFAULT_APP_SETTINGS,
-	clearWorkspace,
-	isMappingMode,
-	loadWorkspace,
-	parseAppSettings,
-	saveWorkspace
-} from './app-settings.ts';
-import type { AppSettings, PersistedWorkspace } from './app-settings.ts';
-import {
-	composeExcludedPixels,
-	extractColorsFromFile,
-	recolorSprite
-} from '../image-processing/index.ts';
-import type { MappingMode, PaletteColor, RecolorConfig } from '../image-processing/types.ts';
-import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
 	MAPPING_STORAGE_KEY,
@@ -27,6 +11,26 @@ import {
 } from '../config/recolor.ts';
 import { localeFromNavigator } from '../i18n/index.ts';
 import type { MessageKey } from '../i18n/locales.ts';
+import {
+	composeExcludedPixels,
+	extractColorsFromFile,
+	recolorSprite
+} from '../image-processing/index.ts';
+import type {
+	MappingMode,
+	PaletteColor,
+	RecolorConfig
+} from '../image-processing/types.ts';
+import type { AppSettings, PersistedWorkspace } from './app-settings.ts';
+import {
+	APP_SETTINGS_KEY,
+	clearWorkspace,
+	DEFAULT_APP_SETTINGS,
+	isMappingMode,
+	loadWorkspace,
+	parseAppSettings,
+	saveWorkspace
+} from './app-settings.ts';
 
 type WorkflowState = {
 	palette: File | null;
@@ -49,7 +53,7 @@ type WorkflowState = {
 	hint: MessageKey | null;
 };
 
-/** Hints that report failures: they stay visible even with help hints disabled. */
+/** Hints that report a failure: they show up even with help hints turned off. */
 const ERROR_HINT_KEYS = new Set<MessageKey>([
 	'workflow.restoreFailed',
 	'workflow.saveSettingsFailed',
@@ -59,7 +63,7 @@ const ERROR_HINT_KEYS = new Set<MessageKey>([
 	'workflow.paletteFailed'
 ]);
 
-/** Creates isolated reactive state and lifecycle effects for one recolor page. */
+/** Sets up the reactive state and lifecycle effects for one recolor page. */
 export function createRecolorWorkflow() {
 	const state = $state<WorkflowState>({
 		palette: null,
@@ -78,14 +82,19 @@ export function createRecolorWorkflow() {
 	});
 
 	const ready = $derived(state.palette !== null && state.sprite !== null);
-	const activeColors = $derived(state.colors.filter((color) => color.active).length);
+	const activeColors = $derived(
+		state.colors.filter(color => color.active).length
+	);
 	const noActiveColors = $derived(activeColors === 0);
 	const mappingSig = $derived(
-		`${state.mapping}:${state.colors.map((color) => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`).join(';')}`
+		`${state.mapping}:${state.colors.map(color => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`).join(';')}`
 	);
-	const exclusionSig = $derived([...state.excludedPixels].sort((a, b) => a - b).join(','));
+	const exclusionSig = $derived(
+		[...state.excludedPixels].sort((a, b) => a - b).join(',')
+	);
 	const buttonHint = $derived.by<MessageKey | null>(() => {
 		if (ready && noActiveColors) return 'workflow.noColors';
+
 		if (
 			ready &&
 			state.result &&
@@ -97,7 +106,9 @@ export function createRecolorWorkflow() {
 		}
 		return state.hint;
 	});
-	const hintIsError = $derived(buttonHint !== null && ERROR_HINT_KEYS.has(buttonHint));
+	const hintIsError = $derived(
+		buttonHint !== null && ERROR_HINT_KEYS.has(buttonHint)
+	);
 
 	let runId = 0;
 	let compositionId = 0;
@@ -110,8 +121,10 @@ export function createRecolorWorkflow() {
 		try {
 			const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
 			state.settings = parseAppSettings(storedSettings, localeFromNavigator());
+
 			if (!storedSettings) {
 				const legacyMapping = localStorage.getItem(MAPPING_STORAGE_KEY);
+
 				if (isMappingMode(legacyMapping)) {
 					state.settings.defaultMapping = legacyMapping;
 					state.mapping = legacyMapping;
@@ -120,6 +133,7 @@ export function createRecolorWorkflow() {
 		} catch (error) {
 			console.error('Could not read saved app settings', error);
 		}
+
 		state.mapping = state.settings.defaultMapping;
 		state.settingsLoaded = true;
 
@@ -131,6 +145,7 @@ export function createRecolorWorkflow() {
 				}
 
 				const workspace = await loadWorkspace();
+
 				if (disposed || workspaceRestoreCancelled) return;
 
 				if (workspace) {
@@ -144,7 +159,7 @@ export function createRecolorWorkflow() {
 								type: 'image/png'
 							})
 						: null;
-					state.colors = workspace.colors.map((color) => ({ ...color }));
+					state.colors = workspace.colors.map(color => ({ ...color }));
 					state.excludedPixels = workspace.excludedPixels;
 				}
 			} catch (error) {
@@ -187,10 +202,16 @@ export function createRecolorWorkflow() {
 
 		const workspace: PersistedWorkspace = {
 			palette: state.palette
-				? { name: state.palette.name, blob: state.palette.slice(0, state.palette.size, 'image/png') }
+				? {
+						name: state.palette.name,
+						blob: state.palette.slice(0, state.palette.size, 'image/png')
+					}
 				: null,
 			sprite: state.sprite
-				? { name: state.sprite.name, blob: state.sprite.slice(0, state.sprite.size, 'image/png') }
+				? {
+						name: state.sprite.name,
+						blob: state.sprite.slice(0, state.sprite.size, 'image/png')
+					}
 				: null,
 			mapping: state.mapping,
 			colors: state.colors.map(({ r, g, b, active }) => ({ r, g, b, active })),
@@ -237,7 +258,10 @@ export function createRecolorWorkflow() {
 		};
 	}
 
-	function releaseResult(url: string | null, retainedUrls: ReadonlySet<string> = new Set()) {
+	function releaseResult(
+		url: string | null,
+		retainedUrls: ReadonlySet<string> = new Set()
+	) {
 		if (url && !retainedUrls.has(url)) URL.revokeObjectURL(url);
 	}
 
@@ -266,7 +290,8 @@ export function createRecolorWorkflow() {
 				return null;
 			}
 
-			if (signature === exclusionSig) return { url, exclusionSignature: signature };
+			if (signature === exclusionSig)
+				return { url, exclusionSignature: signature };
 
 			releaseResult(url, new Set([previewUrl]));
 		}
@@ -306,8 +331,10 @@ export function createRecolorWorkflow() {
 
 		const id = ++runId;
 		compositionId++;
+
 		const signature = mappingSig;
 		const previous = state.result;
+
 		let previewUrl =
 			previous?.mappingSignature === signature ? previous.previewUrl : null;
 		let createdPreviewUrl: string | null = null;
@@ -342,6 +369,7 @@ export function createRecolorWorkflow() {
 
 			const { url, exclusionSignature } = composition;
 			createdResultUrl = url === previewUrl ? null : url;
+
 			const nextResult = {
 				url,
 				previewUrl,
@@ -387,7 +415,10 @@ export function createRecolorWorkflow() {
 		void startRecolor();
 	}
 
-	function setSetting<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
+	function setSetting<K extends keyof AppSettings>(
+		key: K,
+		value: AppSettings[K]
+	) {
 		state.settings[key] = value;
 
 		if (key === 'defaultMapping') state.mapping = state.settings.defaultMapping;
@@ -397,7 +428,7 @@ export function createRecolorWorkflow() {
 		if (!Number.isInteger(index) || index < 0) return;
 
 		state.excludedPixels = state.excludedPixels.includes(index)
-			? state.excludedPixels.filter((pixel) => pixel !== index)
+			? state.excludedPixels.filter(pixel => pixel !== index)
 			: [...state.excludedPixels, index];
 	}
 
@@ -425,12 +456,14 @@ export function createRecolorWorkflow() {
 			const composition = await composeForCurrentExclusions(
 				result.previewUrl,
 				file,
-				() => id !== compositionId || state.result?.previewUrl !== result.previewUrl
+				() =>
+					id !== compositionId || state.result?.previewUrl !== result.previewUrl
 			);
 
 			if (!composition || id !== compositionId) return;
 
 			const currentResult = state.result;
+
 			if (!currentResult || currentResult.previewUrl !== result.previewUrl) {
 				releaseResult(composition.url, new Set([result.previewUrl]));
 				return;
@@ -443,6 +476,7 @@ export function createRecolorWorkflow() {
 			};
 
 			state.result = updatedResult;
+
 			releaseResult(
 				currentResult.url,
 				new Set([updatedResult.url, updatedResult.previewUrl])
@@ -493,7 +527,8 @@ export function createRecolorWorkflow() {
 	});
 
 	$effect(() => {
-		const canRunInitial = ready && state.paletteColorsLoaded && state.workspaceLoaded;
+		const canRunInitial =
+			ready && state.paletteColorsLoaded && state.workspaceLoaded;
 		const hasResult = state.result !== null;
 
 		untrack(() => {
@@ -536,13 +571,15 @@ export function createRecolorWorkflow() {
 			{ ...PALETTE_CONFIG, maxColors },
 			CANVAS_CONFIG
 		)
-			.then((colors) => {
+			.then(colors => {
 				if (cancelled) return;
 
-				state.colors = colors.map((color) => {
+				state.colors = colors.map(color => {
 					const previous = previousColors?.find(
-						(candidate) =>
-							candidate.r === color.r && candidate.g === color.g && candidate.b === color.b
+						candidate =>
+							candidate.r === color.r &&
+							candidate.g === color.g &&
+							candidate.b === color.b
 					);
 					return previous ? { ...color, active: previous.active } : color;
 				});

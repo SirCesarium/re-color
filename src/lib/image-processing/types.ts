@@ -1,26 +1,22 @@
-/** An RGB color with each channel represented by an integer from 0 to 255. */
+/** An RGB color, channels as integers from 0 to 255. */
 export type Rgb = {
-	/** Red channel. */
 	r: number;
-	/** Green channel. */
 	g: number;
-	/** Blue channel. */
 	b: number;
 };
 
-/** A palette color that can be enabled or excluded from mapping. */
+/** A palette color the user can toggle off to keep it out of the mapping. */
 export type PaletteColor = Rgb & {
-	/** Whether this color participates in the mapping strategy. */
+	/** Inactive colors are never offered to the mapping strategy. */
 	active: boolean;
 };
 
-/** Names of the built-in source-to-palette mapping algorithms. */
 export type MappingMode = 'nearest' | 'luminance' | 'dominant';
 
 /** Per-channel weights ordered as red, green, and blue. */
 export type RgbWeights = readonly [number, number, number];
 
-/** Parameters for choosing a built-in color-mapping algorithm or custom strategy. */
+/** Algorithm choice plus the knobs each one understands. */
 export type ColorMappingConfig = {
 	/** Built-in algorithm to use unless `strategy` supplies a plugin. */
 	mode: MappingMode;
@@ -28,13 +24,13 @@ export type ColorMappingConfig = {
 	distanceWeights: RgbWeights;
 	/** Per-channel luminance coefficients. */
 	luminanceWeights: RgbWeights;
-	/** Behavior when a rank-based algorithm has fewer target colors than source colors. */
+	/** What to do when a rank-based algorithm runs out of palette colors. */
 	fallback: 'first-active' | 'unmapped';
-	/** Optional custom strategy; async implementations can delegate to WebAssembly. */
+	/** Custom strategy; async implementations can delegate to WebAssembly or a worker. */
 	strategy?: ColorMappingStrategy;
 };
 
-/** Input passed to a mapping strategy after image pixels and palette are prepared. */
+/** What a mapping strategy gets to work with once the pixels are prepared. */
 export type ColorMappingInput = {
 	/** Unique source colors encoded as 0xRRGGBB integer keys. */
 	keys: readonly number[];
@@ -44,20 +40,20 @@ export type ColorMappingInput = {
 	counts: ReadonlyMap<number, number>;
 	/** Mapping settings excluding the custom strategy itself. */
 	config: Omit<ColorMappingConfig, 'strategy'>;
-	/** Lets async plugins stop expensive work when the owning operation is cancelled. */
+	/** Lets a slow plugin notice the operation was cancelled and bail out. */
 	isCancelled: () => boolean;
 };
 
-/** Contract implemented by built-in and user-supplied color mapping plugins. */
+/** The contract every mapping strategy, built-in or third-party, implements. */
 export type ColorMappingStrategy = {
 	/** Stable identifier for this strategy, useful for diagnostics and plugin registries. */
 	readonly id: string;
 	/**
 	 * Creates the source-to-target lookup used to recolor pixels.
 	 *
-	 * Return a color for each source key that should be recolored. Omitted keys
-	 * are left unchanged. An asynchronous implementation can use a Worker or
-	 * WebAssembly module; reject the promise to report a plugin failure.
+	 * Return a color for each source key that should change; leave a key out to
+	 * keep its original pixels. Async implementations (a Worker, a WebAssembly
+	 * module) may return a promise; reject it to report a plugin failure.
 	 *
 	 * @param input Source colors, active palette, pixel counts, settings, and cancellation hook.
 	 * @returns A lookup map, or a promise that resolves to one.
@@ -67,25 +63,25 @@ export type ColorMappingStrategy = {
 	): ReadonlyMap<number, Rgb> | Promise<ReadonlyMap<number, Rgb>>;
 };
 
-/** Controls how colors are counted and filtered while building a palette from an image. */
+/** Knobs for turning an image into a palette. */
 export type PaletteExtractionConfig = {
 	/** Maximum number of distinct colors returned. */
 	maxColors: number;
-	/** Pixels whose alpha is below this value are excluded; the threshold is in the 0-255 range. */
+	/** Pixels below this alpha (0-255) don't get counted at all. */
 	alphaThreshold: number;
 };
 
-/** Controls which sprite pixels are eligible and how output alpha is written. */
+/** Decides which sprite pixels we repaint and what happens to their alpha. */
 export type TransparencyConfig = {
-	/** Pixels whose alpha is below this value are not counted or recolored. */
+	/** Pixels below this alpha are neither counted nor recolored. */
 	minAlpha: number;
-	/** Preserve each eligible pixel's original alpha instead of replacing it. */
+	/** Keep each pixel's own alpha instead of overwriting it. */
 	preserveAlpha: boolean;
-	/** Alpha assigned to recolored pixels when `preserveAlpha` is false. */
+	/** Alpha written to repainted pixels when `preserveAlpha` is false. */
 	opaqueAlpha: number;
 };
 
-/** Progress fractions emitted at the major stages of a recolor operation. */
+/** The progress numbers emitted at each stage of a recolor. */
 export type ProgressConfig = {
 	/** Emitted before image loading begins. */
 	start: number;
@@ -100,43 +96,43 @@ export type ProgressConfig = {
 };
 
 /**
- * Complete set of options required by {@link recolorSprite}.
+ * Every option {@link recolorSprite} needs.
  *
- * Callers provide every field explicitly; the engine does not merge defaults.
- * Application-level presets can be composed and overridden before invocation.
+ * Callers fill in each field; the engine never merges defaults of its own, so
+ * application-level presets are composed and overridden before the call.
  */
 export type RecolorConfig = {
-	/** Browser canvas settings used while reading and writing image pixels. */
+	/** Canvas settings used while reading and writing pixels. */
 	canvas: {
-		/** Hint that the canvas will be read frequently. */
+		/** True when we read pixels back often; lets the browser skip a GPU copy. */
 		willReadFrequently: boolean;
-		/** Color space used for the canvas pixel data. */
+		/** Color space for the canvas bitmap. */
 		colorSpace: PredefinedColorSpace;
 	};
-	/** Color mapping algorithm and its tunable parameters. */
+	/** Mapping algorithm and its knobs. */
 	mapping: ColorMappingConfig;
 	/** Alpha handling for sprite pixels. */
 	transparency: TransparencyConfig;
-	/** Linear source-pixel indexes to leave unchanged instead of applying the palette. */
+	/** Linear pixel indexes to leave untouched instead of repainting. */
 	excludedPixels?: ReadonlySet<number>;
-	/** Scheduling, progress, and cancellation settings for pixel processing. */
+	/** Scheduling, progress, and cancellation for the pixel loop. */
 	processing: {
-		/** Maximum time spent processing rows before yielding to the browser. */
+		/** How long the loop runs before it yields back to the browser. */
 		chunkDurationMs: number;
-		/** Progress milestones, expressed as ordered fractions from zero to one. */
+		/** Progress milestones as ordered fractions from zero to one. */
 		progress: ProgressConfig;
-		/** Scheduling hook called between chunks; can be replaced by a worker scheduler. */
+		/** Called between chunks; swap it out to schedule from a worker instead. */
 		yieldToMain: () => Promise<void>;
-		/** Receives progress fractions defined by `progress`. */
+		/** Receives the fractions defined by `progress`. */
 		onProgress: (fraction: number) => void;
 		/** Returns true to cancel the active operation. */
 		isCancelled: () => boolean;
 	};
-	/** Encoded result format and optional encoder quality. */
+	/** Result format and encoder quality. */
 	output: {
-		/** Requested browser canvas encoding MIME type. */
+		/** MIME type the browser encoder is asked for. */
 		mimeType: 'image/png' | 'image/jpeg' | 'image/webp';
-		/** Encoder quality from 0 to 1; used by lossy formats. */
+		/** From 0 to 1; only the lossy formats use it. */
 		quality?: number;
 	};
 };

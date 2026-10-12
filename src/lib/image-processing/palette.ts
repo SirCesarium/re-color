@@ -1,24 +1,28 @@
-import { validateExtractionConfig } from './config-schema.ts';
 import { keyToRgb, rgbToKey } from './color/metrics.ts';
+import { validateExtractionConfig } from './config-schema.ts';
 import type { CanvasConfig } from './image/canvas.ts';
-import { context2d, createCanvas, loadImage, readPixels } from './image/canvas.ts';
+import {
+	context2d,
+	createCanvas,
+	loadImage,
+	readPixels
+} from './image/canvas.ts';
 import { yieldToBrowser } from './image/scheduler.ts';
 import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, PaletteExtractionConfig } from './types.ts';
 
 /**
- * Extracts the most frequent colors from a decoded image.
+ * Picks the most frequent colors of an image to use as a palette.
  *
- * Pixels with alpha below `config.alphaThreshold` are ignored. Remaining colors
- * are ordered by descending pixel frequency, truncated to `config.maxColors`,
- * and returned active for use as a mapping palette.
+ * Nearly transparent pixels are ignored; the survivors are sorted by frequency,
+ * cut down to `maxColors`, and returned active so they can map right away.
  *
- * @param image Decoded image element to sample.
- * @param config Maximum color count and minimum included alpha.
- * @param canvas Canvas read settings used to sample the image.
- * @returns Distinct colors sorted from most to least frequent.
- * @throws {RangeError} If the maximum count or alpha threshold is invalid.
- * @throws If canvas creation, drawing, or pixel access fails.
+ * @param image Image to sample.
+ * @param config Maximum palette size and the alpha cutoff.
+ * @param canvas Canvas hints used while reading the pixels.
+ * @returns Colors from most to least frequent.
+ * @throws {RangeError} If `maxColors` or `alphaThreshold` is out of range.
+ * @throws If the canvas cannot be created or read.
  */
 export function extractColors(
 	image: HTMLImageElement,
@@ -37,8 +41,10 @@ export function extractColors(
 }
 
 /**
- * Extracts colors from an input file. PNG samples are decoded directly from
- * their stored pixel values so browser color management cannot change the palette.
+ * Same idea as {@link extractColors}, but from a file.
+ *
+ * PNGs are read from their stored samples, so the browser's color management
+ * cannot quietly shift the palette away from what the file actually contains.
  */
 export async function extractColorsFromFile(
 	file: Blob,
@@ -50,19 +56,29 @@ export async function extractColorsFromFile(
 	const image = await loadImage(file);
 
 	try {
-		return await colorsFromRgbaAsync(image.pixels ?? readPixels(image, canvas).data, config);
+		return await colorsFromRgbaAsync(
+			image.pixels ?? readPixels(image, canvas).data,
+			config
+		);
 	} finally {
 		image.close();
 	}
 }
 
-function colorsFromRgba(data: Uint8ClampedArray, config: PaletteExtractionConfig): PaletteColor[] {
+function colorsFromRgba(
+	data: Uint8ClampedArray,
+	config: PaletteExtractionConfig
+): PaletteColor[] {
 	const counts = new Map<number, number>();
 
 	for (let index = 0; index < data.length; index += 4) {
 		if (data[index + 3] < config.alphaThreshold) continue;
 
-		const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+		const key = rgbToKey({
+			r: data[index],
+			g: data[index + 1],
+			b: data[index + 2]
+		});
 
 		counts.set(key, (counts.get(key) ?? 0) + 1);
 	}
@@ -82,7 +98,11 @@ async function colorsFromRgbaAsync(
 
 		while (index < data.length && performance.now() - start < 6) {
 			if (data[index + 3] >= config.alphaThreshold) {
-				const key = rgbToKey({ r: data[index], g: data[index + 1], b: data[index + 2] });
+				const key = rgbToKey({
+					r: data[index],
+					g: data[index + 1],
+					b: data[index + 2]
+				});
 				counts.set(key, (counts.get(key) ?? 0) + 1);
 			}
 

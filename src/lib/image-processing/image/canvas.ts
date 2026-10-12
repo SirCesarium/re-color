@@ -1,34 +1,43 @@
 import { decodePng, isPng } from './png.ts';
 import { validateImageFile } from './validation.ts';
 
-/** A decoded image source together with its intrinsic dimensions and cleanup callback. */
+/**
+ * A decoded image plus everything needed to draw or read it back.
+ *
+ * PNGs arrive as raw samples (see {@link loadImage}); other formats arrive as a
+ * drawable source the browser gave us.
+ */
 export type LoadedImage = {
-	/** Drawable source accepted by `CanvasRenderingContext2D.drawImage`. */
+	/** What `drawImage` accepts; absent when we already hold raw samples. */
 	source?: CanvasImageSource;
-	/** Intrinsic width in pixels. */
+	/** Width in pixels. */
 	width: number;
-	/** Intrinsic height in pixels. */
+	/** Height in pixels. */
 	height: number;
-	/** Original decoded PNG samples, avoiding browser color-profile conversion. */
+	/** Raw RGBA samples straight from the PNG file, with no browser color conversion applied. */
 	pixels?: Uint8ClampedArray<ArrayBuffer>;
-	/** Releases resources allocated while decoding the image. */
+	/** Frees whatever the decoder held on to (bitmap, object URL, ...). */
 	close: () => void;
 };
 
-/** Browser canvas options used when reading or writing pixels. */
+/** The two canvas options that matter for pixel work. */
 export type CanvasConfig = {
-	/** Whether the context is expected to be read frequently. */
+	/** True when we read pixels back often; the browser can then skip the GPU copy. */
 	willReadFrequently: boolean;
-	/** Color space used for the canvas bitmap. */
+	/** Color space for the canvas bitmap. */
 	colorSpace: PredefinedColorSpace;
 };
 
 /**
- * Decodes PNG samples directly and other supported formats through browser image APIs.
+ * Decodes a file into pixels we can read back.
+ *
+ * PNGs go through our own decoder (in a worker when available) so their samples
+ * stay untouched by browser color management. Everything else uses
+ * `createImageBitmap`, falling back to an `<img>` element when that fails.
  *
  * @param file Image file to decode.
- * @returns The decoded image dimensions and a callback that releases its resources.
- * @throws If PNG data is invalid or decoding fails.
+ * @returns The decoded dimensions, the pixels or drawable source, and a `close()` that releases them.
+ * @throws If the PNG data is invalid or the browser cannot decode the file.
  */
 export async function loadImage(file: Blob): Promise<LoadedImage> {
 	const signature = new Uint8Array(await file.slice(0, 8).arrayBuffer());
@@ -55,7 +64,7 @@ export async function loadImage(file: Blob): Promise<LoadedImage> {
 				close: () => bitmap.close()
 			};
 		} catch {
-			// Fall back to an image element when bitmap decoding is unavailable.
+			// The browser has createImageBitmap but still refused this file; try the <img> path.
 		}
 	}
 
@@ -93,11 +102,20 @@ function decodePngInWorker(
 	}
 
 	return new Promise((resolve, reject) => {
-		const worker = new Worker(new URL('./png.worker.ts', import.meta.url), { type: 'module' });
+		const worker = new Worker(new URL('./png.worker.ts', import.meta.url), {
+			type: 'module'
+		});
 
 		worker.addEventListener(
 			'message',
-			(event: MessageEvent<{ width?: number; height?: number; pixels?: ArrayBuffer; error?: string }>) => {
+			(
+				event: MessageEvent<{
+					width?: number;
+					height?: number;
+					pixels?: ArrayBuffer;
+					error?: string;
+				}>
+			) => {
 				worker.terminate();
 
 				if (event.data.error) {
@@ -124,7 +142,7 @@ function decodePngInWorker(
 		);
 		worker.addEventListener(
 			'error',
-			(event) => {
+			event => {
 				worker.terminate();
 				reject(new Error(`PNG decoder worker failed: ${event.message}`));
 			},
@@ -135,10 +153,11 @@ function decodePngInWorker(
 }
 
 /**
- * Rebuilds an output image by copying excluded pixels from the original sprite.
+ * Paints the excluded pixels of the original sprite back over an already
+ * recolored image.
  *
- * This does not run color mapping; it only composes the already-recolored image
- * with the original pixels selected by the mask.
+ * No mapping happens here; it is a straight copy of the masked pixels, which is
+ * why both images must be the same size.
  */
 export async function composeExcludedPixels(
 	baseUrl: string,
@@ -150,7 +169,8 @@ export async function composeExcludedPixels(
 	await validateImageFile(originalFile);
 	const response = await fetch(baseUrl);
 
-	if (!response.ok) throw new Error(`Could not read the recolored image: ${response.status}`);
+	if (!response.ok)
+		throw new Error(`Could not read the recolored image: ${response.status}`);
 
 	const base = await loadImage(await response.blob());
 
@@ -167,8 +187,14 @@ export async function composeExcludedPixels(
 			const pixelCount = base.width * base.height;
 
 			for (const pixelIndex of excludedPixels) {
-				if (!Number.isInteger(pixelIndex) || pixelIndex < 0 || pixelIndex >= pixelCount) {
-					throw new RangeError(`excludedPixels contains an invalid pixel index: ${pixelIndex}`);
+				if (
+					!Number.isInteger(pixelIndex) ||
+					pixelIndex < 0 ||
+					pixelIndex >= pixelCount
+				) {
+					throw new RangeError(
+						`excludedPixels contains an invalid pixel index: ${pixelIndex}`
+					);
 				}
 
 				const channelIndex = pixelIndex * 4;
@@ -192,11 +218,12 @@ export async function composeExcludedPixels(
 }
 
 /**
- * Creates an HTML canvas with the requested pixel dimensions.
+ * Creates a detached canvas of the requested pixel size. Nothing is inserted
+ * into the document, so there is no layout cost while it is painted into.
  *
- * @param width Canvas width in pixels.
- * @param height Canvas height in pixels.
- * @returns A newly created, unattached canvas.
+ * @param width Width in pixels.
+ * @param height Height in pixels.
+ * @returns The new canvas.
  */
 export function createCanvas(width: number, height: number): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
@@ -208,12 +235,14 @@ export function createCanvas(width: number, height: number): HTMLCanvasElement {
 }
 
 /**
- * Gets a 2D rendering context configured for pixel access.
+ * A 2D context wired for pixel work: smoothing and filters are switched off so
+ * the browser never resamples or recolors the sprite behind our back. The
+ * color space and read-frequency hints come from `config`.
  *
- * @param canvas Canvas whose context is requested.
- * @param config Read-frequency and color-space options.
- * @returns The canvas 2D context.
- * @throws If the browser cannot create a 2D context with the supplied options.
+ * @param canvas Canvas to get the context from.
+ * @param config Color-space and `willReadFrequently` hints.
+ * @returns The configured 2D context.
+ * @throws If the browser refuses to create one with the supplied options.
  */
 export function context2d(
 	canvas: HTMLCanvasElement,
@@ -233,16 +262,24 @@ export function context2d(
 }
 
 /**
- * Draws a decoded image to a temporary canvas and reads its pixel data.
+ * Reads an image's pixels as RGBA `ImageData`.
  *
- * @param image Decoded image source and dimensions.
- * @param config Canvas settings used for drawing and reading pixels.
- * @returns Image data with four RGBA channel bytes per pixel.
- * @throws If canvas creation, drawing, or pixel access fails.
+ * Raw PNG samples are used as-is when present; only images decoded through the
+ * browser APIs need the temporary draw-and-read round trip.
+ *
+ * @param image Decoded image to read.
+ * @param config Canvas settings for the draw round trip.
+ * @returns Four RGBA bytes per pixel.
+ * @throws If the image has neither samples nor a drawable source, or the canvas fails.
  */
-export function readPixels(image: LoadedImage, config: CanvasConfig): ImageData {
-	if (image.pixels) return new ImageData(image.pixels, image.width, image.height);
-	if (!image.source) throw new Error('Decoded image does not have a readable source');
+export function readPixels(
+	image: LoadedImage,
+	config: CanvasConfig
+): ImageData {
+	if (image.pixels)
+		return new ImageData(image.pixels, image.width, image.height);
+	if (!image.source)
+		throw new Error('Decoded image does not have a readable source');
 
 	const context = context2d(createCanvas(image.width, image.height), config);
 
@@ -252,12 +289,16 @@ export function readPixels(image: LoadedImage, config: CanvasConfig): ImageData 
 }
 
 /**
- * Encodes a canvas and returns an object URL for the resulting blob.
+ * Encodes the canvas and hands back an object URL for the result.
+ *
+ * The blob's type is checked against the request: some browsers answer with a
+ * PNG (or nothing at all) when they do not support the requested format, and a
+ * silent downgrade would break both the download and its file extension.
  *
  * @param canvas Canvas to encode.
- * @param config Requested MIME type and optional lossy-encoder quality.
- * @returns An object URL whose blob type matches the requested MIME type.
- * @throws If encoding fails or the browser returns a different MIME type.
+ * @param config MIME type, plus quality for the lossy formats.
+ * @returns An object URL; the caller is responsible for revoking it.
+ * @throws If encoding fails or comes back in the wrong format.
  */
 export function toBlobUrl(
 	canvas: HTMLCanvasElement,
@@ -265,7 +306,7 @@ export function toBlobUrl(
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		canvas.toBlob(
-			(blob) => {
+			blob => {
 				if (!blob) {
 					reject(new Error(`Could not encode the image as ${config.mimeType}`));
 
@@ -274,7 +315,9 @@ export function toBlobUrl(
 
 				if (blob.type !== config.mimeType) {
 					reject(
-						new Error(`Image encoder returned ${blob.type} instead of ${config.mimeType}`)
+						new Error(
+							`Image encoder returned ${blob.type} instead of ${config.mimeType}`
+						)
 					);
 
 					return;

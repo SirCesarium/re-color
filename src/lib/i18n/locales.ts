@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import en from './messages/en.json';
+import type en from './messages/en.json';
 
 export const SUPPORTED_LOCALES = ['en', 'es'] as const;
 

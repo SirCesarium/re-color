@@ -13,7 +13,7 @@
 		class?: string;
 	} = $props();
 
-	let index = $derived(options.findIndex((option) => option.value === value));
+	let index = $derived(options.findIndex(option => option.value === value));
 </script>
 
 <div

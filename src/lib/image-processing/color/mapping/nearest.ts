@@ -1,10 +1,11 @@
-import { keyToRgb, weightedDistance } from '../metrics.ts';
 import type { ColorMappingInput, Rgb } from '../../types.ts';
+import { keyToRgb, weightedDistance } from '../metrics.ts';
 
 /**
- * Maps each source color to its nearest active palette entry using weighted RGB distance.
+ * Maps each source color to the closest active palette entry in weighted RGB
+ * space: simple, and usually what people expect from "recolor with this palette".
  *
- * @param input Source keys, active palette, channel weights, and processing metadata.
+ * @param input Source keys, active palette, distance weights, and the rest of the config.
  * @returns A mapping for every source key; empty when the palette is empty.
  */
 export function mapNearest(input: ColorMappingInput): ReadonlyMap<number, Rgb> {
@@ -19,7 +20,11 @@ export function mapNearest(input: ColorMappingInput): ReadonlyMap<number, Rgb> {
 		let bestDistance = weightedDistance(source, best, config.distanceWeights);
 
 		for (let index = 1; index < palette.length; index++) {
-			const candidate = weightedDistance(source, palette[index], config.distanceWeights);
+			const candidate = weightedDistance(
+				source,
+				palette[index],
+				config.distanceWeights
+			);
 
 			if (candidate < bestDistance) {
 				bestDistance = candidate;
