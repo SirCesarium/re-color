@@ -98,7 +98,7 @@ describe('recolor workflow', () => {
 		expect(firstUrl).toBeDefined();
 
 		// A mapping change with autoRecolor on kicks off a second run.
-		workflow.setSetting('defaultMapping', 'nearest');
+		workflow.state.mapping = 'nearest';
 		await settle();
 
 		const secondUrl = workflow.state.result?.previewUrl;

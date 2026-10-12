@@ -4,6 +4,7 @@ import {
 	type PaletteColor
 } from '#core/image-processing/index.ts';
 import { CANVAS_CONFIG, PALETTE_CONFIG } from '#core/recolor.ts';
+import { settings } from '../settings/store.svelte.ts';
 
 /** The slice of workflow state the palette effect reads and writes. */
 type PaletteHost = {
@@ -11,7 +12,6 @@ type PaletteHost = {
 	colors: PaletteColor[];
 	paletteColorsLoaded: boolean;
 	hint: string | null;
-	settings: { maxPaletteColors: number };
 };
 
 /**
@@ -27,7 +27,7 @@ type PaletteHost = {
 export function watchPaletteColors(state: PaletteHost): void {
 	$effect(() => {
 		const file = state.palette;
-		const maxColors = state.settings.maxPaletteColors;
+		const maxColors = settings.maxPaletteColors;
 
 		if (!file) {
 			state.colors = [];

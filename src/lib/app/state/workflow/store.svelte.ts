@@ -9,20 +9,13 @@ import {
 import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
-	MAPPING_STORAGE_KEY,
 	OUTPUT_CONFIG,
 	OUTPUT_EXTENSIONS,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
 } from '#core/recolor.ts';
-import { localeFromNavigator } from '../../i18n/index.ts';
 import type { MessageKey } from '../../i18n/locales.ts';
-import {
-	type AppSettings,
-	DEFAULT_APP_SETTINGS,
-	isMappingMode
-} from '../settings/model.ts';
-import { APP_SETTINGS_KEY, parseAppSettings } from '../settings/repository.ts';
+import { settings, updateSetting } from '../settings/store.svelte.ts';
 import {
 	clearWorkspace,
 	loadWorkspace,
@@ -59,7 +52,7 @@ type WorkflowState = {
 	sprite: File | null;
 	colors: PaletteColor[];
 	mapping: MappingMode;
-	settings: AppSettings;
+	/** True once onMount has restored saved settings and seeded `state.mapping`. */
 	settingsLoaded: boolean;
 	workspaceLoaded: boolean;
 	paletteColorsLoaded: boolean;
@@ -82,7 +75,6 @@ export function createRecolorWorkflow() {
 		sprite: null,
 		colors: [],
 		mapping: 'luminance',
-		settings: { ...DEFAULT_APP_SETTINGS },
 		settingsLoaded: false,
 		workspaceLoaded: false,
 		paletteColorsLoaded: false,
@@ -109,7 +101,7 @@ export function createRecolorWorkflow() {
 				ready,
 				busy: state.busy,
 				noActiveColors,
-				autoRecolor: state.settings.autoRecolor,
+				autoRecolor: settings.autoRecolor,
 				hasResult: result !== null,
 				resultMappingSignature: result?.mappingSignature ?? null
 			},
@@ -128,28 +120,15 @@ export function createRecolorWorkflow() {
 	onMount(() => {
 		let disposed = false;
 
-		try {
-			const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-			state.settings = parseAppSettings(storedSettings, localeFromNavigator());
-
-			if (!storedSettings) {
-				const legacyMapping = localStorage.getItem(MAPPING_STORAGE_KEY);
-
-				if (isMappingMode(legacyMapping)) {
-					state.settings.defaultMapping = legacyMapping;
-					state.mapping = legacyMapping;
-				}
-			}
-		} catch (error) {
-			console.error('Could not read saved app settings', error);
-		}
-
-		state.mapping = state.settings.defaultMapping;
+		// The settings store loads preferences at import; seed the live mapping
+		// from the saved default and mark restore done so the mapping-sync
+		// effect below only starts tracking changes from here on.
+		state.mapping = settings.defaultMapping;
 		state.settingsLoaded = true;
 
 		void (async () => {
 			try {
-				if (!state.settings.persistWorkspace) {
+				if (!settings.persistWorkspace) {
 					await clearWorkspace();
 					return;
 				}
@@ -185,31 +164,27 @@ export function createRecolorWorkflow() {
 		};
 	});
 
-	// ── Settings persistence & app-wide side effects ──────────────────────
+	// ── Live mapping → saved default ──────────────────────────────────────
+
+	// The home page edits `state.mapping` directly; mirror it into the saved
+	// default so the last-used mapping becomes the startup one. Gated on
+	// restore so an early flush cannot clobber the saved choice, and the
+	// default is read untracked so a settings-page change cannot feed back.
 	$effect(() => {
 		if (!state.settingsLoaded) return;
 
-		state.settings.defaultMapping = state.mapping;
+		const mapping = state.mapping;
 
-		try {
-			localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(state.settings));
-		} catch (error) {
-			console.error('Could not save app settings', error);
-			state.hint = 'workflow.saveSettingsFailed';
-		}
+		untrack(() => {
+			if (mapping !== settings.defaultMapping) {
+				updateSetting('defaultMapping', mapping);
+			}
+		});
 	});
 
+	// ── Workspace persistence ─────────────────────────────────────────────
 	$effect(() => {
-		if (!state.settingsLoaded || typeof document === 'undefined') return;
-
-		document.documentElement.classList.toggle(
-			'animations-disabled',
-			!state.settings.animationsEnabled
-		);
-	});
-
-	$effect(() => {
-		if (!state.workspaceLoaded || !state.settings.persistWorkspace) return;
+		if (!state.workspaceLoaded || !settings.persistWorkspace) return;
 
 		const workspace: PersistedWorkspace = {
 			palette: state.palette
@@ -428,15 +403,6 @@ export function createRecolorWorkflow() {
 		void startRecolor();
 	}
 
-	function setSetting<K extends keyof AppSettings>(
-		key: K,
-		value: AppSettings[K]
-	) {
-		state.settings[key] = value;
-
-		if (key === 'defaultMapping') state.mapping = state.settings.defaultMapping;
-	}
-
 	function toggleExcludedPixel(index: number) {
 		if (!Number.isInteger(index) || index < 0) return;
 
@@ -531,7 +497,7 @@ export function createRecolorWorkflow() {
 	$effect(() => {
 		const signature = mappingSig;
 		const result = state.result;
-		const autoRecolor = state.settings.autoRecolor;
+		const autoRecolor = settings.autoRecolor;
 
 		untrack(() => {
 			const fires = shouldAutoRecolor(
@@ -619,7 +585,6 @@ export function createRecolorWorkflow() {
 		get buttonHintIsError() {
 			return hintIsError;
 		},
-		setSetting,
 		clearFormData,
 		handleRecolor,
 		toggleExcludedPixel,
