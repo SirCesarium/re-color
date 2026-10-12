@@ -1,7 +1,6 @@
 import { onDestroy, onMount, untrack } from 'svelte';
 import {
 	composeExcludedPixels,
-	extractColorsFromFile,
 	type MappingMode,
 	type PaletteColor,
 	type RecolorConfig,
@@ -13,7 +12,6 @@ import {
 	MAPPING_STORAGE_KEY,
 	OUTPUT_CONFIG,
 	OUTPUT_EXTENSIONS,
-	PALETTE_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
 } from '#core/recolor.ts';
@@ -41,6 +39,7 @@ import {
 	shouldRunInitialRecolor,
 	type WorkflowSnapshot
 } from './machine.ts';
+import { watchPaletteColors } from './palette-effects.svelte.ts';
 
 /** A snapshot where every field is neutral; guards ignore the ones they don't read. */
 const IDLE_SNAPSHOT: WorkflowSnapshot = {
@@ -125,6 +124,7 @@ export function createRecolorWorkflow() {
 	let workspaceSaveTimer: ReturnType<typeof setTimeout> | undefined;
 	let workspaceRestoreCancelled = false;
 
+	// ── Restore ──────────────────────────────────────────────────────────
 	onMount(() => {
 		let disposed = false;
 
@@ -185,6 +185,7 @@ export function createRecolorWorkflow() {
 		};
 	});
 
+	// ── Settings persistence & app-wide side effects ──────────────────────
 	$effect(() => {
 		if (!state.settingsLoaded) return;
 
@@ -239,6 +240,7 @@ export function createRecolorWorkflow() {
 		return () => clearTimeout(workspaceSaveTimer);
 	});
 
+	// ── Result & config helpers ───────────────────────────────────────────
 	function clearResult() {
 		if (state.result) {
 			for (const url of new Set([state.result.url, state.result.previewUrl])) {
@@ -334,6 +336,7 @@ export function createRecolorWorkflow() {
 		state.hint = null;
 	}
 
+	// ── Recolor pipeline & actions ────────────────────────────────────────
 	async function startRecolor() {
 		const file = state.sprite;
 
@@ -498,6 +501,10 @@ export function createRecolorWorkflow() {
 		}
 	}
 
+	// ── Reactive effects ──────────────────────────────────────────────────
+
+	// New inputs arrived: any in-flight run is stale and the old result no
+	// longer matches, so invalidate it and reset the run-to-idle surface.
 	$effect(() => {
 		void state.palette;
 		void state.sprite;
@@ -511,6 +518,8 @@ export function createRecolorWorkflow() {
 		});
 	});
 
+	// Excluded pixels are indexes into the previous sprite, so a new sprite
+	// invalidates them — the fresh one starts with nothing excluded.
 	$effect(() => {
 		void state.sprite;
 
@@ -582,53 +591,11 @@ export function createRecolorWorkflow() {
 		});
 	});
 
-	$effect(() => {
-		const file = state.palette;
-		const maxColors = state.settings.maxPaletteColors;
+	// Re-extract the palette colors when the image or its cap changes; the
+	// module owns its own state slice, so it registers its own effect here.
+	watchPaletteColors(state);
 
-		if (!file) {
-			state.colors = [];
-			state.paletteColorsLoaded = false;
-
-			return;
-		}
-
-		let cancelled = false;
-		state.paletteColorsLoaded = false;
-		const previousColors = untrack(() => state.colors);
-		void extractColorsFromFile(
-			file,
-			{ ...PALETTE_CONFIG, maxColors },
-			CANVAS_CONFIG
-		)
-			.then(colors => {
-				if (cancelled) return;
-
-				state.colors = colors.map(color => {
-					const previous = previousColors?.find(
-						candidate =>
-							candidate.r === color.r &&
-							candidate.g === color.g &&
-							candidate.b === color.b
-					);
-					return previous ? { ...color, active: previous.active } : color;
-				});
-				state.paletteColorsLoaded = true;
-			})
-			.catch((error: unknown) => {
-				if (cancelled) return;
-
-				console.error('Could not extract the palette image colors', error);
-				state.colors = [];
-				state.paletteColorsLoaded = false;
-				state.hint = 'workflow.paletteFailed';
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	});
-
+	// ── Teardown ──────────────────────────────────────────────────────────
 	onDestroy(() => {
 		runId++;
 		clearTimeout(workspaceSaveTimer);
