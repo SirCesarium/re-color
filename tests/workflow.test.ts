@@ -1,7 +1,7 @@
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { createRecolorWorkflow } from '../src/lib/state/recolor-workflow.svelte.ts';
+import type { createRecolorWorkflow } from '../src/lib/state/workflow/store.svelte.ts';
 
 // The workflow drives the real engine, which paints pixels on a canvas jsdom
 // cannot provide. Swap it for controllable fakes so orchestration, timing, and

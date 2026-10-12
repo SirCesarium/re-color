@@ -8,25 +8,31 @@ import {
 	PALETTE_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
-} from '../config/recolor.ts';
-import { localeFromNavigator } from '../i18n/index.ts';
-import type { MessageKey } from '../i18n/locales.ts';
+} from '../../config/recolor.ts';
+import { localeFromNavigator } from '../../i18n/index.ts';
+import type { MessageKey } from '../../i18n/locales.ts';
 import {
 	composeExcludedPixels,
 	extractColorsFromFile,
 	recolorSprite
-} from '../image-processing/index.ts';
+} from '../../image-processing/index.ts';
 import type {
 	MappingMode,
 	PaletteColor,
 	RecolorConfig
-} from '../image-processing/types.ts';
+} from '../../image-processing/types.ts';
 import {
 	type AppSettings,
 	DEFAULT_APP_SETTINGS,
 	isMappingMode
-} from './settings/model.ts';
-import { APP_SETTINGS_KEY, parseAppSettings } from './settings/repository.ts';
+} from '../settings/model.ts';
+import { APP_SETTINGS_KEY, parseAppSettings } from '../settings/repository.ts';
+import {
+	clearWorkspace,
+	loadWorkspace,
+	type PersistedWorkspace,
+	saveWorkspace
+} from '../workspace.ts';
 import {
 	buttonHint as deriveButtonHint,
 	exclusionSignature,
@@ -36,13 +42,7 @@ import {
 	shouldRecomposeExclusions,
 	shouldRunInitialRecolor,
 	type WorkflowSnapshot
-} from './workflow/machine.ts';
-import {
-	clearWorkspace,
-	loadWorkspace,
-	type PersistedWorkspace,
-	saveWorkspace
-} from './workspace.ts';
+} from './machine.ts';
 
 /** A snapshot where every field is neutral; guards ignore the ones they don't read. */
 const IDLE_SNAPSHOT: WorkflowSnapshot = {
