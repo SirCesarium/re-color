@@ -32,6 +32,7 @@ import {
 	shouldRunInitialRecolor,
 	type WorkflowSnapshot
 } from './machine.ts';
+import { releaseUrl, revokeResultUrls } from './object-urls.ts';
 import { createOperationScope } from './operations.ts';
 import { watchPaletteColors } from './palette-effects.svelte.ts';
 
@@ -220,11 +221,7 @@ export function createRecolorWorkflow() {
 
 	// ── Result & config helpers ───────────────────────────────────────────
 	function clearResult() {
-		if (state.result) {
-			for (const url of new Set([state.result.url, state.result.previewUrl])) {
-				URL.revokeObjectURL(url);
-			}
-		}
+		if (state.result) revokeResultUrls(state.result);
 
 		state.result = null;
 	}
@@ -248,13 +245,6 @@ export function createRecolorWorkflow() {
 		};
 	}
 
-	function releaseResult(
-		url: string | null,
-		retainedUrls: ReadonlySet<string> = new Set()
-	) {
-		if (url && !retainedUrls.has(url)) URL.revokeObjectURL(url);
-	}
-
 	async function composeForCurrentExclusions(
 		previewUrl: string,
 		file: File,
@@ -276,14 +266,14 @@ export function createRecolorWorkflow() {
 			}
 
 			if (isStale()) {
-				releaseResult(url, new Set([previewUrl]));
+				releaseUrl(url, new Set([previewUrl]));
 				return null;
 			}
 
 			if (signature === exclusionSig)
 				return { url, exclusionSignature: signature };
 
-			releaseResult(url, new Set([previewUrl]));
+			releaseUrl(url, new Set([previewUrl]));
 		}
 
 		return null;
@@ -347,7 +337,7 @@ export function createRecolorWorkflow() {
 				);
 
 				if (signal.aborted || previewUrl === null) {
-					releaseResult(previewUrl);
+					releaseUrl(previewUrl);
 					return;
 				}
 
@@ -361,7 +351,7 @@ export function createRecolorWorkflow() {
 			);
 
 			if (!composition) {
-				releaseResult(createdPreviewUrl);
+				releaseUrl(createdPreviewUrl);
 				return;
 			}
 
@@ -378,14 +368,14 @@ export function createRecolorWorkflow() {
 
 			if (previous) {
 				for (const oldUrl of new Set([previous.url, previous.previewUrl])) {
-					releaseResult(oldUrl, retainedUrls);
+					releaseUrl(oldUrl, retainedUrls);
 				}
 			}
 
 			state.result = nextResult;
 		} catch (error) {
-			releaseResult(createdPreviewUrl);
-			releaseResult(createdResultUrl);
+			releaseUrl(createdPreviewUrl);
+			releaseUrl(createdResultUrl);
 			console.error(error);
 
 			if (!signal.aborted) state.hint = 'workflow.recolorFailed';
@@ -453,7 +443,7 @@ export function createRecolorWorkflow() {
 			const currentResult = state.result;
 
 			if (!currentResult || currentResult.previewUrl !== result.previewUrl) {
-				releaseResult(composition.url, new Set([result.previewUrl]));
+				releaseUrl(composition.url, new Set([result.previewUrl]));
 				return;
 			}
 
@@ -465,7 +455,7 @@ export function createRecolorWorkflow() {
 
 			state.result = updatedResult;
 
-			releaseResult(
+			releaseUrl(
 				currentResult.url,
 				new Set([updatedResult.url, updatedResult.previewUrl])
 			);
