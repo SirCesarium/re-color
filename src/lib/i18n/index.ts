@@ -1,5 +1,8 @@
 import { addMessages, init, locale as localeStore } from 'svelte-i18n';
-import { APP_SETTINGS_KEY, parseAppSettings } from '#lib/state/app-settings.ts';
+import {
+	APP_SETTINGS_KEY,
+	parseAppSettings
+} from '#lib/state/settings/repository.ts';
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locales.ts';
 import en from './messages/en.json';
 import es from './messages/es.json';

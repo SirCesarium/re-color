@@ -16,16 +16,18 @@
 		SUPPORTED_LOCALES
 	} from '#lib/i18n/locales.ts';
 	import { LocalizedError } from '#lib/i18n/localized-error.ts';
-	import type { AppSettings } from '#lib/state/app-settings.ts';
+	import { hintsEnabled } from '#lib/state/hints.ts';
+	import {
+		type AppSettings,
+		DEFAULT_APP_SETTINGS
+	} from '#lib/state/settings/model.ts';
 	import {
 		APP_SETTINGS_KEY,
 		clearSavedAppData,
-		DEFAULT_APP_SETTINGS,
 		exportAppSettings,
 		importAppSettings,
 		parseAppSettings
-	} from '#lib/state/app-settings.ts';
-	import { hintsEnabled } from '#lib/state/hints.ts';
+	} from '#lib/state/settings/repository.ts';
 	import {
 		clearWorkspace,
 		loadWorkspace,

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { APP_SETTINGS_KEY, parseAppSettings } from './app-settings.ts';
+import { APP_SETTINGS_KEY, parseAppSettings } from './settings/repository.ts';
 
 function initialHints(): boolean {
 	if (typeof localStorage === 'undefined') return true;

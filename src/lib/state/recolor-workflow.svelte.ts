@@ -21,13 +21,12 @@ import type {
 	PaletteColor,
 	RecolorConfig
 } from '../image-processing/types.ts';
-import type { AppSettings } from './app-settings.ts';
 import {
-	APP_SETTINGS_KEY,
+	type AppSettings,
 	DEFAULT_APP_SETTINGS,
-	isMappingMode,
-	parseAppSettings
-} from './app-settings.ts';
+	isMappingMode
+} from './settings/model.ts';
+import { APP_SETTINGS_KEY, parseAppSettings } from './settings/repository.ts';
 import {
 	buttonHint as deriveButtonHint,
 	exclusionSignature,

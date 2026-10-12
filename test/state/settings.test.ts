@@ -2,11 +2,13 @@ import { expect, test } from 'bun:test';
 import { LocalizedError } from '../../src/lib/i18n/localized-error.ts';
 import {
 	DEFAULT_APP_SETTINGS,
+	isMappingMode
+} from '../../src/lib/state/settings/model.ts';
+import {
 	exportAppSettings,
 	importAppSettings,
-	isMappingMode,
 	parseAppSettings
-} from '../../src/lib/state/app-settings.ts';
+} from '../../src/lib/state/settings/repository.ts';
 
 /** Runs an import that must fail and returns the localized rejection. */
 function importFailure(json: string): LocalizedError {

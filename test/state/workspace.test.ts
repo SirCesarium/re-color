@@ -6,7 +6,7 @@ import {
 	clearSavedAppData,
 	HINT_STORAGE_KEYS,
 	resetHints
-} from '../../src/lib/state/app-settings.ts';
+} from '../../src/lib/state/settings/repository.ts';
 import {
 	clearWorkspace,
 	loadWorkspace,
