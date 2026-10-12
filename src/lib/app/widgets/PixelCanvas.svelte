@@ -42,6 +42,11 @@
 		excluded: boolean;
 	} | null = null;
 
+	// One membership structure for the exclusion mask: the pointer-down
+	// check and the paint pass both ask "is this index excluded?", which a
+	// Set answers in O(1) instead of scanning the array per question.
+	const excludedSet = $derived(new Set(excludedPixels));
+
 	$effect(() => {
 		const file = spriteFile;
 
@@ -120,7 +125,7 @@
 		const image = sourceImage;
 		const original = originalSprite;
 		const size = dimensions;
-		const mask = excludedPixels;
+		const mask = excludedSet;
 
 		if (!surface || !image || !size) return;
 
@@ -140,7 +145,7 @@
 		context.clearRect(0, 0, size.width, size.height);
 		context.drawImage(image, 0, 0);
 
-		if (original && mask.length > 0) paintPixels(mask, original);
+		if (original && mask.size > 0) paintPixels(mask, original);
 	});
 
 	function getImageRect() {
@@ -220,7 +225,7 @@
 		if (!pixel) return;
 
 		event.preventDefault();
-		const excluded = excludedPixels.includes(pixel.index);
+		const excluded = excludedSet.has(pixel.index);
 		pointerStroke = {
 			pointerId: event.pointerId,
 			lastPixel: { x: pixel.x, y: pixel.y },
@@ -259,12 +264,14 @@
 
 		// Every pixel between the last point and this one, so a fast drag
 		// leaves no gaps in the stroke.
-		const segment = linePoints(stroke.lastPixel, pixel).map(point => {
-			const index = point.y * size.width + point.x;
-			stroke.indexes.add(index);
+		const segment = new Set(
+			linePoints(stroke.lastPixel, pixel).map(point => {
+				const index = point.y * size.width + point.x;
+				stroke.indexes.add(index);
 
-			return index;
-		});
+				return index;
+			})
+		);
 
 		stroke.lastPixel = { x: pixel.x, y: pixel.y };
 
@@ -275,10 +282,10 @@
 	}
 
 	function paintPixels(
-		indexes: readonly number[],
+		indexes: ReadonlySet<number>,
 		image: HTMLImageElement | null
 	) {
-		if (!canvas || !image || !dimensions || indexes.length === 0) return;
+		if (!canvas || !image || !dimensions || indexes.size === 0) return;
 
 		const context = canvas.getContext('2d');
 		if (!context) return;
