@@ -17,6 +17,11 @@ export const composeExcludedPixels = vi.fn(
 	async (previewUrl: string) => previewUrl
 );
 
+/** The fake engine runs to completion without ever yielding to the browser. */
+export function yieldToBrowser(): Promise<void> {
+	return Promise.resolve();
+}
+
 export function resetFakeEngine(): void {
 	recolorSprite.mockReset();
 	extractColorsFromFile.mockReset();

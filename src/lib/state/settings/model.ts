@@ -4,7 +4,7 @@ import {
 	LOCALE_SCHEMA,
 	type Locale
 } from '../../i18n/locales.ts';
-import type { MappingMode } from '../../image-processing/types.ts';
+import type { MappingMode } from '../../image-processing/index.ts';
 
 export type AppSettings = {
 	animationsEnabled: boolean;

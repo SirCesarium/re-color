@@ -1,12 +1,12 @@
-import type { CanvasConfig } from '../image-processing/image/canvas.ts';
-import { yieldToBrowser } from '../image-processing/image/scheduler.ts';
-import type {
-	ColorMappingConfig,
-	MappingMode,
-	PaletteExtractionConfig,
-	RecolorConfig,
-	TransparencyConfig
-} from '../image-processing/types.ts';
+import {
+	type CanvasConfig,
+	type ColorMappingConfig,
+	type MappingMode,
+	type PaletteExtractionConfig,
+	type RecolorConfig,
+	type TransparencyConfig,
+	yieldToBrowser
+} from '../image-processing/index.ts';
 
 export const MAPPING_STORAGE_KEY = 'recolor.mapping';
 

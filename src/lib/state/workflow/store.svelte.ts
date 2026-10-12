@@ -14,13 +14,11 @@ import type { MessageKey } from '../../i18n/locales.ts';
 import {
 	composeExcludedPixels,
 	extractColorsFromFile,
+	type MappingMode,
+	type PaletteColor,
+	type RecolorConfig,
 	recolorSprite
 } from '../../image-processing/index.ts';
-import type {
-	MappingMode,
-	PaletteColor,
-	RecolorConfig
-} from '../../image-processing/types.ts';
 import {
 	type AppSettings,
 	DEFAULT_APP_SETTINGS,
