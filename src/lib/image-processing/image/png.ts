@@ -12,8 +12,6 @@ const ADAM7_PASSES = [
 	{ x: 0, y: 1, dx: 1, dy: 2 }
 ] as const;
 
-type Pass = { x: number; y: number; dx: number; dy: number };
-
 type PngHeader = {
 	width: number;
 	height: number;
