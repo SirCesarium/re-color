@@ -7,12 +7,6 @@ import { OUTPUT_CONFIG, OUTPUT_EXTENSIONS } from '#core/recolor.ts';
 import type { MessageKey } from '../../i18n/locales.ts';
 import { settings, updateSetting } from '../settings/store.svelte.ts';
 import {
-	clearWorkspace,
-	loadWorkspace,
-	type PersistedWorkspace,
-	saveWorkspace
-} from '../workspace.ts';
-import {
 	buttonHint as deriveButtonHint,
 	exclusionSignature,
 	isErrorHint,
@@ -26,6 +20,7 @@ import { revokeResultUrls } from './object-urls.ts';
 import { createOperationScope } from './operations.ts';
 import { watchPaletteColors } from './palette-effects.svelte.ts';
 import { createPipeline } from './pipeline.ts';
+import { watchWorkspace } from './workspace-effects.svelte.ts';
 
 /** A snapshot where every field is neutral; guards ignore the ones they don't read. */
 const IDLE_SNAPSHOT: WorkflowSnapshot = {
@@ -118,55 +113,16 @@ export function createRecolorWorkflow() {
 		exclusionSignature: () => exclusionSig
 	});
 
-	let workspaceSaveTimer: ReturnType<typeof setTimeout> | undefined;
+	// Set by `clearFormData`: a workspace restore still in flight must not
+	// repopulate what the user just cleared.
 	let workspaceRestoreCancelled = false;
 
-	// ── Restore ──────────────────────────────────────────────────────────
 	onMount(() => {
-		let disposed = false;
-
 		// The settings store loads preferences at import; seed the live mapping
 		// from the saved default and mark restore done so the mapping-sync
 		// effect below only starts tracking changes from here on.
 		state.mapping = settings.defaultMapping;
 		state.settingsLoaded = true;
-
-		void (async () => {
-			try {
-				if (!settings.persistWorkspace) {
-					await clearWorkspace();
-					return;
-				}
-
-				const workspace = await loadWorkspace();
-
-				if (disposed || workspaceRestoreCancelled) return;
-
-				if (workspace) {
-					state.palette = workspace.palette
-						? new File([workspace.palette.blob], workspace.palette.name, {
-								type: 'image/png'
-							})
-						: null;
-					state.sprite = workspace.sprite
-						? new File([workspace.sprite.blob], workspace.sprite.name, {
-								type: 'image/png'
-							})
-						: null;
-					state.colors = workspace.colors.map(color => ({ ...color }));
-					state.excludedPixels = workspace.excludedPixels;
-				}
-			} catch (error) {
-				console.error('Could not restore saved app workspace', error);
-				state.hint = 'workflow.restoreFailed';
-			} finally {
-				if (!disposed) state.workspaceLoaded = true;
-			}
-		})();
-
-		return () => {
-			disposed = true;
-		};
 	});
 
 	// ── Live mapping → saved default ──────────────────────────────────────
@@ -185,39 +141,6 @@ export function createRecolorWorkflow() {
 				updateSetting('defaultMapping', mapping);
 			}
 		});
-	});
-
-	// ── Workspace persistence ─────────────────────────────────────────────
-	$effect(() => {
-		if (!state.workspaceLoaded || !settings.persistWorkspace) return;
-
-		const workspace: PersistedWorkspace = {
-			palette: state.palette
-				? {
-						name: state.palette.name,
-						blob: state.palette.slice(0, state.palette.size, 'image/png')
-					}
-				: null,
-			sprite: state.sprite
-				? {
-						name: state.sprite.name,
-						blob: state.sprite.slice(0, state.sprite.size, 'image/png')
-					}
-				: null,
-			mapping: state.mapping,
-			colors: state.colors.map(({ r, g, b, active }) => ({ r, g, b, active })),
-			excludedPixels: [...state.excludedPixels]
-		};
-
-		clearTimeout(workspaceSaveTimer);
-		workspaceSaveTimer = setTimeout(() => {
-			void saveWorkspace(workspace).catch((error: unknown) => {
-				console.error('Could not save app workspace', error);
-				state.hint = 'workflow.saveDataFailed';
-			});
-		}, 350);
-
-		return () => clearTimeout(workspaceSaveTimer);
 	});
 
 	// ── Result helpers ────────────────────────────────────────────────────
@@ -380,15 +303,16 @@ export function createRecolorWorkflow() {
 		});
 	});
 
-	// Re-extract the palette colors when the image or its cap changes; the
-	// module owns its own state slice, so it registers its own effect here.
+	// Effect modules that own their slice of state: palette re-extraction, and
+	// workspace restore + debounced save.
 	watchPaletteColors(state);
+	watchWorkspace(state, () => workspaceRestoreCancelled);
 
 	// ── Teardown ──────────────────────────────────────────────────────────
 	onDestroy(() => {
 		scope.abortAll();
-		clearTimeout(workspaceSaveTimer);
 		clearResult();
+
 		if (typeof document !== 'undefined') {
 			document.documentElement.classList.remove('animations-disabled');
 		}
