@@ -39,7 +39,7 @@ function config(overrides: Partial<RecolorConfig> = {}): RecolorConfig {
 		processing: {
 			...PROCESSING_CONFIG,
 			onProgress: () => {},
-			isCancelled: () => false
+			signal: new AbortController().signal
 		},
 		output: OUTPUT_CONFIG,
 		...overrides
@@ -105,7 +105,7 @@ test('emits ordered progress from start to completion', async () => {
 					...PROCESSING_CONFIG,
 					chunkDurationMs: 0.25,
 					onProgress: fraction => fractions.push(fraction),
-					isCancelled: () => false,
+					signal: new AbortController().signal,
 					yieldToMain: async () => {}
 				}
 			})
@@ -137,7 +137,7 @@ test('returns no result and revokes the URL when cancelled after encoding', asyn
 	);
 	const revoked: string[] = [];
 	const revoke = URL.revokeObjectURL.bind(URL);
-	let cancelled = false;
+	const controller = new AbortController();
 
 	URL.revokeObjectURL = (url: string) => {
 		revoked.push(url);
@@ -154,9 +154,9 @@ test('returns no result and revokes the URL when cancelled after encoding', asyn
 					onProgress: fraction => {
 						// Cancelling once the result is encoded must discard the object URL.
 						if (fraction >= PROCESSING_CONFIG.progress.complete)
-							cancelled = true;
+							controller.abort();
 					},
-					isCancelled: () => cancelled
+					signal: controller.signal
 				}
 			})
 		);
@@ -174,7 +174,7 @@ test('skips encoding when cancelled at the last processing milestone', async () 
 		4,
 		rgbaPixels(4, 4, () => [10, 20, 30, 255])
 	);
-	let cancelled = false;
+	const controller = new AbortController();
 
 	const url = await recolorSprite(
 		file,
@@ -185,9 +185,9 @@ test('skips encoding when cancelled at the last processing milestone', async () 
 				onProgress: fraction => {
 					// The pixel loop reports processingComplete right after its final chunk.
 					if (fraction >= PROCESSING_CONFIG.progress.processingComplete)
-						cancelled = true;
+						controller.abort();
 				},
-				isCancelled: () => cancelled
+				signal: controller.signal
 			}
 		})
 	);

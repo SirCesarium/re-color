@@ -53,7 +53,7 @@ function mappingInput(
 		palette,
 		counts,
 		config: mappingConfig(overrides),
-		isCancelled: () => false
+		signal: new AbortController().signal
 	};
 }
 
@@ -366,9 +366,9 @@ test('createColorLookup awaits asynchronous strategies', async () => {
 	expect(lookup.get(key(BLACK))).toEqual(mapped);
 });
 
-test('createColorLookup forwards settings, counts, and the cancellation hook to plugins', () => {
+test('createColorLookup forwards settings, counts, and the cancellation signal to plugins', () => {
 	let received: ColorMappingInput | null = null;
-	const isCancelled = () => true;
+	const signal = AbortSignal.abort();
 	const counts = new Map([[key(BLACK), 42]]);
 	const strategy = {
 		id: 'test/spy',
@@ -380,13 +380,13 @@ test('createColorLookup forwards settings, counts, and the cancellation hook to 
 	};
 
 	createColorLookup(
-		{ ...mappingInput([key(BLACK)], [WHITE], {}, counts), isCancelled },
+		{ ...mappingInput([key(BLACK)], [WHITE], {}, counts), signal },
 		{ ...mappingConfig({ mode: 'dominant' }), strategy }
 	);
 
 	expect(received).not.toBeNull();
 	const input = received as unknown as ColorMappingInput;
-	expect(input.isCancelled).toBe(isCancelled);
+	expect(input.signal).toBe(signal);
 	expect(input.counts).toBe(counts);
 	// The config argument rebuilds the settings the plugin sees; it wins over input.config.
 	expect(input.config.mode).toBe('dominant');

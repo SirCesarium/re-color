@@ -35,7 +35,7 @@ export const TRANSPARENCY_CONFIG: TransparencyConfig = {
 
 export const PROCESSING_CONFIG: Omit<
 	RecolorConfig['processing'],
-	'onProgress' | 'isCancelled'
+	'onProgress' | 'signal'
 > = {
 	chunkDurationMs: 6,
 	progress: {

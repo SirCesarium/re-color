@@ -242,7 +242,7 @@ export function createRecolorWorkflow() {
 				onProgress: (fraction: number) => {
 					if (!signal.aborted) state.progress = fraction;
 				},
-				isCancelled: () => signal.aborted
+				signal
 			},
 			output: OUTPUT_CONFIG
 		};

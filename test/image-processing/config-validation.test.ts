@@ -21,7 +21,7 @@ function baseConfig(): RecolorConfig {
 		processing: {
 			...PROCESSING_CONFIG,
 			onProgress: () => {},
-			isCancelled: () => false
+			signal: new AbortController().signal
 		},
 		output: { ...OUTPUT_CONFIG }
 	};
