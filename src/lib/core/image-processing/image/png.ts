@@ -1,4 +1,4 @@
-import { unzlibSync } from 'fflate';
+import { Decompress } from 'fflate';
 import { MAX_IMAGE_HEIGHT, MAX_IMAGE_WIDTH } from './validation.ts';
 
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -18,6 +18,13 @@ type PngHeader = {
 	bitDepth: number;
 	colorType: number;
 	interlace: number;
+};
+
+type ParsedChunks = {
+	header: PngHeader;
+	palette: Uint8Array | null;
+	transparency: Uint8Array | null;
+	compressed: Uint8Array[];
 };
 
 export type DecodedPng = {
@@ -42,6 +49,22 @@ export function isPng(data: Uint8Array): boolean {
 export function decodePng(data: Uint8Array): DecodedPng {
 	if (!isPng(data)) throw new TypeError('Input is not a PNG image');
 
+	const { header, palette, transparency, compressed } = parseChunks(data);
+
+	validateHeader(header, palette, transparency);
+
+	// The header decides exactly how many raw bytes the image can use; the
+	// inflate refuses to hold more, so a small IDAT cannot balloon into a
+	// huge allocation before anything else gets a chance to object.
+	const budget = expectedRawSize(header);
+	const raw = inflateWithinBudget(concatParts(compressed), budget);
+	const rgba = expandPixels(header, palette, transparency, raw);
+
+	return { width: header.width, height: header.height, data: rgba };
+}
+
+/** Walks the chunk chain, verifying every checksum, until the end marker. */
+function parseChunks(data: Uint8Array): ParsedChunks {
 	const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
 	let offset = SIGNATURE.length;
 	let header: PngHeader | null = null;
@@ -61,6 +84,13 @@ export function decodePng(data: Uint8Array): DecodedPng {
 
 		const type = readChunkType(data, typeOffset);
 		const body = data.subarray(bodyOffset, bodyOffset + length);
+		const expectedCrc = view.getUint32(bodyOffset + length);
+
+		// The PNG checksum covers the chunk's type and body. Verifying it here
+		// turns silent corruption into one error that names the chunk at fault.
+		if (crc32(data.subarray(typeOffset, bodyOffset + length)) !== expectedCrc) {
+			throw new Error(`PNG chunk CRC mismatch: ${type}`);
+		}
 
 		if (!header && type !== 'IHDR')
 			throw new Error('PNG header must be the first chunk');
@@ -108,23 +138,96 @@ export function decodePng(data: Uint8Array): DecodedPng {
 		throw new Error('PNG is missing required image data');
 	}
 
-	validateHeader(header, palette, transparency);
+	return { header, palette, transparency, compressed };
+}
 
-	const compressedLength = compressed.reduce(
-		(total, part) => total + part.length,
-		0
-	);
-	const compressedData = new Uint8Array(compressedLength);
-	let compressedOffset = 0;
-	for (const part of compressed) {
-		compressedData.set(part, compressedOffset);
-		compressedOffset += part.length;
+/**
+ * The exact raw byte count the header's geometry demands — one filter byte
+ * plus the packed row per scanline, summed over the interlace passes.
+ */
+function expectedRawSize(header: PngHeader): number {
+	const channels = channelCount(header.colorType);
+	const passes =
+		header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
+	let total = 0;
+
+	for (const pass of passes) {
+		const width = passSize(header.width, pass.x, pass.dx);
+		const height = passSize(header.height, pass.y, pass.dy);
+
+		if (width === 0 || height === 0) continue;
+
+		const rowBytes = Math.ceil((width * channels * header.bitDepth) / 8);
+		total += (rowBytes + 1) * height;
 	}
 
-	const raw = unzlibSync(compressedData);
+	return total;
+}
+
+/** Joins the IDAT chunks into one contiguous zlib stream. */
+function concatParts(parts: readonly Uint8Array[]): Uint8Array<ArrayBuffer> {
+	const total = parts.reduce((sum, part) => sum + part.length, 0);
+	const joined = new Uint8Array(total);
+	let offset = 0;
+
+	for (const part of parts) {
+		joined.set(part, offset);
+		offset += part.length;
+	}
+
+	return joined;
+}
+
+/**
+ * Inflates the IDAT stream, refusing to hold more than the budget. Accumulation
+ * stops the moment the declared image has every byte it could possibly use, so
+ * a zip-bomb IDAT costs at most the budget instead of its full expansion.
+ */
+function inflateWithinBudget(
+	compressed: Uint8Array,
+	budget: number
+): Uint8Array<ArrayBuffer> {
+	const parts: Uint8Array[] = [];
+	let size = 0;
+	let overshoot = false;
+
+	const decompressor = new Decompress(part => {
+		if (overshoot) return;
+
+		size += part.length;
+
+		if (size > budget) {
+			overshoot = true;
+
+			return;
+		}
+
+		parts.push(part);
+	});
+
+	decompressor.push(compressed, true);
+
+	if (overshoot) {
+		throw new RangeError(
+			`PNG pixel data inflates beyond the expected ${budget} bytes`
+		);
+	}
+
+	return concatParts(parts);
+}
+
+/** Unfilters the raw scanlines and writes them out as RGBA samples. */
+function expandPixels(
+	header: PngHeader,
+	palette: Uint8Array | null,
+	transparency: Uint8Array | null,
+	raw: Uint8Array<ArrayBuffer>
+): Uint8ClampedArray<ArrayBuffer> {
 	const outputSize = header.width * header.height * 4;
+
 	if (!Number.isSafeInteger(outputSize))
 		throw new RangeError('PNG dimensions are too large');
+
 	const rgba = new Uint8ClampedArray(outputSize);
 	const channels = channelCount(header.colorType);
 	const passes =
@@ -166,10 +269,7 @@ export function decodePng(data: Uint8Array): DecodedPng {
 		}
 	}
 
-	if (rawOffset !== raw.length)
-		throw new Error('PNG contains unexpected decompressed pixel data');
-
-	return { width: header.width, height: header.height, data: rgba };
+	return rgba;
 }
 
 function readChunkType(data: Uint8Array, offset: number): string {
@@ -179,6 +279,35 @@ function readChunkType(data: Uint8Array, offset: number): string {
 		data[offset + 2],
 		data[offset + 3]
 	);
+}
+
+const CRC_TABLE = buildCrcTable();
+
+function buildCrcTable(): Uint32Array {
+	const table = new Uint32Array(256);
+
+	for (let index = 0; index < 256; index++) {
+		let value = index;
+
+		for (let bit = 0; bit < 8; bit++) {
+			value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+		}
+
+		table[index] = value >>> 0;
+	}
+
+	return table;
+}
+
+/** The PNG chunk checksum: CRC-32 (IEEE) over a chunk's type and body. */
+function crc32(bytes: Uint8Array): number {
+	let crc = 0xffffffff;
+
+	for (const byte of bytes) {
+		crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+	}
+
+	return (crc ^ 0xffffffff) >>> 0;
 }
 
 function validateHeader(

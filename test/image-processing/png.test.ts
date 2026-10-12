@@ -555,17 +555,16 @@ test('rejects decompressed image data that does not match the header', () => {
 		'PNG pixel data is truncated'
 	);
 
-	// A 1 × 1 RGBA image needs exactly one row.
+	// A 1 × 1 RGBA image needs exactly one row; anything more is overshoot
+	// against the budget the header promises.
 	expect(
 		decodeWithIdat(header(1, 1, 8, 6, 0), new Uint8Array([...row, 9, 9]))
-	).toThrow('PNG contains unexpected decompressed pixel data');
+	).toThrow(RangeError);
 
-	// Row filters above the Paeth filter are undefined.
+	// Row filters above the Paeth filter are undefined. The data measures
+	// exactly what a 1 × 1 RGBA image needs, so only the filter can object.
 	expect(
-		decodeWithIdat(
-			header(1, 1, 8, 6, 0),
-			new Uint8Array([5, 1, 2, 3, 4, 5, 6, 7, 8])
-		)
+		decodeWithIdat(header(1, 1, 8, 6, 0), new Uint8Array([5, 1, 2, 3, 4]))
 	).toThrow('Unsupported PNG row filter');
 
 	// Indexed pixels may only reference palette entries that exist.
@@ -579,6 +578,58 @@ test('rejects decompressed image data that does not match the header', () => {
 			])
 		)
 	).toThrow('Indexed PNG references a missing palette entry');
+});
+
+test('rejects image data that inflates beyond what the header promises', () => {
+	// 1 MiB of zeros compresses to a few hundred bytes, and a 1 × 1 header
+	// needs exactly 5 raw bytes: this IDAT is a decompression bomb.
+	const bomb = zlibSync(new Uint8Array(1 << 20));
+	const png = makePng([
+		chunk('IHDR', header(1, 1, 8, 6, 0)),
+		chunk('IDAT', bomb),
+		chunk('IEND', new Uint8Array())
+	]);
+
+	expect(() => decodePng(png)).toThrow(RangeError);
+});
+
+test('rejects a chunk whose checksum does not match its contents', () => {
+	const png = makePng([
+		chunk('IHDR', header(1, 1, 8, 6, 0)),
+		chunk('IDAT', zlibSync(new Uint8Array([0, 7, 8, 9, 255]))),
+		chunk('IEND', new Uint8Array())
+	]);
+	// The IHDR checksum is the last field of the first chunk: offset 8 + 25 - 4.
+	const corrupt = new Uint8Array(png);
+	corrupt[29] ^= 0xff;
+
+	expect(() => decodePng(corrupt)).toThrow('PNG chunk CRC mismatch: IHDR');
+});
+
+test('rejects a chunk whose body no longer matches its checksum', () => {
+	const png = makePng([
+		chunk('IHDR', header(1, 1, 8, 6, 0)),
+		chunk('IDAT', zlibSync(new Uint8Array([0, 7, 8, 9, 255]))),
+		chunk('IEND', new Uint8Array())
+	]);
+	// IHDR ends at 8 + 25; the IDAT body starts after its length and type fields.
+	const corrupt = new Uint8Array(png);
+	corrupt[41] ^= 0x01;
+
+	expect(() => decodePng(corrupt)).toThrow('PNG chunk CRC mismatch: IDAT');
+});
+
+test('accepts chunks whose checksums are correct, even when ignored', () => {
+	// chunk() computes the real CRC, so a well-formed ancillary chunk the
+	// decoder does not understand must pass verification without pixel damage.
+	const png = makePng([
+		chunk('IHDR', header(1, 1, 8, 6, 0)),
+		chunk('gAMA', new Uint8Array([0, 0, 1, 0])),
+		chunk('IDAT', zlibSync(new Uint8Array([0, 10, 20, 30, 255]))),
+		chunk('IEND', new Uint8Array())
+	]);
+
+	expect([...decodePng(png).data]).toEqual([10, 20, 30, 255]);
 });
 
 test('ignores trailing bytes after the end chunk', () => {
@@ -667,21 +718,6 @@ test('ignores a palette attached to a grayscale image', () => {
 	expect([...decodePng(png).data]).toEqual([
 		10, 10, 10, 255, 200, 200, 200, 255
 	]);
-});
-
-test('does not verify chunk checksums', () => {
-	const png = makeSampledPng({
-		width: 1,
-		height: 1,
-		colorType: 6,
-		bitDepth: 8,
-		pixels: [[7, 8, 9, 255]]
-	});
-	// The IHDR checksum spans bytes 29-32; corrupting it changes nothing today.
-	const corrupt = new Uint8Array(png);
-	corrupt[29] ^= 0xff;
-
-	expect([...decodePng(corrupt).data]).toEqual([7, 8, 9, 255]);
 });
 
 test('rejects interlaced indexed pixels that reference missing palette entries', () => {
