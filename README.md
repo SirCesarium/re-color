@@ -9,7 +9,7 @@ Recolor a pixel art sprite with any image's palette, privately, in your browser.
 [![CI](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml/badge.svg)](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/SirCesarium/re-color)](LICENSE)
 [![Built with Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte)](https://svelte.dev/)
-[![Bun](https://img.shields.io/badge/Bun-test%20%26%20build-000000?logo=bun)](https://bun.sh/)
+[![Bun](https://img.shields.io/badge/Bun-scripts%20%26%20build-000000?logo=bun)](https://bun.sh/)
 [![Privacy First](https://img.shields.io/badge/Privacy-Local%20only-00C853)](#privacy)
 
 </div>
@@ -98,14 +98,14 @@ Review the [license](./LICENSE) or the [privacy section](https://recolor.pages.d
 The CI runs these five commands on every push and pull request. Run them before opening one:
 
 ```bash
-bun run check    # svelte-check
-bun run test     # domain tier — bun test test/, no DOM
-bun run test:ui  # UI tier — Vitest + jsdom
-bun run lint     # biome check
+bun run check        # svelte-check
+bun run lint         # biome check
+bun run test:domain  # domain tier — Vitest under node, no DOM
+bun run test:ui      # ui tier — Vitest under jsdom
 bun run build
 ```
 
-Never run bare `bun test`: with no path it sweeps `tests/` too and hangs the Vitest suite under Bun. Always go through the scripts.
+`domain` runs without a DOM so browser APIs cannot quietly creep into `src/lib/core/`; `ui` covers the reactive workflow and the widgets, which do need a document. `bun run test` runs both.
 
 ### Running with Docker
 
