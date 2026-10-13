@@ -20,7 +20,8 @@
 				"bradlc.vscode-tailwindcss",
 				"ardenivanov.svelte-intellisense",
 				"ms-azuretools.vscode-docker",
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"biomejs.biome"
 			]
 		}
 	}
