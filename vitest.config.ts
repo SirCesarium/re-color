@@ -6,31 +6,61 @@ const lib = fileURLToPath(new URL('./src/lib', import.meta.url));
 const app = fileURLToPath(new URL('./src/lib/app', import.meta.url));
 const core = fileURLToPath(new URL('./src/lib/core', import.meta.url));
 
-// Svelte-facing tests (the reactive workflow, widgets) run here under a DOM.
-// The pure domain stays in `bun test` with no DOM, which keeps those tests
-// fast and guards the image-processing layer against browser dependencies.
-export default defineConfig({
-	plugins: [
-		svelte({
-			compilerOptions: {
-				runes: true
-			}
-		})
-	],
-	resolve: {
-		alias: {
-			'#lib': lib,
-			'#app': app,
-			'#core': core
-		},
-		// Load Svelte's client build (which exports mount) instead of the
-		// server one; without this, rendering under jsdom fails.
-		conditions: ['browser']
+const sveltePlugin = svelte({
+	compilerOptions: {
+		runes: true
+	}
+});
+
+const resolveConfig = {
+	alias: {
+		'#lib': lib,
+		'#app': app,
+		'#core': core
 	},
+	// Load Svelte's client build (which exports mount) instead of the
+	// server one; without this, rendering under jsdom fails.
+	conditions: ['browser']
+};
+
+/**
+ * Two tiers, on purpose.
+ *
+ * `domain` runs under plain node with no DOM at all. That absence is the test:
+ * it keeps the image-processing layer honest about browser dependencies and
+ * keeps the suite fast. `ui` runs under jsdom for the reactive workflow and
+ * the widgets, which genuinely need a document.
+ *
+ * Do not collapse them into one environment — a DOM in `domain` would quietly
+ * let browser APIs leak into `src/lib/core/`.
+ *
+ * Inline projects inherit the plugins and aliases declared here, so neither
+ * tier repeats them. To run `domain` without the Svelte plugin later, that
+ * project needs `extends: false` plus its own plugin list.
+ */
+export default defineConfig({
+	plugins: [sveltePlugin],
+	resolve: resolveConfig,
 	test: {
-		environment: 'jsdom',
-		globals: true,
-		include: ['tests/**/*.test.ts'],
-		setupFiles: ['tests/setup.ts']
+		projects: [
+			{
+				test: {
+					name: 'domain',
+					environment: 'node',
+					include: ['test/domain/**/*.test.ts']
+				}
+			},
+			{
+				test: {
+					name: 'ui',
+					environment: 'jsdom',
+					// @testing-library/svelte only wires its DOM cleanup through a
+					// global afterEach, so without this the renders pile up across tests.
+					globals: true,
+					include: ['test/ui/**/*.test.ts'],
+					setupFiles: ['test/ui/setup.ts']
+				}
+			}
+		]
 	}
 });
