@@ -1,6 +1,6 @@
-import { expect, test } from 'vitest';
 import { get } from 'svelte/store';
 import { locale, t } from 'svelte-i18n';
+import { expect, test } from 'vitest';
 // Side-effect import: registers the dictionaries and calls init().
 import '../../../src/lib/app/i18n/index.ts';
 

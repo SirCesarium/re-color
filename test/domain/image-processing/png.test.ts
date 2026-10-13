@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest';
 import { zlibSync } from 'fflate';
+import { expect, test } from 'vitest';
 import {
 	decodePng,
 	isPng

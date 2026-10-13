@@ -21,7 +21,7 @@ import {
 	recolorSprite,
 	resetFakeEngine
 } from './support/fake-engine.ts';
-import { revokedObjectUrls } from './support/object-urls.ts';
+import { fakeObjectUrl, revokedObjectUrls } from './support/object-urls.ts';
 import WorkflowHarness from './support/WorkflowHarness.svelte';
 
 type Workflow = ReturnType<typeof createRecolorWorkflow>;
@@ -133,7 +133,7 @@ describe('recolor workflow', () => {
 
 		// The engine answers late, but the run is stale: its URL must be
 		// released rather than published as a result.
-		const orphanUrl = URL.createObjectURL();
+		const orphanUrl = fakeObjectUrl();
 		pending.resolve(orphanUrl);
 		await settle();
 
@@ -150,7 +150,7 @@ describe('recolor workflow', () => {
 		await settle();
 
 		// Each recomposition produces a fresh URL, the way the real encoder would.
-		composeExcludedPixels.mockImplementation(async () => URL.createObjectURL());
+		composeExcludedPixels.mockImplementation(async () => fakeObjectUrl());
 
 		workflow.toggleExcludedPixel(0);
 		await settle();
@@ -193,7 +193,7 @@ describe('recolor workflow', () => {
 
 		// The engine answers late, but the composition was superseded: its URL
 		// must be released rather than published.
-		const orphanUrl = URL.createObjectURL();
+		const orphanUrl = fakeObjectUrl();
 		pending.resolve(orphanUrl);
 		await settle();
 
@@ -218,12 +218,12 @@ describe('recolor workflow', () => {
 
 		// Swap the engine back before changing the input, so the replacement run
 		// gets a fresh URL while the old run still awaits its own promise.
-		recolorSprite.mockImplementation(async () => URL.createObjectURL());
+		recolorSprite.mockImplementation(async () => fakeObjectUrl());
 
 		workflow.state.sprite = pngFile('sprite-2.png');
 		await settle();
 
-		const orphanUrl = URL.createObjectURL();
+		const orphanUrl = fakeObjectUrl();
 		pending.resolve(orphanUrl);
 		await settle();
 

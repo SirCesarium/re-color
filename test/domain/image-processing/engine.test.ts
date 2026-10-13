@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, expect, test } from 'vitest';
 import { zlibSync } from 'fflate';
+import { afterEach, beforeEach, expect, test } from 'vitest';
 import { recolorSprite } from '../../../src/lib/core/image-processing/engine.ts';
 import { composeExcludedPixels } from '../../../src/lib/core/image-processing/image/canvas.ts';
 import type {

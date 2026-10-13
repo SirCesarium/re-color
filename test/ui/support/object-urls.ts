@@ -25,6 +25,15 @@ export function resetObjectUrlTracking(): void {
 	revoked = [];
 }
 
+/**
+ * A fresh tracked object URL for a test that only needs a unique string. The
+ * fake ignores the blob entirely, but unlike Bun's typing the DOM signature
+ * will not take zero arguments, so the empty blob is paid once, here.
+ */
+export function fakeObjectUrl(): string {
+	return URL.createObjectURL(new Blob());
+}
+
 export function createdObjectUrls(): readonly string[] {
 	return created;
 }

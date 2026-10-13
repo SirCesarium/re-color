@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { fakeObjectUrl } from './object-urls.ts';
 
 /**
  * Controllable stand-ins for the image-processing engine. The real functions
@@ -7,7 +8,7 @@ import { vi } from 'vitest';
  * deterministically. URLs are produced through the tracked createObjectURL so
  * the workflow's release logic can be asserted.
  */
-export const recolorSprite = vi.fn(async () => URL.createObjectURL());
+export const recolorSprite = vi.fn(async () => fakeObjectUrl());
 
 export const extractColorsFromFile = vi.fn(async () => [
 	{ r: 10, g: 20, b: 30, active: true }
@@ -27,7 +28,7 @@ export function resetFakeEngine(): void {
 	extractColorsFromFile.mockReset();
 	composeExcludedPixels.mockReset();
 
-	recolorSprite.mockImplementation(async () => URL.createObjectURL());
+	recolorSprite.mockImplementation(async () => fakeObjectUrl());
 	extractColorsFromFile.mockImplementation(async () => [
 		{ r: 10, g: 20, b: 30, active: true }
 	]);

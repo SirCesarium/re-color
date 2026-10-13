@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest';
 import { zlibSync } from 'fflate';
+import { expect, test } from 'vitest';
 import { recolorSprite } from '../../../src/lib/core/image-processing/engine.ts';
 import { decodePng } from '../../../src/lib/core/image-processing/image/png.ts';
 import {
