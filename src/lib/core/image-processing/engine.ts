@@ -45,7 +45,7 @@ export async function recolorSprite(
 
 	if (!palette.some(color => color.active)) return null;
 
-	const { onProgress, isCancelled, chunkDurationMs, progress, yieldToMain } =
+	const { onProgress, signal, chunkDurationMs, progress, yieldToMain } =
 		config.processing;
 
 	onProgress(progress.start);
@@ -53,7 +53,7 @@ export async function recolorSprite(
 	const image = await loadImage(file);
 
 	try {
-		if (isCancelled()) return null;
+		if (signal.aborted) return null;
 
 		onProgress(progress.imageLoaded);
 
@@ -65,16 +65,16 @@ export async function recolorSprite(
 
 		onProgress(progress.pixelsRead);
 
-		if (isCancelled()) return null;
+		if (signal.aborted) return null;
 
 		const counts = await countColors(
 			data,
 			config.transparency.minAlpha,
 			chunkDurationMs,
 			yieldToMain,
-			isCancelled
+			signal
 		);
-		if (!counts || isCancelled()) return null;
+		if (!counts || signal.aborted) return null;
 
 		const activePalette = palette.filter(color => color.active);
 
@@ -89,13 +89,13 @@ export async function recolorSprite(
 					luminanceWeights: config.mapping.luminanceWeights,
 					fallback: config.mapping.fallback
 				},
-				isCancelled
+				signal
 			},
 			config.mapping
 		);
 
 		if (lookup.size === 0) return null;
-		if (isCancelled()) return null;
+		if (signal.aborted) return null;
 
 		const canvas = createCanvas(width, height);
 		const context = context2d(canvas, config.canvas);
@@ -122,7 +122,7 @@ export async function recolorSprite(
 					((progress.processingComplete - progress.pixelsRead) * row) / height
 			);
 
-			if (isCancelled()) return null;
+			if (signal.aborted) return null;
 
 			if (row < height) await yieldToMain();
 		}
@@ -135,7 +135,7 @@ export async function recolorSprite(
 
 		onProgress(progress.complete);
 
-		if (isCancelled()) {
+		if (signal.aborted) {
 			URL.revokeObjectURL(url);
 
 			return null;
@@ -153,7 +153,7 @@ async function countColors(
 	minAlpha: number,
 	chunkDurationMs: number,
 	yieldToMain: () => Promise<void>,
-	isCancelled: () => boolean
+	signal: AbortSignal
 ): Promise<Map<number, number> | null> {
 	const counts = new Map<number, number>();
 	let index = 0;
@@ -174,7 +174,7 @@ async function countColors(
 			index += 4;
 		}
 
-		if (isCancelled()) return null;
+		if (signal.aborted) return null;
 		if (index < data.length) await yieldToMain();
 	}
 

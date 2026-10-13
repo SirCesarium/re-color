@@ -12,6 +12,11 @@ vi.mock(
 );
 
 import {
+	settings,
+	updateSetting
+} from '../src/lib/app/state/settings/store.svelte.ts';
+import {
+	composeExcludedPixels,
 	deferred,
 	recolorSprite,
 	resetFakeEngine
@@ -135,5 +140,114 @@ describe('recolor workflow', () => {
 		expect(workflow.state.result).toBeNull();
 		expect(workflow.state.busy).toBe(false);
 		expect(revokedObjectUrls()).toContain(orphanUrl);
+	});
+
+	it('an exclusion recompose revokes the URL it replaced', async () => {
+		const { workflow } = mountWorkflow();
+
+		await settle();
+		loadInputs(workflow);
+		await settle();
+
+		// Each recomposition produces a fresh URL, the way the real encoder would.
+		composeExcludedPixels.mockImplementation(async () => URL.createObjectURL());
+
+		workflow.toggleExcludedPixel(0);
+		await settle();
+
+		const firstComposed = workflow.state.result?.url;
+		const preview = workflow.state.result?.previewUrl;
+
+		expect(firstComposed).toBeDefined();
+		expect(preview).toBeDefined();
+
+		workflow.toggleExcludedPixel(1);
+		await settle();
+
+		// The replaced composition dies; the preview (the compose base) and the
+		// current composition stay alive.
+		expect(revokedObjectUrls()).toContain(firstComposed);
+		expect(revokedObjectUrls()).not.toContain(preview);
+		expect(workflow.state.result?.url).not.toBe(firstComposed);
+		expect(workflow.state.result?.previewUrl).toBe(preview);
+	});
+
+	it('clearFormData cancels an in-flight exclusion composition', async () => {
+		const { workflow } = mountWorkflow();
+
+		await settle();
+		loadInputs(workflow);
+		await settle();
+
+		// Hold the recomposition open so we can clear while it is mid-flight.
+		const pending = deferred<string>();
+		composeExcludedPixels.mockReturnValue(pending.promise);
+
+		workflow.toggleExcludedPixel(0);
+		await settle();
+
+		expect(composeExcludedPixels).toHaveBeenCalledTimes(1);
+		expect(workflow.state.result).not.toBeNull();
+
+		workflow.clearFormData();
+
+		// The engine answers late, but the composition was superseded: its URL
+		// must be released rather than published.
+		const orphanUrl = URL.createObjectURL();
+		pending.resolve(orphanUrl);
+		await settle();
+
+		expect(workflow.state.result).toBeNull();
+		expect(workflow.state.busy).toBe(false);
+		expect(revokedObjectUrls()).toContain(orphanUrl);
+	});
+
+	it('changing the sprite invalidates the run in flight', async () => {
+		const { workflow } = mountWorkflow();
+
+		await settle();
+
+		// Hold the first recolor open so a new input can supersede it.
+		const pending = deferred<string>();
+		recolorSprite.mockReturnValue(pending.promise);
+
+		loadInputs(workflow);
+		await settle();
+
+		expect(workflow.state.busy).toBe(true);
+
+		// Swap the engine back before changing the input, so the replacement run
+		// gets a fresh URL while the old run still awaits its own promise.
+		recolorSprite.mockImplementation(async () => URL.createObjectURL());
+
+		workflow.state.sprite = pngFile('sprite-2.png');
+		await settle();
+
+		const orphanUrl = URL.createObjectURL();
+		pending.resolve(orphanUrl);
+		await settle();
+
+		// The late answer belongs to the superseded run: it is released, never
+		// published as the result.
+		expect(revokedObjectUrls()).toContain(orphanUrl);
+		expect(workflow.state.result).toBeNull();
+		expect(workflow.state.busy).toBe(false);
+	});
+
+	it('a mapping change saves the new mode as the startup default', async () => {
+		// Arrange: start from a known default so the assertion cannot ride a
+		// leftover value another test left behind.
+		updateSetting('defaultMapping', 'luminance');
+
+		const { workflow } = mountWorkflow();
+
+		await settle();
+		loadInputs(workflow);
+		await settle();
+
+		workflow.state.mapping = 'dominant';
+		await settle();
+
+		expect(settings.defaultMapping).toBe('dominant');
 	});
 });

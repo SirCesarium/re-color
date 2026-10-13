@@ -41,7 +41,7 @@ export type ColorMappingInput = {
 	/** Mapping settings excluding the custom strategy itself. */
 	config: Omit<ColorMappingConfig, 'strategy'>;
 	/** Lets a slow plugin notice the operation was cancelled and bail out. */
-	isCancelled: () => boolean;
+	signal: AbortSignal;
 };
 
 /** The contract every mapping strategy, built-in or third-party, implements. */
@@ -55,7 +55,7 @@ export type ColorMappingStrategy = {
 	 * keep its original pixels. Async implementations (a Worker, a WebAssembly
 	 * module) may return a promise; reject it to report a plugin failure.
 	 *
-	 * @param input Source colors, active palette, pixel counts, settings, and cancellation hook.
+	 * @param input Source colors, active palette, pixel counts, settings, and cancellation signal.
 	 * @returns A lookup map, or a promise that resolves to one.
 	 */
 	createLookup(
@@ -125,8 +125,8 @@ export type RecolorConfig = {
 		yieldToMain: () => Promise<void>;
 		/** Receives the fractions defined by `progress`. */
 		onProgress: (fraction: number) => void;
-		/** Returns true to cancel the active operation. */
-		isCancelled: () => boolean;
+		/** Aborting this signal cancels the active operation. */
+		signal: AbortSignal;
 	};
 	/** Result format and encoder quality. */
 	output: {

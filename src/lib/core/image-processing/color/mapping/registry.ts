@@ -17,7 +17,7 @@ const BUILT_IN_STRATEGIES = {
  * Builds the source-color lookup, either with a built-in algorithm or with the
  * caller's injected strategy.
  *
- * @param input Prepared source keys, active palette, pixel counts, settings, and cancellation hook.
+ * @param input Prepared source keys, active palette, pixel counts, settings, and cancellation signal.
  * @param config Selects the built-in mode and the optional custom strategy.
  * @returns A mapping table, or a promise for one when a plugin produced it.
  * @throws Errors thrown or rejected by a custom strategy are passed straight through.

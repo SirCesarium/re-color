@@ -184,7 +184,7 @@
 	}
 
 	.drop-base:hover {
-		color: var(--base);
+		color: var(--sprite-base);
 		background-color: var(--panel-hover);
 	}
 
@@ -215,7 +215,7 @@
 	}
 
 	.drop-base .tag {
-		color: var(--base);
+		color: var(--sprite-base);
 	}
 
 	.drop-ref {
@@ -223,7 +223,7 @@
 	}
 
 	.drop-base {
-		--zone-accent: var(--base);
+		--zone-accent: var(--sprite-base);
 	}
 
 	.track {
@@ -256,7 +256,7 @@
 	}
 
 	.drop-base :global(.drop-label) {
-		color: var(--base);
+		color: var(--sprite-base);
 	}
 
 </style>

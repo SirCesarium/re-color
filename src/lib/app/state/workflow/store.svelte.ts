@@ -1,27 +1,11 @@
 import { onDestroy, onMount, untrack } from 'svelte';
-import {
-	composeExcludedPixels,
-	type MappingMode,
-	type PaletteColor,
-	type RecolorConfig,
-	recolorSprite
+import type {
+	MappingMode,
+	PaletteColor
 } from '#core/image-processing/index.ts';
-import {
-	CANVAS_CONFIG,
-	MAPPING_CONFIG,
-	OUTPUT_CONFIG,
-	OUTPUT_EXTENSIONS,
-	PROCESSING_CONFIG,
-	TRANSPARENCY_CONFIG
-} from '#core/recolor.ts';
+import { OUTPUT_CONFIG, OUTPUT_EXTENSIONS } from '#core/recolor.ts';
 import type { MessageKey } from '../../i18n/locales.ts';
 import { settings, updateSetting } from '../settings/store.svelte.ts';
-import {
-	clearWorkspace,
-	loadWorkspace,
-	type PersistedWorkspace,
-	saveWorkspace
-} from '../workspace.ts';
 import {
 	buttonHint as deriveButtonHint,
 	exclusionSignature,
@@ -32,7 +16,11 @@ import {
 	shouldRunInitialRecolor,
 	type WorkflowSnapshot
 } from './machine.ts';
+import { revokeResultUrls } from './object-urls.ts';
+import { createOperationScope } from './operations.ts';
 import { watchPaletteColors } from './palette-effects.svelte.ts';
+import { createPipeline } from './pipeline.ts';
+import { watchWorkspace } from './workspace-effects.svelte.ts';
 
 /** A snapshot where every field is neutral; guards ignore the ones they don't read. */
 const IDLE_SNAPSHOT: WorkflowSnapshot = {
@@ -47,7 +35,8 @@ const IDLE_SNAPSHOT: WorkflowSnapshot = {
 	workspaceLoaded: false
 };
 
-type WorkflowState = {
+/** The workflow's observable state, shared with the async pipeline. */
+export type WorkflowState = {
 	palette: File | null;
 	sprite: File | null;
 	colors: PaletteColor[];
@@ -111,57 +100,29 @@ export function createRecolorWorkflow() {
 	});
 	const hintIsError = $derived(isErrorHint(buttonHint));
 
-	let runId = 0;
-	let compositionId = 0;
-	let workspaceSaveTimer: ReturnType<typeof setTimeout> | undefined;
+	// One owner of "what is current": claiming a lane aborts its predecessor,
+	// so no async path can start without invalidating the one it replaced.
+	const scope = createOperationScope();
+
+	// The async stages share the scope and the URL rules; the store hands them
+	// the state plus two live fingerprints read at each stage's own pace.
+	const pipeline = createPipeline({
+		state,
+		scope,
+		mappingSignature: () => mappingSig,
+		exclusionSignature: () => exclusionSig
+	});
+
+	// Set by `clearFormData`: a workspace restore still in flight must not
+	// repopulate what the user just cleared.
 	let workspaceRestoreCancelled = false;
 
-	// ── Restore ──────────────────────────────────────────────────────────
 	onMount(() => {
-		let disposed = false;
-
 		// The settings store loads preferences at import; seed the live mapping
 		// from the saved default and mark restore done so the mapping-sync
 		// effect below only starts tracking changes from here on.
 		state.mapping = settings.defaultMapping;
 		state.settingsLoaded = true;
-
-		void (async () => {
-			try {
-				if (!settings.persistWorkspace) {
-					await clearWorkspace();
-					return;
-				}
-
-				const workspace = await loadWorkspace();
-
-				if (disposed || workspaceRestoreCancelled) return;
-
-				if (workspace) {
-					state.palette = workspace.palette
-						? new File([workspace.palette.blob], workspace.palette.name, {
-								type: 'image/png'
-							})
-						: null;
-					state.sprite = workspace.sprite
-						? new File([workspace.sprite.blob], workspace.sprite.name, {
-								type: 'image/png'
-							})
-						: null;
-					state.colors = workspace.colors.map(color => ({ ...color }));
-					state.excludedPixels = workspace.excludedPixels;
-				}
-			} catch (error) {
-				console.error('Could not restore saved app workspace', error);
-				state.hint = 'workflow.restoreFailed';
-			} finally {
-				if (!disposed) state.workspaceLoaded = true;
-			}
-		})();
-
-		return () => {
-			disposed = true;
-		};
 	});
 
 	// ── Live mapping → saved default ──────────────────────────────────────
@@ -182,108 +143,11 @@ export function createRecolorWorkflow() {
 		});
 	});
 
-	// ── Workspace persistence ─────────────────────────────────────────────
-	$effect(() => {
-		if (!state.workspaceLoaded || !settings.persistWorkspace) return;
-
-		const workspace: PersistedWorkspace = {
-			palette: state.palette
-				? {
-						name: state.palette.name,
-						blob: state.palette.slice(0, state.palette.size, 'image/png')
-					}
-				: null,
-			sprite: state.sprite
-				? {
-						name: state.sprite.name,
-						blob: state.sprite.slice(0, state.sprite.size, 'image/png')
-					}
-				: null,
-			mapping: state.mapping,
-			colors: state.colors.map(({ r, g, b, active }) => ({ r, g, b, active })),
-			excludedPixels: [...state.excludedPixels]
-		};
-
-		clearTimeout(workspaceSaveTimer);
-		workspaceSaveTimer = setTimeout(() => {
-			void saveWorkspace(workspace).catch((error: unknown) => {
-				console.error('Could not save app workspace', error);
-				state.hint = 'workflow.saveDataFailed';
-			});
-		}, 350);
-
-		return () => clearTimeout(workspaceSaveTimer);
-	});
-
-	// ── Result & config helpers ───────────────────────────────────────────
+	// ── Result helpers ────────────────────────────────────────────────────
 	function clearResult() {
-		if (state.result) {
-			for (const url of new Set([state.result.url, state.result.previewUrl])) {
-				URL.revokeObjectURL(url);
-			}
-		}
+		if (state.result) revokeResultUrls(state.result);
 
 		state.result = null;
-	}
-
-	function createConfig(id: number): RecolorConfig {
-		return {
-			canvas: CANVAS_CONFIG,
-			mapping: {
-				...MAPPING_CONFIG,
-				mode: state.mapping
-			},
-			transparency: TRANSPARENCY_CONFIG,
-			processing: {
-				...PROCESSING_CONFIG,
-				onProgress: (fraction: number) => {
-					if (id === runId) state.progress = fraction;
-				},
-				isCancelled: () => id !== runId
-			},
-			output: OUTPUT_CONFIG
-		};
-	}
-
-	function releaseResult(
-		url: string | null,
-		retainedUrls: ReadonlySet<string> = new Set()
-	) {
-		if (url && !retainedUrls.has(url)) URL.revokeObjectURL(url);
-	}
-
-	async function composeForCurrentExclusions(
-		previewUrl: string,
-		file: File,
-		isStale: () => boolean
-	): Promise<{ url: string; exclusionSignature: string } | null> {
-		while (!isStale()) {
-			const signature = exclusionSig;
-			const pixels = [...state.excludedPixels];
-			let url = previewUrl;
-
-			if (pixels.length > 0) {
-				url = await composeExcludedPixels(
-					previewUrl,
-					file,
-					new Set(pixels),
-					CANVAS_CONFIG,
-					OUTPUT_CONFIG
-				);
-			}
-
-			if (isStale()) {
-				releaseResult(url, new Set([previewUrl]));
-				return null;
-			}
-
-			if (signature === exclusionSig)
-				return { url, exclusionSignature: signature };
-
-			releaseResult(url, new Set([previewUrl]));
-		}
-
-		return null;
 	}
 
 	function downloadResult() {
@@ -298,8 +162,8 @@ export function createRecolorWorkflow() {
 	}
 
 	function clearFormData() {
-		runId++;
-		compositionId++;
+		scope.abortAll();
+
 		workspaceRestoreCancelled = true;
 		clearResult();
 		state.palette = null;
@@ -311,86 +175,11 @@ export function createRecolorWorkflow() {
 		state.hint = null;
 	}
 
-	// ── Recolor pipeline & actions ────────────────────────────────────────
-	async function startRecolor() {
-		const file = state.sprite;
-
-		if (!file) return;
-
-		const id = ++runId;
-		compositionId++;
-
-		const signature = mappingSig;
-		const previous = state.result;
-
-		let previewUrl =
-			previous?.mappingSignature === signature ? previous.previewUrl : null;
-		let createdPreviewUrl: string | null = null;
-		let createdResultUrl: string | null = null;
-
-		state.busy = true;
-		state.progress = 0;
-		state.hint = null;
-
-		try {
-			if (!previewUrl) {
-				previewUrl = await recolorSprite(file, state.colors, createConfig(id));
-
-				if (id !== runId || previewUrl === null) {
-					releaseResult(previewUrl);
-					return;
-				}
-
-				createdPreviewUrl = previewUrl;
-			}
-
-			const composition = await composeForCurrentExclusions(
-				previewUrl,
-				file,
-				() => id !== runId
-			);
-
-			if (!composition) {
-				releaseResult(createdPreviewUrl);
-				return;
-			}
-
-			const { url, exclusionSignature } = composition;
-			createdResultUrl = url === previewUrl ? null : url;
-
-			const nextResult = {
-				url,
-				previewUrl,
-				mappingSignature: signature,
-				exclusionSignature
-			};
-			const retainedUrls = new Set([nextResult.url, nextResult.previewUrl]);
-
-			if (previous) {
-				for (const oldUrl of new Set([previous.url, previous.previewUrl])) {
-					releaseResult(oldUrl, retainedUrls);
-				}
-			}
-
-			state.result = nextResult;
-		} catch (error) {
-			releaseResult(createdPreviewUrl);
-			releaseResult(createdResultUrl);
-			console.error(error);
-
-			if (id === runId) state.hint = 'workflow.recolorFailed';
-		} finally {
-			if (id === runId) {
-				state.busy = false;
-				state.progress = 0;
-			}
-		}
-	}
-
+	// ── Actions ───────────────────────────────────────────────────────────
 	function handleRecolor() {
 		if (state.busy) {
-			runId++;
-			compositionId++;
+			scope.abortAll();
+
 			state.busy = false;
 			state.progress = 0;
 			state.hint = null;
@@ -400,7 +189,7 @@ export function createRecolorWorkflow() {
 
 		if (!ready || noActiveColors) return;
 
-		void startRecolor();
+		void pipeline.startRecolor();
 	}
 
 	function toggleExcludedPixel(index: number) {
@@ -424,49 +213,6 @@ export function createRecolorWorkflow() {
 		state.excludedPixels = [...next];
 	}
 
-	async function updateResultExclusions(
-		result: NonNullable<WorkflowState['result']>,
-		id: number
-	) {
-		const file = state.sprite;
-		if (!file) return;
-
-		try {
-			const composition = await composeForCurrentExclusions(
-				result.previewUrl,
-				file,
-				() =>
-					id !== compositionId || state.result?.previewUrl !== result.previewUrl
-			);
-
-			if (!composition || id !== compositionId) return;
-
-			const currentResult = state.result;
-
-			if (!currentResult || currentResult.previewUrl !== result.previewUrl) {
-				releaseResult(composition.url, new Set([result.previewUrl]));
-				return;
-			}
-
-			const updatedResult = {
-				...currentResult,
-				url: composition.url,
-				exclusionSignature: composition.exclusionSignature
-			};
-
-			state.result = updatedResult;
-
-			releaseResult(
-				currentResult.url,
-				new Set([updatedResult.url, updatedResult.previewUrl])
-			);
-		} catch (error) {
-			console.error(error);
-
-			if (id === compositionId) state.hint = 'workflow.exclusionFailed';
-		}
-	}
-
 	// ── Reactive effects ──────────────────────────────────────────────────
 
 	// New inputs arrived: any in-flight run is stale and the old result no
@@ -476,7 +222,7 @@ export function createRecolorWorkflow() {
 		void state.sprite;
 
 		untrack(() => {
-			runId++;
+			scope.abortRun();
 			clearResult();
 			state.busy = false;
 			state.progress = 0;
@@ -510,7 +256,7 @@ export function createRecolorWorkflow() {
 				signature
 			);
 
-			if (fires) void startRecolor();
+			if (fires) void pipeline.startRecolor();
 		});
 	});
 
@@ -532,7 +278,7 @@ export function createRecolorWorkflow() {
 				busy: state.busy
 			});
 
-			if (fires) void startRecolor();
+			if (fires) void pipeline.startRecolor();
 		});
 	});
 
@@ -552,20 +298,21 @@ export function createRecolorWorkflow() {
 
 			if (!result || !fires) return;
 
-			const id = ++compositionId;
-			void updateResultExclusions(result, id);
+			const signal = scope.claimComposition();
+			void pipeline.updateResultExclusions(result, signal);
 		});
 	});
 
-	// Re-extract the palette colors when the image or its cap changes; the
-	// module owns its own state slice, so it registers its own effect here.
+	// Effect modules that own their slice of state: palette re-extraction, and
+	// workspace restore + debounced save.
 	watchPaletteColors(state);
+	watchWorkspace(state, () => workspaceRestoreCancelled);
 
 	// ── Teardown ──────────────────────────────────────────────────────────
 	onDestroy(() => {
-		runId++;
-		clearTimeout(workspaceSaveTimer);
+		scope.abortAll();
 		clearResult();
+
 		if (typeof document !== 'undefined') {
 			document.documentElement.classList.remove('animations-disabled');
 		}

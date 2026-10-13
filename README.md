@@ -95,13 +95,17 @@ Review the [license](./LICENSE) or the [privacy section](https://recolor.pages.d
 
 ### Checks
 
-The CI runs these three commands on every push and pull request. Run them before opening one:
+The CI runs these five commands on every push and pull request. Run them before opening one:
 
 ```bash
-bun run check   # svelte-check
-bun test
+bun run check    # svelte-check
+bun run test     # domain tier — bun test test/, no DOM
+bun run test:ui  # UI tier — Vitest + jsdom
+bun run lint     # biome check
 bun run build
 ```
+
+Never run bare `bun test`: with no path it sweeps `tests/` too and hangs the Vitest suite under Bun. Always go through the scripts.
 
 ### Running with Docker
 
