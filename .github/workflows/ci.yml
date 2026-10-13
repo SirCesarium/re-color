@@ -26,7 +26,7 @@ jobs:
         run: bun run lint
 
       - name: Test (domain, no DOM)
-        run: bun run test
+        run: bun run test:domain
 
       - name: Test (frontend, jsdom)
         run: bun run test:ui
