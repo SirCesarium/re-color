@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'vitest';
 import {
 	releaseUrl,
 	revokeResultUrls
-} from '../../src/lib/app/state/workflow/object-urls.ts';
+} from '../../../src/lib/app/state/workflow/object-urls.ts';
 
 const revoked: string[] = [];
 const realRevoke = URL.revokeObjectURL;

@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import {
 	fitImageInViewport,
 	pixelAtPoint
-} from '../../src/lib/core/geometry/pixel-coords.ts';
+} from '../../../src/lib/core/geometry/pixel-coords.ts';
 
 describe('fitImageInViewport', () => {
 	test('scales to the limiting axis and centers on both', () => {

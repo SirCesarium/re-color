@@ -1,6 +1,6 @@
-import { expect, test } from 'bun:test';
-import en from '../../src/lib/app/i18n/messages/en.json';
-import es from '../../src/lib/app/i18n/messages/es.json';
+import { expect, test } from 'vitest';
+import en from '../../../src/lib/app/i18n/messages/en.json';
+import es from '../../../src/lib/app/i18n/messages/es.json';
 
 const english = en as Record<string, string>;
 const spanish = es as Record<string, string>;

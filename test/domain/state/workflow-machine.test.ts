@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import {
 	buttonHint,
 	exclusionSignature,
@@ -8,7 +8,7 @@ import {
 	shouldRecomposeExclusions,
 	shouldRunInitialRecolor,
 	type WorkflowSnapshot
-} from '../../src/lib/app/state/workflow/machine.ts';
+} from '../../../src/lib/app/state/workflow/machine.ts';
 
 /** A neutral baseline; each test overrides only what it cares about. */
 function snapshot(overrides: Partial<WorkflowSnapshot> = {}): WorkflowSnapshot {

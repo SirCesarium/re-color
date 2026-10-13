@@ -1,19 +1,19 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { zlibSync } from 'fflate';
-import { recolorSprite } from '../../src/lib/core/image-processing/engine.ts';
-import { decodePng } from '../../src/lib/core/image-processing/image/png.ts';
+import { recolorSprite } from '../../../src/lib/core/image-processing/engine.ts';
+import { decodePng } from '../../../src/lib/core/image-processing/image/png.ts';
 import {
 	MAX_IMAGE_BYTES,
 	validateImageFile
-} from '../../src/lib/core/image-processing/image/validation.ts';
-import { extractColorsFromFile } from '../../src/lib/core/image-processing/palette.ts';
+} from '../../../src/lib/core/image-processing/image/validation.ts';
+import { extractColorsFromFile } from '../../../src/lib/core/image-processing/palette.ts';
 import {
 	CANVAS_CONFIG,
 	MAPPING_CONFIG,
 	OUTPUT_CONFIG,
 	PROCESSING_CONFIG,
 	TRANSPARENCY_CONFIG
-} from '../../src/lib/core/recolor.ts';
+} from '../../../src/lib/core/recolor.ts';
 import {
 	chunk,
 	header,

@@ -1,20 +1,20 @@
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { createRecolorWorkflow } from '../src/lib/app/state/workflow/store.svelte.ts';
+import type { createRecolorWorkflow } from '../../src/lib/app/state/workflow/store.svelte.ts';
 
 // The workflow drives the real engine, which paints pixels on a canvas jsdom
 // cannot provide. Swap it for controllable fakes so orchestration, timing, and
 // URL handling can be exercised deterministically.
 vi.mock(
-	'../src/lib/core/image-processing/index.ts',
+	'../../src/lib/core/image-processing/index.ts',
 	() => import('./support/fake-engine.ts')
 );
 
 import {
 	settings,
 	updateSetting
-} from '../src/lib/app/state/settings/store.svelte.ts';
+} from '../../src/lib/app/state/settings/store.svelte.ts';
 import {
 	composeExcludedPixels,
 	deferred,

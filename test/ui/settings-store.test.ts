@@ -1,22 +1,22 @@
 import { get } from 'svelte/store';
 import { locale } from 'svelte-i18n';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { hintsEnabled } from '../src/lib/app/state/hints.ts';
+import { hintsEnabled } from '../../src/lib/app/state/hints.ts';
 import {
 	type AppSettings,
 	DEFAULT_APP_SETTINGS
-} from '../src/lib/app/state/settings/model.ts';
+} from '../../src/lib/app/state/settings/model.ts';
 import {
 	APP_SETTINGS_KEY,
 	exportAppSettings,
 	importAppSettings
-} from '../src/lib/app/state/settings/repository.ts';
+} from '../../src/lib/app/state/settings/repository.ts';
 import {
 	loadSettings,
 	replaceSettings,
 	settings,
 	updateSetting
-} from '../src/lib/app/state/settings/store.svelte.ts';
+} from '../../src/lib/app/state/settings/store.svelte.ts';
 
 /** Writes a settings blob the way the app would find it on a return visit. */
 function saveSettings(overrides: Partial<AppSettings>): void {

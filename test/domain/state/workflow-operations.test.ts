@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-import { createOperationScope } from '../../src/lib/app/state/workflow/operations.ts';
+import { describe, expect, test } from 'vitest';
+import { createOperationScope } from '../../../src/lib/app/state/workflow/operations.ts';
 
 describe('createOperationScope', () => {
 	test('a freshly claimed signal stays live', () => {

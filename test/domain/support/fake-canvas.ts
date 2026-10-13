@@ -1,9 +1,9 @@
 import { zlibSync } from 'fflate';
-import { decodePng } from '../../src/lib/core/image-processing/image/png.ts';
+import { decodePng } from '../../../src/lib/core/image-processing/image/png.ts';
 import { chunk, header, makePng } from './png-fixtures.ts';
 
 /**
- * Minimal canvas doubles for running the browser-only image pipeline under bun.
+ * Minimal canvas doubles for running the browser-only image pipeline under node.
  *
  * The engine only needs four canvas capabilities on its happy path: creating a
  * canvas, receiving pixels with `putImageData`, reading them back with
@@ -90,7 +90,7 @@ export async function readObjectUrlPixels(
 	};
 }
 
-/** Stands in for the `ImageData` constructor, which bun does not provide. */
+/** Stands in for the `ImageData` constructor, which node does not provide. */
 export class FakeImageData {
 	readonly data: Uint8ClampedArray;
 	readonly width: number;
@@ -192,7 +192,7 @@ class FakeCanvas {
 }
 
 /**
- * Provides `document.createElement('canvas')` and `ImageData` while bun lacks them.
+ * Provides `document.createElement('canvas')` and `ImageData` while node lacks them.
  *
  * @returns A callback that restores the previous globals.
  */

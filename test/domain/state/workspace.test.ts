@@ -1,18 +1,18 @@
 import 'fake-indexeddb/auto';
 
-import { afterEach, beforeEach, expect, test } from 'bun:test';
+import { afterEach, beforeEach, expect, test } from 'vitest';
 import {
 	APP_SETTINGS_KEY,
 	clearSavedAppData,
 	HINT_STORAGE_KEYS,
 	resetHints
-} from '../../src/lib/app/state/settings/repository.ts';
+} from '../../../src/lib/app/state/settings/repository.ts';
 import {
 	clearWorkspace,
 	loadWorkspace,
 	type PersistedWorkspace,
 	saveWorkspace
-} from '../../src/lib/app/state/workspace.ts';
+} from '../../../src/lib/app/state/workspace.ts';
 import { installFakeLocalStorage } from '../support/fake-storage.ts';
 
 let uninstallStorage: (() => void) | undefined;

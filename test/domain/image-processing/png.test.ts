@@ -1,9 +1,9 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { zlibSync } from 'fflate';
 import {
 	decodePng,
 	isPng
-} from '../../src/lib/core/image-processing/image/png.ts';
+} from '../../../src/lib/core/image-processing/image/png.ts';
 import {
 	chunk,
 	header,

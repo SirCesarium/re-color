@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-import { linePoints } from '../../src/lib/core/geometry/stroke-line.ts';
+import { describe, expect, test } from 'vitest';
+import { linePoints } from '../../../src/lib/core/geometry/stroke-line.ts';
 
 describe('linePoints', () => {
 	test('a horizontal line yields every point between the ends', () => {

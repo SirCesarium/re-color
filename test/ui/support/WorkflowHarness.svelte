@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { createRecolorWorkflow } from '../../src/lib/app/state/workflow/store.svelte.ts';
+	import { createRecolorWorkflow } from '../../../src/lib/app/state/workflow/store.svelte.ts';
 
 	let {
 		onReady

@@ -1,7 +1,7 @@
 /**
  * Installs an in-memory `localStorage` while the real global is missing, which
- * is always under bun. Backed by a plain map; returns a cleanup that restores
- * whatever was there before.
+ * is always the case under node. Backed by a plain map; returns a cleanup that
+ * restores whatever was there before.
  */
 export function installFakeLocalStorage(): () => void {
 	const globals = globalThis as Record<string, unknown>;
