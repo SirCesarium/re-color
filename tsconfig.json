@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"strict": true,
 		"allowArbitraryExtensions": true,
-		"types": ["$app/types"]
+		"types": ["$app/types", "node"]
 	},
 	"include": ["src", "test", "vitest.config.ts", "vite.config.ts"],
 	"exclude": ["src/service-worker"]
