@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
-	import ButtonGroup from '#app/components/ButtonGroup.svelte';
 	import Dropdown from '#app/components/Dropdown.svelte';
 	import PixelSlider from '#app/components/PixelSlider.svelte';
 	import SettingRow from '#app/components/SettingRow.svelte';
@@ -248,7 +247,8 @@
 					</SettingRow>
 					<SettingRow stacked title={$t("settings.mappingTitle")} hint={$t("settings.mappingDesc")}>
 						{#snippet control()}
-							<ButtonGroup
+							<Dropdown
+								class="w-full"
 								value={settings.defaultMapping}
 								options={mappingOptions}
 								label={$t("settings.mappingAria")}
