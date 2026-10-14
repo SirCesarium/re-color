@@ -12,8 +12,6 @@
 		onchange?: (value: T) => void;
 		class?: string;
 	} = $props();
-
-	let index = $derived(options.findIndex(option => option.value === value));
 </script>
 
 <div
@@ -22,8 +20,6 @@
 	aria-label={label}
 	style:--option-count={options.length}
 >
-	<span class="pill" style:--i={index}></span>
-
 	{#each options as option (option.value)}
 		<button
 			class="seg"
@@ -52,16 +48,17 @@
 		box-shadow: 4px 4px 0 var(--btn-shadow);
 	}
 
-	.pill {
+	.seg::before {
+		content: '';
 		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: calc(var(--i, 0) * 100% / var(--option-count));
-		width: calc(100% / var(--option-count));
+		inset: 0;
+		z-index: -1;
+		background: transparent;
+		transition: background-color 120ms linear;
+	}
+
+	.seg.on::before {
 		background: var(--btn-bg);
-		transition:
-			left 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
-			top 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
 	.seg {
@@ -127,15 +124,6 @@
 	@media (max-width: 420px) {
 		.button-group {
 			grid-template-columns: 1fr;
-		}
-
-		.pill {
-			left: 0;
-			right: 0;
-			bottom: auto;
-			width: auto;
-			top: calc(var(--i, 0) * 100% / var(--option-count));
-			height: calc(100% / var(--option-count));
 		}
 
 		.seg {
