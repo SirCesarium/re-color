@@ -51,7 +51,7 @@
 </svelte:head>
 
 <main
-	class="box-border flex w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12 min-[900px]:mx-auto min-[900px]:grid min-[900px]:max-w-[1040px] min-[900px]:grid-cols-[1fr_1fr] min-[900px]:content-center min-[900px]:justify-items-start min-[900px]:gap-x-16 min-[900px]:gap-y-8"
+	class="box-border flex w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12 min-[900px]:mx-auto min-[900px]:grid min-[900px]:max-w-260 min-[900px]:grid-cols-[1fr_1fr] min-[900px]:content-center min-[900px]:justify-items-start min-[900px]:gap-x-16 min-[900px]:gap-y-8"
 >
 	<Hero bind:colors={workflow.state.colors} />
 	<ImageInputs
@@ -59,7 +59,7 @@
 		bind:sprite={workflow.state.sprite}
 	/>
 	<div
-		class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
+		class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-120 flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
 	>
 		<button
 			class="self-start text-xs text-text-dim underline decoration-dotted underline-offset-4 hover:text-text"
@@ -85,10 +85,10 @@
 	/>
 	</div>
 	<div
-		class="flex w-full max-w-[480px] flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
+		class="flex w-full max-w-120 flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
 	>
 		<section
-			class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-[480px] flex-col gap-2"
+			class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-120 flex-col gap-2"
 			aria-label={$t("home.mappingAria")}
 		>
 			<Typography as="span" variant="section-label">{$t("home.mappingSection")}</Typography>
