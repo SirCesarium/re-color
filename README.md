@@ -18,7 +18,7 @@ Recolor a pixel art sprite with any image's palette, privately, in your browser.
 
 <div align="center">
 
-https://github.com/user-attachments/assets/1a4b56f3-1a3a-4ae8-b91c-57b1b61cf0d8
+https://github.com/user-attachments/assets/7bd850c8-d3ed-44b3-8350-7cd14f139fb0
 
 </div>
 
