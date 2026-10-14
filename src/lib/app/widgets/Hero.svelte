@@ -12,7 +12,7 @@
 	class="animate-[rise_380ms_ease-out_backwards] w-full text-center min-[900px]:col-start-1 min-[900px]:text-left"
 >
 	<Wordmark />
-	<Typography as="h2" variant="tagline">
+	<Typography as="h1" variant="tagline">
 		{$t('hero.tagline1')}<br />{$t('hero.tagline2')}
 	</Typography>
 	<PaletteStrip bind:colors />
