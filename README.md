@@ -6,6 +6,8 @@
 
 Recolor a pixel art sprite with any image's palette, privately, in your browser.
 
+**[Try it at recolor.pages.dev](https://recolor.pages.dev/)**
+
 [![CI](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml/badge.svg)](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/SirCesarium/re-color)](LICENSE)
 [![Built with Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte)](https://svelte.dev/)
