@@ -8,12 +8,12 @@
 <svelte:head>
 	<title>{$t('privacy.title')}</title>
 	<meta name="description" content={$t('privacy.metaDescription')} />
-	<link rel="canonical" href="https://recolor.pages.dev/privacy" />
+	<link rel="canonical" href="https://recolor.pages.dev/privacy/" />
 
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="re::color" />
 	<meta property="og:locale" content="en_US" />
-	<meta property="og:url" content="https://recolor.pages.dev/privacy" />
+	<meta property="og:url" content="https://recolor.pages.dev/privacy/" />
 	<meta property="og:title" content={$t('privacy.title')} />
 	<meta property="og:description" content={$t('privacy.ogDescription')} />
 	<meta property="og:image" content="https://recolor.pages.dev/og.png" />
