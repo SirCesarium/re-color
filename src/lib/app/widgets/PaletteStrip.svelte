@@ -95,7 +95,9 @@
 					style:--c={cssRgb(color)}
 					type="button"
 					aria-pressed={color.active}
-					aria-label={color.active ? $t('palette.disable') : $t('palette.enable')}
+					aria-label={color.active
+						? $t("palette.disable")
+						: $t("palette.enable")}
 					onclick={() => toggle(index)}
 				></button>
 			{/each}
@@ -104,40 +106,21 @@
 		<Hint
 			placement="above"
 			hintsEnabled={$hintsEnabled}
-			text={hintVisible ? $t('palette.toggleHint') : null}
+			text={hintVisible ? $t("palette.toggleHint") : null}
 		/>
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}
-				<span class="sw sw-{key} relative h-4 w-4 border border-border p-0"></span>
+				<span
+					class="sw relative h-4 w-4 border border-border p-0"
+					style:background-color="var(--sw-{key})"
+				></span>
 			{/each}
 		</div>
 	{/if}
 </div>
 
 <style>
-	.sw-red {
-		background: var(--sw-red);
-	}
-	.sw-orange {
-		background: var(--sw-orange);
-	}
-	.sw-yellow {
-		background: var(--sw-yellow);
-	}
-	.sw-green {
-		background: var(--sw-green);
-	}
-	.sw-aqua {
-		background: var(--sw-aqua);
-	}
-	.sw-blue {
-		background: var(--sw-blue);
-	}
-	.sw-purple {
-		background: var(--sw-purple);
-	}
-
 	.sw {
 		transition:
 			box-shadow 100ms ease-out,
@@ -157,7 +140,7 @@
 	}
 
 	.sw.off::after {
-		content: '';
+		content: "";
 		position: absolute;
 		inset: 0;
 		z-index: 1;
