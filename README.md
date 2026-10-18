@@ -2,7 +2,7 @@
 
 <h1>re::color</h1>
 
-![re::color hero](static/og.png)
+[![re::color hero](static/og.png)](https://recolor.pages.dev/)
 
 Recolor a pixel art sprite with any image's palette, privately, in your browser.
 

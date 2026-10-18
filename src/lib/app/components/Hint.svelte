@@ -10,6 +10,7 @@
 		error = false,
 		hintsEnabled = true,
 		onDismiss,
+		tailOffset,
 		class: className = ''
 	}: {
 		text?: string | null;
@@ -18,105 +19,37 @@
 		error?: boolean;
 		hintsEnabled?: boolean;
 		onDismiss?: () => void;
+		tailOffset?: string;
 		class?: string;
 	} = $props();
 
 	// The widget wires in the help-hints preference; errors are status feedback,
 	// so they show even when help hints are off.
 	const visible = $derived(Boolean(text) && (error || hintsEnabled));
+
+	const isDownArrow = $derived(placement === 'above' || arrow === 'down');
 </script>
 
 {#if visible}
 	<div
-		class="hint pointer-events-none relative self-center border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] {className}"
-		class:interactive={onDismiss !== undefined}
-		class:above={placement === 'above'}
-		class:down-arrow={placement === 'above' || arrow === 'down'}
+		class="pointer-events-none relative self-center border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] max-w-full whitespace-normal text-balance {placement === 'above' ? 'absolute bottom-[calc(100%+12px)] left-0 right-0 w-max mx-auto animate-[hint-in-above_200ms_ease-out]' : 'animate-[hint-in_200ms_ease-out]'} {onDismiss !== undefined ? 'pointer-events-auto flex items-start gap-2' : ''} {className}"
 		role="status"
 		out:fade={{ duration: 250 }}
 	>
-		<Typography as="span" variant="body" class="hint-content leading-none">{text}</Typography>
+		<Typography as="span" variant="body" class="{onDismiss !== undefined ? 'flex-1' : ''} leading-none">{text}</Typography>
 		{#if onDismiss}
 			<button
-				class="dismiss"
+				class="shrink-0 border-0 bg-transparent px-0.5 py-0 text-inherit cursor-pointer font-[inherit] leading-none"
 				type="button"
 				aria-label={$t('hint.dismiss')}
 				onclick={onDismiss}
 			>
-				×
+				&times;
 			</button>
 		{/if}
-		<span class="tail"></span>
+		<span
+			class="absolute border-[6px] border-transparent {tailOffset ? '' : 'left-1/2 -translate-x-1/2'} {isDownArrow ? 'top-full border-t-btn-edge' : 'bottom-full border-b-btn-edge'}"
+			style={tailOffset ? `left: ${tailOffset}` : ''}
+		></span>
 	</div>
 {/if}
-
-<style>
-	.hint {
-		animation: hint-in 200ms ease-out;
-		max-width: 100%;
-		white-space: normal;
-		text-wrap: balance;
-	}
-
-	.hint.above {
-		position: absolute;
-		bottom: calc(100% + 12px);
-		left: 0;
-		right: 0;
-		width: max-content;
-		margin-inline: auto;
-		animation: hint-in-above 200ms ease-out;
-	}
-
-	.hint.interactive {
-		pointer-events: auto;
-		display: flex;
-		align-items: flex-start;
-		gap: 8px;
-	}
-
-	.hint.interactive :global(.hint-content) {
-		flex: 1;
-	}
-
-	.dismiss {
-		flex: none;
-		padding: 0 2px;
-		border: 0;
-		background: transparent;
-		color: inherit;
-		cursor: pointer;
-		font: inherit;
-		line-height: 1;
-	}
-
-	.tail {
-		position: absolute;
-		bottom: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-		border: 6px solid transparent;
-		border-bottom-color: var(--btn-edge);
-	}
-
-	.hint.down-arrow .tail {
-		bottom: auto;
-		top: 100%;
-		border-bottom-color: transparent;
-		border-top-color: var(--btn-edge);
-	}
-
-	@keyframes hint-in {
-		from {
-			opacity: 0;
-			transform: translateY(-6px);
-		}
-	}
-
-	@keyframes hint-in-above {
-		from {
-			opacity: 0;
-			transform: translateY(6px);
-		}
-	}
-</style>

@@ -28,7 +28,7 @@
 	<meta name="twitter:image:alt" content={$t('meta.ogAlt')} />
 </svelte:head>
 
-<main class="box-border flex w-full max-w-[560px] flex-1 flex-col items-center gap-6 px-4 py-12 text-center">
+<main class="box-border flex w-full max-w-140 flex-1 flex-col items-center gap-6 px-4 py-12 text-center">
 	<Typography as="h1" variant="page-title">{$t('privacy.h1')}</Typography>
 
 	<Typography class="max-w-[44ch]" variant="body">

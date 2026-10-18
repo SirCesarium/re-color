@@ -350,7 +350,7 @@
 
 {#if imageUrl && dimensions && !previewError}
 	<button
-		class="viewport absolute inset-0 overflow-hidden"
+		class="absolute inset-0 overflow-hidden touch-none cursor-crosshair p-0 border-0 bg-transparent text-left"
 		bind:this={viewport}
 		type="button"
 		aria-label={$t('result.canvasAria')}
@@ -363,55 +363,20 @@
 	>
 		<canvas
 			bind:this={canvas}
-			class="preview-canvas absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]"
+			class="pointer-events-none absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]"
 			aria-hidden="true"
 		></canvas>
 		{#if hoverPixel}
 			<span
-				class="pixel-hover pointer-events-none absolute"
+				class="pointer-events-none absolute border border-accent shadow-[inset_0_0_0_1px_var(--panel)] [@media(hover:none)]:hidden pointer-coarse:hidden"
 				style={getHoverStyle()}
 			></span>
 		{/if}
 	</button>
 {:else if imageUrl && previewError}
-	<div class="preview-message" role="alert">{$t('result.previewError')}</div>
+	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text" role="alert">{$t('result.previewError')}</div>
 {:else if imageUrl}
-	<div class="preview-message">{$t('result.loading')}</div>
+	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">{$t('result.loading')}</div>
 {:else}
-	<div class="preview-message">{$t('result.empty')}</div>
+	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">{$t('result.empty')}</div>
 {/if}
-
-<style>
-	.viewport {
-		touch-action: none;
-		cursor: crosshair;
-		padding: 0;
-		border: 0;
-		background: transparent;
-		text-align: left;
-	}
-
-	.preview-canvas {
-		pointer-events: none;
-	}
-
-	.pixel-hover {
-		border: 1px solid var(--accent);
-		box-shadow: inset 0 0 0 1px var(--panel);
-	}
-
-	.preview-message {
-		position: relative;
-		border: 1px solid var(--border);
-		background: var(--panel-sunken);
-		padding: 8px 16px;
-		color: var(--text);
-		font-size: 16px;
-	}
-
-	@media (hover: none), (pointer: coarse) {
-		.pixel-hover {
-			display: none;
-		}
-	}
-</style>

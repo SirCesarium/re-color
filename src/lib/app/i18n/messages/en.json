@@ -1,9 +1,9 @@
 {
 	"hero.tagline1": "Recolor a sprite",
 	"hero.tagline2": "with any image's palette.",
-	"home.title": "re::color: recolor a sprite with any image's palette",
-	"home.description": "Recolor a sprite with any image's palette. Runs entirely on your device, no image is ever uploaded.",
-	"home.ogDescription": "Recolor a sprite with any image's palette. Runs entirely on your device.",
+	"home.title": "Recolor Pixel Art & Sprites Online. Free Palette Swap Tool",
+	"home.description": "Free online tool to recolor a pixel art sprite with any image's palette. Private, no uploads, runs in your browser.",
+	"home.ogDescription": "Recolor a pixel art sprite with any image's palette. Private, no uploads, runs in your browser.",
 	"home.recolor": "recolor!",
 	"home.clearForm": "clear form data",
 	"home.clearFormConfirm": "Clear the selected images and current recolor form?",

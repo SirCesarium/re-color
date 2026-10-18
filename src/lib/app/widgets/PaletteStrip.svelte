@@ -5,7 +5,13 @@
 	import { hintsEnabled } from '#app/state/hints.ts';
 	import { cssRgb, type PaletteColor } from '#lib';
 
-	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
+	let {
+		colors = $bindable([]),
+		class: className = ''
+	}: {
+		colors: PaletteColor[];
+		class?: string;
+	} = $props();
 
 	let hintVisible = $state(false);
 	let hintAllowed = $state(false);
@@ -81,7 +87,7 @@
 </script>
 
 <div
-	class="wrap relative mt-4 flex w-full justify-center"
+	class="wrap relative mt-4 flex w-full justify-center {className}"
 	role="presentation"
 	bind:this={root}
 	onpointermove={onPointerMove}
@@ -90,12 +96,13 @@
 		<div class="flex flex-wrap justify-center gap-1">
 			{#each colors as color, index (index)}
 				<button
-					class="sw relative h-4 w-4 cursor-pointer border border-border bg-[var(--c)] p-0 hover:shadow-[0_0_0_2px_var(--accent)]"
-					class:off={!color.active}
+					class="relative h-4 w-4 cursor-pointer border border-border p-0 [transition:box-shadow_100ms_ease-out,opacity_200ms_ease-out] hover:shadow-[0_0_0_2px_var(--accent)] {!color.active ? 'bg-[color-mix(in_srgb,var(--text-dim)_65%,var(--c))] after:content-[\'\'] after:absolute after:inset-0 after:z-1 after:bg-[linear-gradient(to_top_right,transparent_calc(50%-1px),var(--pop)_calc(50%-1px),var(--pop)_calc(50%+1px),transparent_calc(50%+1px))]' : 'bg-(--c)'}"
 					style:--c={cssRgb(color)}
 					type="button"
 					aria-pressed={color.active}
-					aria-label={color.active ? $t('palette.disable') : $t('palette.enable')}
+					aria-label={color.active
+						? $t("palette.disable")
+						: $t("palette.enable")}
 					onclick={() => toggle(index)}
 				></button>
 			{/each}
@@ -104,69 +111,16 @@
 		<Hint
 			placement="above"
 			hintsEnabled={$hintsEnabled}
-			text={hintVisible ? $t('palette.toggleHint') : null}
+			text={hintVisible ? $t("palette.toggleHint") : null}
 		/>
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}
-				<span class="sw sw-{key} relative h-4 w-4 border border-border p-0"></span>
+				<span
+					class="relative h-4 w-4 cursor-default border border-border p-0"
+					style:background-color="var(--sw-{key})"
+				></span>
 			{/each}
 		</div>
 	{/if}
 </div>
-
-<style>
-	.sw-red {
-		background: var(--sw-red);
-	}
-	.sw-orange {
-		background: var(--sw-orange);
-	}
-	.sw-yellow {
-		background: var(--sw-yellow);
-	}
-	.sw-green {
-		background: var(--sw-green);
-	}
-	.sw-aqua {
-		background: var(--sw-aqua);
-	}
-	.sw-blue {
-		background: var(--sw-blue);
-	}
-	.sw-purple {
-		background: var(--sw-purple);
-	}
-
-	.sw {
-		transition:
-			box-shadow 100ms ease-out,
-			opacity 200ms ease-out;
-	}
-
-	span.sw {
-		cursor: default;
-	}
-
-	span.sw:hover {
-		box-shadow: none;
-	}
-
-	.sw.off {
-		background: color-mix(in srgb, var(--text-dim) 65%, var(--c));
-	}
-
-	.sw.off::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: 1;
-		background: linear-gradient(
-			to top right,
-			transparent calc(50% - 1px),
-			var(--pop) calc(50% - 1px),
-			var(--pop) calc(50% + 1px),
-			transparent calc(50% + 1px)
-		);
-	}
-</style>

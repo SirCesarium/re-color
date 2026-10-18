@@ -1,9 +1,9 @@
 {
 	"hero.tagline1": "Recolora un sprite",
 	"hero.tagline2": "con la paleta de cualquier imagen.",
-	"home.title": "re::color: recolorea un sprite con la paleta de cualquier imagen",
-	"home.description": "Recolorea un sprite con la paleta de cualquier imagen. Funciona totalmente en tu dispositivo, ninguna imagen se sube.",
-	"home.ogDescription": "Recolorea un sprite con la paleta de cualquier imagen. Funciona totalmente en tu dispositivo.",
+	"home.title": "Recolorea pixel art y sprites online. Herramienta gratis para cambiar paletas de colores",
+	"home.description": "Herramienta online y gratis para recolorear un sprite de pixel art con la paleta de cualquier imagen. Privada, sin subidas, funciona en tu navegador.",
+	"home.ogDescription": "Recolorea un sprite de pixel art con la paleta de cualquier imagen. Privada, sin subidas, funciona en tu navegador.",
 	"home.recolor": "recolorear!",
 	"home.clearForm": "borrar formulario",
 	"home.clearFormConfirm": "¿Borrar las imágenes seleccionadas y el formulario actual?",

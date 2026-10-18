@@ -2,6 +2,6 @@
 	import Typography from '#app/components/Typography.svelte';
 </script>
 
-<Typography as="h1" variant="wordmark">
+<Typography as="div" variant="wordmark">
 	re<span class="text-pop">::</span>color
 </Typography>
