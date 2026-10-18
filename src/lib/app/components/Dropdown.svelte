@@ -143,7 +143,7 @@
 		<div
 			bind:this={list}
 			id={listId}
-			class="absolute left-0 top-full z-30 mt-1 grid max-h-[260px] w-max min-w-full overflow-y-auto border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)]"
+			class="absolute left-0 top-full z-30 mt-1 grid max-h-65 w-max min-w-full overflow-y-auto border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)]"
 			role="listbox"
 			aria-label={label}
 			aria-activedescendant={activeId}
@@ -153,7 +153,7 @@
 			{#each options as option, index (option.value)}
 				<button
 					id="{listId}-option-{index}"
-					class="cursor-pointer px-3 py-[11px] text-left text-base leading-[1.2] whitespace-nowrap transition-colors duration-150 {optionClass(
+					class="cursor-pointer px-3 py-2.75 text-left text-base leading-[1.2] whitespace-nowrap transition-colors duration-150 {optionClass(
 						index
 					)}"
 					type="button"

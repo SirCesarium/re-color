@@ -41,7 +41,7 @@
 </script>
 
 <section
-	class="animate-[rise_380ms_ease-out_80ms_backwards] flex w-full max-w-[480px] gap-4 max-[420px]:flex-col min-[900px]:col-start-1"
+	class="animate-[rise_380ms_ease-out_80ms_backwards] flex w-full max-w-120 gap-4 max-[420px]:flex-col min-[900px]:col-start-1"
 	aria-label={$t('inputs.aria')}
 >
 	<DropZone

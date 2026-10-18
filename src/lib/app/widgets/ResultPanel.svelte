@@ -60,9 +60,9 @@
 >
 	<Typography as="span" variant="section-label">{$t('result.section')}</Typography>
 	<div
-		class="result relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
+		class="group/result relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
-		<div class="checker"></div>
+		<div class="pointer-events-none absolute inset-0 checker-pattern opacity-35 group-hover/result:animate-[drift_4s_linear_infinite]"></div>
 		<PixelCanvas
 			{imageUrl}
 			{spriteFile}
@@ -74,10 +74,11 @@
 
 		{#if imageUrl}
 			{#if helpVisible}
-				<div class="help-anchor absolute top-2 left-2 right-2 z-10">
+				<div class="absolute top-2 left-2 right-2 z-10">
 					<Hint
-						class="pixel-help"
+						class="text-left text-xs leading-[1.35]"
 						arrow="down"
+						tailOffset="18px"
 						hintsEnabled={$hintsEnabled}
 						text={$t('result.pixelHelp')}
 						onDismiss={dismissHelp}
@@ -90,38 +91,3 @@
 		<Button onclick={onDownload}>{$t('result.download')}</Button>
 	{/if}
 </section>
-
-<style>
-	@keyframes drift {
-		to {
-			background-position: var(--checker-size) var(--checker-size);
-		}
-	}
-
-	.checker {
-		position: absolute;
-		inset: 0;
-		background:
-			conic-gradient(
-				var(--panel) 0 25%,
-				transparent 0 50%,
-				var(--panel) 0 75%,
-				transparent 0
-			) 0 0 / var(--checker-size) var(--checker-size);
-		opacity: 0.35;
-	}
-
-	.result:hover .checker {
-		animation: drift 4s linear infinite;
-	}
-
-	.help-anchor :global(.pixel-help) {
-		text-align: left;
-		font-size: 12px;
-		line-height: 1.35;
-	}
-
-	.help-anchor :global(.pixel-help .tail) {
-		left: 18px;
-	}
-</style>

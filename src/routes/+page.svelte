@@ -62,19 +62,6 @@
 	<div
 		class="animate-[rise_380ms_ease-out_160ms_backwards] flex w-full max-w-120 flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
 	>
-		<section
-			class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-120 flex-col gap-2"
-			aria-label={$t("home.mappingAria")}
-		>
-			<Typography as="span" variant="section-label"
-				>{$t("home.mappingSection")}</Typography
-			>
-			<Dropdown
-				bind:value={workflow.state.mapping}
-				options={mappingOptions}
-				label={$t("home.mappingAria")}
-			/>
-		</section>
 		<button
 			class="self-start text-xs text-text-dim underline decoration-dotted underline-offset-4 hover:text-text"
 			type="button"
@@ -101,6 +88,19 @@
 	<div
 		class="flex w-full max-w-120 flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
 	>
+		<section
+			class="animate-[rise_380ms_ease-out_200ms_backwards] flex w-full max-w-120 flex-col gap-2"
+			aria-label={$t("home.mappingAria")}
+		>
+			<Typography as="span" variant="section-label"
+				>{$t("home.mappingSection")}</Typography
+			>
+			<Dropdown
+				bind:value={workflow.state.mapping}
+				options={mappingOptions}
+				label={$t("home.mappingAria")}
+			/>
+		</section>
 		<ResultPanel
 			imageUrl={workflow.state.result?.previewUrl ?? null}
 			spriteFile={workflow.state.sprite}

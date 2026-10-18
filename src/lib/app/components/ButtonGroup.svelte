@@ -12,18 +12,37 @@
 		onchange?: (value: T) => void;
 		class?: string;
 	} = $props();
+
+	function segClasses(isOn: boolean): string {
+		const base = [
+			'group/seg relative z-1 flex min-w-0 items-center justify-center',
+			'gap-1.5 px-1 py-3 border-0 border-l-2 border-l-btn-edge',
+			'bg-transparent cursor-pointer',
+			'[transition:background-color_120ms_linear,color_120ms_linear]',
+			'first:border-l-0',
+			'max-[420px]:border-l-0 max-[420px]:border-t-2 max-[420px]:border-t-btn-edge',
+			'max-[420px]:px-2 max-[420px]:first:border-t-0',
+			"before:content-[''] before:absolute before:inset-0 before:-z-1",
+			'before:transition-colors before:duration-120 before:ease-linear'
+		];
+		if (isOn) {
+			base.push('text-btn-fg before:bg-btn-bg');
+		} else {
+			base.push('text-text-dim hover:bg-panel-hover hover:text-text');
+		}
+		return base.join(' ');
+	}
 </script>
 
 <div
-	class="button-group {className}"
+	class="relative overflow-hidden grid bg-panel border-2 border-btn-edge shadow-[4px_4px_0_var(--btn-shadow)] grid-cols-[repeat(var(--option-count),minmax(0,1fr))] max-[420px]:grid-cols-1 {className}"
 	role="group"
 	aria-label={label}
 	style:--option-count={options.length}
 >
 	{#each options as option (option.value)}
 		<button
-			class="seg"
-			class:on={value === option.value}
+			class={segClasses(value === option.value)}
 			type="button"
 			aria-pressed={value === option.value}
 			title={option.label}
@@ -32,108 +51,9 @@
 				onchange?.(option.value);
 			}}
 		>
-			<span class="label">{option.label}</span>
+			<span
+				class="min-w-0 text-base leading-[1.2] text-center wrap-break-word transition-transform duration-120 ease-out group-active/seg:[text-shadow:1px_1px_0_var(--btn-shadow)] {value === option.value ? 'animate-[pop_220ms_ease-out]' : ''}"
+			>{option.label}</span>
 		</button>
 	{/each}
 </div>
-
-<style>
-	.button-group {
-		position: relative;
-		overflow: hidden;
-		display: grid;
-		grid-template-columns: repeat(var(--option-count), minmax(0, 1fr));
-		background: var(--panel);
-		border: 2px solid var(--btn-edge);
-		box-shadow: 4px 4px 0 var(--btn-shadow);
-	}
-
-	.seg::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		background: transparent;
-		transition: background-color 120ms linear;
-	}
-
-	.seg.on::before {
-		background: var(--btn-bg);
-	}
-
-	.seg {
-		position: relative;
-		z-index: 1;
-		display: flex;
-		min-width: 0;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		padding: 12px 4px;
-		border: 0;
-		border-left: 2px solid var(--btn-edge);
-		background: transparent;
-		color: var(--text-dim);
-		cursor: pointer;
-		transition:
-			background-color 120ms linear,
-			color 120ms linear;
-	}
-
-	.seg:first-of-type {
-		border-left: 0;
-	}
-
-	.seg:hover {
-		background: var(--panel-hover);
-		color: var(--text);
-	}
-
-	.seg.on,
-	.seg.on:hover {
-		color: var(--btn-fg);
-	}
-
-	.seg.on:hover {
-		background: transparent;
-	}
-
-	.label {
-		min-width: 0;
-		font-size: 16px;
-		line-height: 1.2;
-		text-align: center;
-		overflow-wrap: break-word;
-		transition: transform 120ms ease-out;
-	}
-
-	.seg.on .label {
-		animation: pop 220ms ease-out;
-	}
-
-	.seg:active .label {
-		text-shadow: 1px 1px 0 var(--btn-shadow);
-	}
-
-	@keyframes pop {
-		from {
-			transform: scale(0.7);
-		}
-	}
-
-	@media (max-width: 420px) {
-		.button-group {
-			grid-template-columns: 1fr;
-		}
-
-		.seg {
-			border-top: 2px solid var(--btn-edge);
-			border-left: 0;
-			padding: 12px 8px;
-		}
-
-		.seg:first-of-type {
-			border-top: 0;
-		}
-	}
-</style>

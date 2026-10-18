@@ -172,7 +172,7 @@
 </svelte:head>
 
 <main class="box-border flex w-full flex-1 flex-col items-center gap-8 px-3 py-12 sm:px-4">
-	<section class="flex w-full max-w-[860px] flex-col gap-8" aria-labelledby="settings-title">
+	<section class="flex w-full max-w-215 flex-col gap-8" aria-labelledby="settings-title">
 		<Typography id="settings-title" as="h1" variant="page-title" class="m-0">
 			{$t("settings.title")}
 		</Typography>
@@ -186,7 +186,7 @@
 					<SettingRow title={$t("settings.languageTitle")} hint={$t("settings.languageDesc")}>
 						{#snippet control()}
 							<Dropdown
-								class="w-full min-[640px]:w-[200px]"
+								class="w-full sm:w-50"
 								value={settings.locale}
 								options={localeOptions}
 								label={$t("settings.languageAria")}
@@ -312,7 +312,7 @@
 					<SettingRow title={$t("settings.clearTitle")} hint={$t("settings.clearDesc")}>
 						{#snippet control()}
 							<button
-								class="min-h-11 cursor-pointer border-2 border-[var(--sw-red)] bg-panel px-3 py-2 text-base text-[var(--sw-red)] shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-[var(--sw-red)] hover:text-panel"
+								class="min-h-11 cursor-pointer border-2 border-(--sw-red) bg-panel px-3 py-2 text-base text-(--sw-red) shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-(--sw-red) hover:text-panel"
 								type="button"
 								onclick={handleClearAppData}
 							>
@@ -329,7 +329,7 @@
 		<Typography
 			as="p"
 			variant="body"
-			class="w-full max-w-[860px] text-[var(--sw-red)]"
+			class="w-full max-w-215 text-(--sw-red)"
 			role="alert"
 		>
 			{$t(error.id, { values: error.values })}

@@ -22,13 +22,13 @@
 		? 'border-t border-border first:border-t-0 first:pt-0'
 		: ''} {stacked
 		? ''
-		: 'min-[640px]:grid-cols-[minmax(0,1fr)_auto] min-[640px]:items-center'}"
+		: 'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'}"
 >
 	<div class="grid min-w-0 gap-1">
 		<Typography as="span" variant="control-label">{title}</Typography>
 		<Typography as="span" variant="control-hint">{hint}</Typography>
 	</div>
-	<div class="min-w-0 {stacked ? '' : 'min-[640px]:justify-self-end'}">
+	<div class="min-w-0 {stacked ? '' : 'sm:justify-self-end'}">
 		{@render control()}
 	</div>
 </div>

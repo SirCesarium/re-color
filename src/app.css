@@ -98,6 +98,90 @@
 	}
 }
 
+@keyframes pop {
+	from {
+		transform: scale(0.7);
+	}
+}
+
+@keyframes fill-sweep {
+	to {
+		background-position: 16px 0;
+	}
+}
+
+@keyframes ants {
+	to {
+		background-position:
+			16px 0,
+			-16px 100%,
+			0 -16px,
+			100% 16px;
+	}
+}
+
+@keyframes hint-drift {
+	to {
+		background-position: 32px 32px;
+	}
+}
+
+@keyframes hint-slide {
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+@keyframes hint-in {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+}
+
+@keyframes hint-in-above {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+@keyframes drift {
+	to {
+		background-position: var(--checker-size) var(--checker-size);
+	}
+}
+
+@utility drop-pattern {
+	background-image:
+		repeating-linear-gradient(90deg, currentColor 0 8px, transparent 8px 16px),
+		repeating-linear-gradient(90deg, currentColor 0 8px, transparent 8px 16px),
+		repeating-linear-gradient(180deg, currentColor 0 8px, transparent 8px 16px),
+		repeating-linear-gradient(180deg, currentColor 0 8px, transparent 8px 16px);
+	background-size:
+		16px 2px,
+		16px 2px,
+		2px 16px,
+		2px 16px;
+	background-position:
+		0 0,
+		0 100%,
+		0 0,
+		100% 0;
+	background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+}
+
+@utility checker-pattern {
+	background:
+		conic-gradient(
+			var(--panel) 0 25%,
+			transparent 0 50%,
+			var(--panel) 0 75%,
+			transparent 0
+		)
+		0 0 / var(--checker-size) var(--checker-size);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,

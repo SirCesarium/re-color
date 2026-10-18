@@ -15,17 +15,5 @@
 	<Typography as="h1" variant="tagline">
 		{$t('hero.tagline1')}<br />{$t('hero.tagline2')}
 	</Typography>
-	<PaletteStrip bind:colors />
+	<PaletteStrip bind:colors class="min-[900px]:justify-start [&_.hint.above]:min-[900px]:mx-0 [&_.hint.above]:min-[900px]:mr-auto" />
 </header>
-
-<style>
-	@media (min-width: 900px) {
-		header :global(.wrap) {
-			justify-content: flex-start;
-		}
-
-		header :global(.hint.above) {
-			margin-inline: 0 auto;
-		}
-	}
-</style>
