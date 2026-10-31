@@ -32,7 +32,7 @@
 
 {#if visible}
 	<div
-		class="pointer-events-none relative self-center border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] max-w-full whitespace-normal text-balance {placement === 'above' ? 'absolute bottom-[calc(100%+12px)] left-0 right-0 w-max mx-auto animate-[hint-in-above_200ms_ease-out]' : 'animate-[hint-in_200ms_ease-out]'} {onDismiss !== undefined ? 'pointer-events-auto flex items-start gap-2' : ''} {className}"
+		class="relative self-center border-2 border-btn-edge bg-panel px-3 py-2 shadow-[3px_3px_0_var(--shadow)] max-w-full whitespace-normal text-balance {placement === 'above' ? 'absolute bottom-[calc(100%+12px)] left-0 right-0 w-max mx-auto animate-[hint-in-above_200ms_ease-out]' : 'animate-[hint-in_200ms_ease-out]'} {onDismiss !== undefined ? 'pointer-events-auto flex items-start gap-2' : 'pointer-events-none'} {className}"
 		role="status"
 		out:fade={{ duration: 250 }}
 	>
