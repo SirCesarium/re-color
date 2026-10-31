@@ -3,10 +3,7 @@
 import 'fake-indexeddb/auto';
 
 import { beforeEach } from 'vitest';
-import {
-	installObjectUrlTracking,
-	resetObjectUrlTracking
-} from './support/object-urls.ts';
+import { installObjectUrlTracking, resetObjectUrlTracking } from './support/object-urls.ts';
 
 installObjectUrlTracking();
 

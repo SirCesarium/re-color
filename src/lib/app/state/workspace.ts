@@ -30,7 +30,7 @@ function openDatabase(): Promise<IDBPDatabase<WorkspaceDatabase>> {
 			database.createObjectStore(STORE);
 		}
 	}).then(
-		database => {
+		(database) => {
 			database.addEventListener('versionchange', () => {
 				database.close();
 				databasePromise = undefined;
@@ -38,7 +38,7 @@ function openDatabase(): Promise<IDBPDatabase<WorkspaceDatabase>> {
 
 			return database;
 		},
-		error => {
+		(error) => {
 			databasePromise = undefined;
 			throw error;
 		}
@@ -54,9 +54,7 @@ export async function loadWorkspace(): Promise<PersistedWorkspace | null> {
 	return workspace ?? null;
 }
 
-export async function saveWorkspace(
-	workspace: PersistedWorkspace
-): Promise<void> {
+export async function saveWorkspace(workspace: PersistedWorkspace): Promise<void> {
 	const database = await openDatabase();
 
 	await database.put(STORE, workspace, WORKSPACE_KEY);

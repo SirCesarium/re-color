@@ -117,8 +117,7 @@ export function createPipeline(host: PipelineHost) {
 		const signature = host.mappingSignature();
 		const previous = state.result;
 
-		let previewUrl =
-			previous?.mappingSignature === signature ? previous.previewUrl : null;
+		let previewUrl = previous?.mappingSignature === signature ? previous.previewUrl : null;
 		let createdPreviewUrl: string | null = null;
 		let createdResultUrl: string | null = null;
 
@@ -128,11 +127,7 @@ export function createPipeline(host: PipelineHost) {
 
 		try {
 			if (!previewUrl) {
-				previewUrl = await recolorSprite(
-					file,
-					state.colors,
-					createConfig(signal)
-				);
+				previewUrl = await recolorSprite(file, state.colors, createConfig(signal));
 
 				if (signal.aborted || previewUrl === null) {
 					releaseUrl(previewUrl);
@@ -142,11 +137,7 @@ export function createPipeline(host: PipelineHost) {
 				createdPreviewUrl = previewUrl;
 			}
 
-			const composition = await composeForCurrentExclusions(
-				previewUrl,
-				file,
-				() => signal.aborted
-			);
+			const composition = await composeForCurrentExclusions(previewUrl, file, () => signal.aborted);
 
 			if (!composition) {
 				releaseUrl(createdPreviewUrl);
@@ -179,10 +170,7 @@ export function createPipeline(host: PipelineHost) {
 		}
 	}
 
-	async function updateResultExclusions(
-		result: Result,
-		signal: AbortSignal
-	): Promise<void> {
+	async function updateResultExclusions(result: Result, signal: AbortSignal): Promise<void> {
 		const file = state.sprite;
 		if (!file) return;
 

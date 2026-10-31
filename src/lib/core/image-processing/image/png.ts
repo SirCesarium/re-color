@@ -79,8 +79,7 @@ function parseChunks(data: Uint8Array): ParsedChunks {
 		const bodyOffset = offset + 8;
 		const nextOffset = bodyOffset + length + 4;
 
-		if (nextOffset > data.length)
-			throw new Error('PNG chunk extends past the end of the file');
+		if (nextOffset > data.length) throw new Error('PNG chunk extends past the end of the file');
 
 		const type = readChunkType(data, typeOffset);
 		const body = data.subarray(bodyOffset, bodyOffset + length);
@@ -92,8 +91,7 @@ function parseChunks(data: Uint8Array): ParsedChunks {
 			throw new Error(`PNG chunk CRC mismatch: ${type}`);
 		}
 
-		if (!header && type !== 'IHDR')
-			throw new Error('PNG header must be the first chunk');
+		if (!header && type !== 'IHDR') throw new Error('PNG header must be the first chunk');
 
 		switch (type) {
 			case 'IHDR':
@@ -122,7 +120,6 @@ function parseChunks(data: Uint8Array): ParsedChunks {
 			case 'IEND':
 				if (length !== 0) throw new Error('Invalid PNG end chunk');
 				ended = true;
-				offset = nextOffset;
 				break;
 			default:
 				if (type.charCodeAt(0) >= 65 && type.charCodeAt(0) <= 90) {
@@ -147,8 +144,7 @@ function parseChunks(data: Uint8Array): ParsedChunks {
  */
 function expectedRawSize(header: PngHeader): number {
 	const channels = channelCount(header.colorType);
-	const passes =
-		header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
+	const passes = header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
 	let total = 0;
 
 	for (const pass of passes) {
@@ -183,15 +179,12 @@ function concatParts(parts: readonly Uint8Array[]): Uint8Array<ArrayBuffer> {
  * stops the moment the declared image has every byte it could possibly use, so
  * a zip-bomb IDAT costs at most the budget instead of its full expansion.
  */
-function inflateWithinBudget(
-	compressed: Uint8Array,
-	budget: number
-): Uint8Array<ArrayBuffer> {
+function inflateWithinBudget(compressed: Uint8Array, budget: number): Uint8Array<ArrayBuffer> {
 	const parts: Uint8Array[] = [];
 	let size = 0;
 	let overshoot = false;
 
-	const decompressor = new Decompress(part => {
+	const decompressor = new Decompress((part) => {
 		if (overshoot) return;
 
 		size += part.length;
@@ -208,9 +201,7 @@ function inflateWithinBudget(
 	decompressor.push(compressed, true);
 
 	if (overshoot) {
-		throw new RangeError(
-			`PNG pixel data inflates beyond the expected ${budget} bytes`
-		);
+		throw new RangeError(`PNG pixel data inflates beyond the expected ${budget} bytes`);
 	}
 
 	return concatParts(parts);
@@ -225,13 +216,11 @@ function expandPixels(
 ): Uint8ClampedArray<ArrayBuffer> {
 	const outputSize = header.width * header.height * 4;
 
-	if (!Number.isSafeInteger(outputSize))
-		throw new RangeError('PNG dimensions are too large');
+	if (!Number.isSafeInteger(outputSize)) throw new RangeError('PNG dimensions are too large');
 
 	const rgba = new Uint8ClampedArray(outputSize);
 	const channels = channelCount(header.colorType);
-	const passes =
-		header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
+	const passes = header.interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
 	let rawOffset = 0;
 
 	for (const pass of passes) {
@@ -240,15 +229,11 @@ function expandPixels(
 		if (width === 0 || height === 0) continue;
 
 		const rowBytes = Math.ceil((width * channels * header.bitDepth) / 8);
-		const filterBytesPerPixel = Math.max(
-			1,
-			Math.ceil((channels * header.bitDepth) / 8)
-		);
+		const filterBytesPerPixel = Math.max(1, Math.ceil((channels * header.bitDepth) / 8));
 		let previous = new Uint8Array(rowBytes);
 
 		for (let rowIndex = 0; rowIndex < height; rowIndex++) {
-			if (rawOffset + rowBytes + 1 > raw.length)
-				throw new Error('PNG pixel data is truncated');
+			if (rawOffset + rowBytes + 1 > raw.length) throw new Error('PNG pixel data is truncated');
 
 			const filter = raw[rawOffset++];
 			const row = unfilterRow(
@@ -273,12 +258,7 @@ function expandPixels(
 }
 
 function readChunkType(data: Uint8Array, offset: number): string {
-	return String.fromCharCode(
-		data[offset],
-		data[offset + 1],
-		data[offset + 2],
-		data[offset + 3]
-	);
+	return String.fromCharCode(data[offset], data[offset + 1], data[offset + 2], data[offset + 3]);
 }
 
 const CRC_TABLE = buildCrcTable();
@@ -324,32 +304,22 @@ function validateHeader(
 	};
 	const depths = legalDepths[header.colorType];
 
-	if (
-		!header.width ||
-		!header.height ||
-		!Number.isSafeInteger(header.width * header.height)
-	) {
+	if (!header.width || !header.height || !Number.isSafeInteger(header.width * header.height)) {
 		throw new RangeError('Invalid PNG dimensions');
 	}
 	if (header.width > MAX_IMAGE_WIDTH || header.height > MAX_IMAGE_HEIGHT) {
-		throw new RangeError(
-			'PNG dimensions exceed the supported 512 × 512 pixel limit'
-		);
+		throw new RangeError('PNG dimensions exceed the supported 512 × 512 pixel limit');
 	}
 	if (!depths?.includes(header.bitDepth))
 		throw new Error('Unsupported PNG color type or bit depth');
 	if (header.interlace !== 0 && header.interlace !== 1)
 		throw new Error('Unsupported PNG interlace method');
-	if (
-		header.colorType === 3 &&
-		(!palette || palette.length === 0 || palette.length % 3 !== 0)
-	) {
+	if (header.colorType === 3 && (!palette || palette.length === 0 || palette.length % 3 !== 0)) {
 		throw new Error('Indexed PNG is missing a valid palette');
 	}
 	if (
 		palette &&
-		(palette.length > 768 ||
-			(header.colorType === 3 && palette.length / 3 > 1 << header.bitDepth))
+		(palette.length > 768 || (header.colorType === 3 && palette.length / 3 > 1 << header.bitDepth))
 	) {
 		throw new Error('PNG palette has too many entries');
 	}
@@ -396,8 +366,7 @@ function unfilterRow(
 	for (let index = 0; index < row.length; index++) {
 		const left = index >= bytesPerPixel ? row[index - bytesPerPixel] : 0;
 		const above = previous[index] ?? 0;
-		const upperLeft =
-			index >= bytesPerPixel ? (previous[index - bytesPerPixel] ?? 0) : 0;
+		const upperLeft = index >= bytesPerPixel ? (previous[index - bytesPerPixel] ?? 0) : 0;
 
 		switch (filter) {
 			case 0:
@@ -428,8 +397,7 @@ function paeth(left: number, above: number, upperLeft: number): number {
 	const aboveDistance = Math.abs(estimate - above);
 	const upperLeftDistance = Math.abs(estimate - upperLeft);
 
-	if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance)
-		return left;
+	if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) return left;
 	return aboveDistance <= upperLeftDistance ? above : upperLeft;
 }
 
@@ -442,8 +410,7 @@ function readSample(
 ): number {
 	const sampleIndex = pixel * channels + component;
 	if (depth === 8) return row[sampleIndex];
-	if (depth === 16)
-		return (row[sampleIndex * 2] << 8) | row[sampleIndex * 2 + 1];
+	if (depth === 16) return (row[sampleIndex * 2] << 8) | row[sampleIndex * 2 + 1];
 
 	const bitOffset = sampleIndex * depth;
 	const shift = 8 - depth - (bitOffset % 8);
@@ -478,10 +445,7 @@ function writePixel(
 	switch (colorType) {
 		case 0:
 			red = green = blue = toByte(first, bitDepth);
-			if (
-				transparency?.length === 2 &&
-				first === ((transparency[0] << 8) | transparency[1])
-			) {
+			if (transparency?.length === 2 && first === ((transparency[0] << 8) | transparency[1])) {
 				alpha = 0;
 			}
 			break;

@@ -12,9 +12,7 @@ import { fillUnmapped, pairByRank } from './shared.ts';
  * @param input Source keys, active palette, luminance weights, and fallback policy.
  * @returns A mapping for matched keys, with fallback entries when configured.
  */
-export function mapByLuminance(
-	input: ColorMappingInput
-): ReadonlyMap<number, Rgb> {
+export function mapByLuminance(input: ColorMappingInput): ReadonlyMap<number, Rgb> {
 	const { keys, palette, config } = input;
 	const result = new Map<number, Rgb>();
 
@@ -26,9 +24,7 @@ export function mapByLuminance(
 			luminance(keyToRgb(b), config.luminanceWeights)
 	);
 	const sortedPalette = [...palette].sort(
-		(a, b) =>
-			luminance(a, config.luminanceWeights) -
-			luminance(b, config.luminanceWeights)
+		(a, b) => luminance(a, config.luminanceWeights) - luminance(b, config.luminanceWeights)
 	);
 
 	if (sortedKeys.length === 1 && sortedPalette.length > 1) {

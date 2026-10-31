@@ -20,10 +20,7 @@ export type ImageRect = { left: number; top: number; scale: number };
  * @returns The image's offset from the viewport's top-left corner and its scale.
  */
 export function fitImageInViewport(viewport: Size, image: Size): ImageRect {
-	const scale = Math.min(
-		viewport.width / image.width,
-		viewport.height / image.height
-	);
+	const scale = Math.min(viewport.width / image.width, viewport.height / image.height);
 
 	return {
 		left: (viewport.width - image.width * scale) / 2,
@@ -49,9 +46,7 @@ export function pixelAtPoint(
 ): { x: number; y: number; index: number } | null {
 	if (rect.scale <= 0) return null;
 
-	const x = Math.floor(
-		(point.x - viewportOffset.left - rect.left) / rect.scale
-	);
+	const x = Math.floor((point.x - viewportOffset.left - rect.left) / rect.scale);
 	const y = Math.floor((point.y - viewportOffset.top - rect.top) / rect.scale);
 
 	if (x < 0 || y < 0 || x >= image.width || y >= image.height) return null;

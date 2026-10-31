@@ -23,15 +23,7 @@
 	const MAX_HINTS = 2;
 	const HINT_LIFETIME = 4000;
 
-	const PLACEHOLDER = [
-		'red',
-		'orange',
-		'yellow',
-		'green',
-		'aqua',
-		'blue',
-		'purple'
-	];
+	const PLACEHOLDER = ['red', 'orange', 'yellow', 'green', 'aqua', 'blue', 'purple'];
 
 	onMount(() => {
 		const seen = Number(localStorage.getItem(HINT_KEY) ?? 0);
@@ -96,13 +88,13 @@
 		<div class="flex flex-wrap justify-center gap-1">
 			{#each colors as color, index (index)}
 				<button
-					class="relative h-4 w-4 cursor-pointer border border-border p-0 [transition:box-shadow_100ms_ease-out,opacity_200ms_ease-out] hover:shadow-[0_0_0_2px_var(--accent)] {!color.active ? 'bg-[color-mix(in_srgb,var(--text-dim)_65%,var(--c))] after:content-[\'\'] after:absolute after:inset-0 after:z-1 after:bg-[linear-gradient(to_top_right,transparent_calc(50%-1px),var(--pop)_calc(50%-1px),var(--pop)_calc(50%+1px),transparent_calc(50%+1px))]' : 'bg-(--c)'}"
+					class="relative h-4 w-4 cursor-pointer border border-border p-0 [transition:box-shadow_100ms_ease-out,opacity_200ms_ease-out] hover:shadow-[0_0_0_2px_var(--accent)] {!color.active
+						? "bg-[color-mix(in_srgb,var(--text-dim)_65%,var(--c))] after:absolute after:inset-0 after:z-1 after:bg-[linear-gradient(to_top_right,transparent_calc(50%-1px),var(--pop)_calc(50%-1px),var(--pop)_calc(50%+1px),transparent_calc(50%+1px))] after:content-['']"
+						: 'bg-(--c)'}"
 					style:--c={cssRgb(color)}
 					type="button"
 					aria-pressed={color.active}
-					aria-label={color.active
-						? $t("palette.disable")
-						: $t("palette.enable")}
+					aria-label={color.active ? $t('palette.disable') : $t('palette.enable')}
 					onclick={() => toggle(index)}
 				></button>
 			{/each}
@@ -111,7 +103,7 @@
 		<Hint
 			placement="above"
 			hintsEnabled={$hintsEnabled}
-			text={hintVisible ? $t("palette.toggleHint") : null}
+			text={hintVisible ? $t('palette.toggleHint') : null}
 		/>
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">

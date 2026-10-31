@@ -1,7 +1,4 @@
-import type {
-	MappingMode,
-	PaletteColor
-} from '#core/image-processing/index.ts';
+import type { MappingMode, PaletteColor } from '#core/image-processing/index.ts';
 import type { MessageKey } from '../../i18n/locales.ts';
 
 /**
@@ -36,12 +33,9 @@ const ERROR_HINT_KEYS = new Set<MessageKey>([
 ]);
 
 /** A stable fingerprint of the mapping mode and the current palette colors. */
-export function mappingSignature(
-	mapping: MappingMode,
-	colors: readonly PaletteColor[]
-): string {
+export function mappingSignature(mapping: MappingMode, colors: readonly PaletteColor[]): string {
 	const fingerprint = colors
-		.map(color => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`)
+		.map((color) => `${color.r},${color.g},${color.b},${color.active ? 1 : 0}`)
 		.join(';');
 
 	return `${mapping}:${fingerprint}`;
@@ -83,23 +77,17 @@ export function shouldAutoRecolor(
 ): boolean {
 	return Boolean(
 		currentMappingSignature &&
-			snapshot.hasResult &&
-			snapshot.resultMappingSignature !== currentMappingSignature &&
-			snapshot.autoRecolor
+		snapshot.hasResult &&
+		snapshot.resultMappingSignature !== currentMappingSignature &&
+		snapshot.autoRecolor
 	);
 }
 
 /** Whether the first recolor should run once every input is ready. */
 export function shouldRunInitialRecolor(snapshot: WorkflowSnapshot): boolean {
-	const inputsReady =
-		snapshot.ready && snapshot.paletteColorsLoaded && snapshot.workspaceLoaded;
+	const inputsReady = snapshot.ready && snapshot.paletteColorsLoaded && snapshot.workspaceLoaded;
 
-	return Boolean(
-		inputsReady &&
-			!snapshot.hasResult &&
-			!snapshot.busy &&
-			!snapshot.noActiveColors
-	);
+	return Boolean(inputsReady && !snapshot.hasResult && !snapshot.busy && !snapshot.noActiveColors);
 }
 
 /** Whether the excluded pixels changed enough to warrant a recomposition. */
@@ -108,7 +96,6 @@ export function shouldRecomposeExclusions(
 	currentExclusionSignature: string
 ): boolean {
 	return Boolean(
-		snapshot.hasResult &&
-			snapshot.resultExclusionSignature !== currentExclusionSignature
+		snapshot.hasResult && snapshot.resultExclusionSignature !== currentExclusionSignature
 	);
 }

@@ -2,11 +2,7 @@
 	import { t } from 'svelte-i18n';
 	import DropZone from '#app/components/DropZone.svelte';
 	import type { MessageKey } from '#app/i18n/locales.ts';
-	import {
-		type ValidationCode,
-		ValidationError,
-		validateImageFile
-	} from '#lib';
+	import { type ValidationCode, ValidationError, validateImageFile } from '#lib';
 
 	let {
 		palette = $bindable(null),
@@ -33,15 +29,13 @@
 
 			return null;
 		} catch (cause) {
-			return cause instanceof ValidationError
-				? VALIDATION_KEYS[cause.code]
-				: 'dropzone.readFailed';
+			return cause instanceof ValidationError ? VALIDATION_KEYS[cause.code] : 'dropzone.readFailed';
 		}
 	}
 </script>
 
 <section
-	class="animate-[rise_380ms_ease-out_80ms_backwards] flex w-full max-w-120 gap-4 max-[420px]:flex-col min-[900px]:col-start-1"
+	class="flex w-full max-w-120 animate-[rise_380ms_ease-out_80ms_backwards] gap-4 max-[420px]:flex-col min-[900px]:col-start-1"
 	aria-label={$t('inputs.aria')}
 >
 	<DropZone

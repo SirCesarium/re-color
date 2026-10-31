@@ -20,11 +20,7 @@ export function mapNearest(input: ColorMappingInput): ReadonlyMap<number, Rgb> {
 		let bestDistance = weightedDistance(source, best, config.distanceWeights);
 
 		for (let index = 1; index < palette.length; index++) {
-			const candidate = weightedDistance(
-				source,
-				palette[index],
-				config.distanceWeights
-			);
+			const candidate = weightedDistance(source, palette[index], config.distanceWeights);
 
 			if (candidate < bestDistance) {
 				bestDistance = candidate;

@@ -1,17 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import {
-	fitImageInViewport,
-	pixelAtPoint
-} from '../../../src/lib/core/geometry/pixel-coords.ts';
+import { fitImageInViewport, pixelAtPoint } from '../../../src/lib/core/geometry/pixel-coords.ts';
 
 describe('fitImageInViewport', () => {
 	test('scales to the limiting axis and centers on both', () => {
 		// A 100x50 image inside a 200x200 viewport: width limits (scale 2), so
 		// the leftover vertical space is split evenly as top/bottom bars.
-		const rect = fitImageInViewport(
-			{ width: 200, height: 200 },
-			{ width: 100, height: 50 }
-		);
+		const rect = fitImageInViewport({ width: 200, height: 200 }, { width: 100, height: 50 });
 
 		expect(rect.scale).toBe(2);
 		expect(rect.left).toBe(0);
@@ -19,10 +13,7 @@ describe('fitImageInViewport', () => {
 	});
 
 	test('a portrait image centers horizontally instead', () => {
-		const rect = fitImageInViewport(
-			{ width: 200, height: 200 },
-			{ width: 50, height: 100 }
-		);
+		const rect = fitImageInViewport({ width: 200, height: 200 }, { width: 50, height: 100 });
 
 		expect(rect.scale).toBe(2);
 		expect(rect.left).toBe(50);
@@ -30,10 +21,7 @@ describe('fitImageInViewport', () => {
 	});
 
 	test('an exact fit leaves no offset', () => {
-		const rect = fitImageInViewport(
-			{ width: 64, height: 64 },
-			{ width: 64, height: 64 }
-		);
+		const rect = fitImageInViewport({ width: 64, height: 64 }, { width: 64, height: 64 });
 
 		expect(rect.scale).toBe(1);
 		expect(rect.left).toBe(0);
@@ -80,9 +68,7 @@ describe('pixelAtPoint', () => {
 	test('the viewport offset shifts the result', () => {
 		const rect = { left: 0, top: 0, scale: 10 };
 
-		expect(
-			pixelAtPoint({ x: 30, y: 20 }, { left: 10, top: 10 }, rect, image)
-		).toEqual({
+		expect(pixelAtPoint({ x: 30, y: 20 }, { left: 10, top: 10 }, rect, image)).toEqual({
 			x: 2,
 			y: 1,
 			index: 10

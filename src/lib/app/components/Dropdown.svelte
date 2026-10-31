@@ -19,7 +19,8 @@
 		class?: string;
 	} = $props();
 
-	const listId = `dropdown-list-${++instanceCount}`;
+	instanceCount += 1;
+	const listId = `dropdown-list-${instanceCount}`;
 
 	let open = $state(false);
 	let active = $state(0);
@@ -28,7 +29,10 @@
 	let list = $state<HTMLDivElement | undefined>(undefined);
 
 	const selectedIndex = $derived(
-		Math.max(0, options.findIndex((option) => option.value === value))
+		Math.max(
+			0,
+			options.findIndex((option) => option.value === value)
+		)
 	);
 	const selected = $derived(options[selectedIndex]);
 	const activeId = $derived(`${listId}-option-${active}`);
@@ -132,7 +136,7 @@
 			>{selected?.label ?? ''}</span
 		>
 		<span
-			class="size-0 shrink-0 border-x-[5px] border-x-transparent border-t-[6px] transition-transform duration-150 {open
+			class="size-0 shrink-0 border-x-[5px] border-t-[6px] border-x-transparent transition-transform duration-150 {open
 				? 'rotate-180 border-t-text'
 				: 'border-t-text-dim'}"
 			aria-hidden="true"
@@ -143,7 +147,7 @@
 		<div
 			bind:this={list}
 			id={listId}
-			class="absolute left-0 top-full z-30 mt-1 grid max-h-65 w-max min-w-full overflow-y-auto border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)]"
+			class="absolute top-full left-0 z-30 mt-1 grid max-h-65 w-max min-w-full overflow-y-auto border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)]"
 			role="listbox"
 			aria-label={label}
 			aria-activedescendant={activeId}

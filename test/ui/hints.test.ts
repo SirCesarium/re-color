@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 // Registers the message catalogs and the locale so $t resolves real text.
@@ -63,6 +63,34 @@ describe('one-time hints respect the hintsEnabled preference', () => {
 
 		await waitFor(() => {
 			expect(localStorage.getItem(PIXEL_HELP_KEY)).toBe('true');
+		});
+	});
+});
+
+describe('pixel help dismissal', () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	afterEach(() => {
+		hintsEnabled.set(true);
+	});
+
+	it('keeps the help bubble interactive and closes it from the dismiss button', async () => {
+		hintsEnabled.set(true);
+
+		render(ResultPanel, { imageUrl: resultUrl });
+
+		const dismiss = await screen.findByRole('button', { name: 'Dismiss help' });
+		const bubble = dismiss.closest('[role="status"]');
+
+		expect(bubble?.classList.contains('pointer-events-auto')).toBe(true);
+		expect(bubble?.classList.contains('pointer-events-none')).toBe(false);
+
+		await fireEvent.click(dismiss);
+
+		await waitFor(() => {
+			expect(screen.queryByRole('button', { name: 'Dismiss help' })).toBeNull();
 		});
 	});
 });

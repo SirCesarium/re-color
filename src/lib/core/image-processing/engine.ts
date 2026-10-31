@@ -1,13 +1,7 @@
 import { createColorLookup } from './color/mapping/registry.ts';
 import { rgbToKey } from './color/metrics.ts';
 import { validateRecolorConfig } from './config-schema.ts';
-import {
-	context2d,
-	createCanvas,
-	loadImage,
-	readPixels,
-	toBlobUrl
-} from './image/canvas.ts';
+import { context2d, createCanvas, loadImage, readPixels, toBlobUrl } from './image/canvas.ts';
 import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, RecolorConfig, Rgb } from './types.ts';
 
@@ -43,10 +37,9 @@ export async function recolorSprite(
 	validateRecolorConfig(config);
 	await validateImageFile(file);
 
-	if (!palette.some(color => color.active)) return null;
+	if (!palette.some((color) => color.active)) return null;
 
-	const { onProgress, signal, chunkDurationMs, progress, yieldToMain } =
-		config.processing;
+	const { onProgress, signal, chunkDurationMs, progress, yieldToMain } = config.processing;
 
 	onProgress(progress.start);
 
@@ -76,7 +69,7 @@ export async function recolorSprite(
 		);
 		if (!counts || signal.aborted) return null;
 
-		const activePalette = palette.filter(color => color.active);
+		const activePalette = palette.filter((color) => color.active);
 
 		const lookup = await createColorLookup(
 			{
@@ -106,20 +99,12 @@ export async function recolorSprite(
 			const start = performance.now();
 
 			while (row < height && performance.now() - start < chunkDurationMs) {
-				applyRow(
-					data,
-					row,
-					width,
-					lookup,
-					config.transparency,
-					config.excludedPixels
-				);
+				applyRow(data, row, width, lookup, config.transparency, config.excludedPixels);
 				row++;
 			}
 
 			onProgress(
-				progress.pixelsRead +
-					((progress.processingComplete - progress.pixelsRead) * row) / height
+				progress.pixelsRead + ((progress.processingComplete - progress.pixelsRead) * row) / height
 			);
 
 			if (signal.aborted) return null;
@@ -223,9 +208,7 @@ function validateExcludedPixels(
 
 	for (const index of excludedPixels) {
 		if (!Number.isInteger(index) || index < 0 || index >= pixelCount) {
-			throw new RangeError(
-				`excludedPixels contains an invalid pixel index: ${index}`
-			);
+			throw new RangeError(`excludedPixels contains an invalid pixel index: ${index}`);
 		}
 	}
 }

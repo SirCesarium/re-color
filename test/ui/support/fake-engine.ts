@@ -10,13 +10,9 @@ import { fakeObjectUrl } from './object-urls.ts';
  */
 export const recolorSprite = vi.fn(async () => fakeObjectUrl());
 
-export const extractColorsFromFile = vi.fn(async () => [
-	{ r: 10, g: 20, b: 30, active: true }
-]);
+export const extractColorsFromFile = vi.fn(async () => [{ r: 10, g: 20, b: 30, active: true }]);
 
-export const composeExcludedPixels = vi.fn(
-	async (previewUrl: string) => previewUrl
-);
+export const composeExcludedPixels = vi.fn(async (previewUrl: string) => previewUrl);
 
 /** The fake engine runs to completion without ever yielding to the browser. */
 export function yieldToBrowser(): Promise<void> {
@@ -29,12 +25,8 @@ export function resetFakeEngine(): void {
 	composeExcludedPixels.mockReset();
 
 	recolorSprite.mockImplementation(async () => fakeObjectUrl());
-	extractColorsFromFile.mockImplementation(async () => [
-		{ r: 10, g: 20, b: 30, active: true }
-	]);
-	composeExcludedPixels.mockImplementation(
-		async (previewUrl: string) => previewUrl
-	);
+	extractColorsFromFile.mockImplementation(async () => [{ r: 10, g: 20, b: 30, active: true }]);
+	composeExcludedPixels.mockImplementation(async (previewUrl: string) => previewUrl);
 }
 
 /** A promise whose resolution the test controls by hand. */

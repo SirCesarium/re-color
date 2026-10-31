@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import type { MappingMode } from '#core/image-processing/index.ts';
-import {
-	DEFAULT_LOCALE,
-	LOCALE_SCHEMA,
-	type Locale
-} from '../../i18n/locales.ts';
+import { DEFAULT_LOCALE, LOCALE_SCHEMA, type Locale } from '../../i18n/locales.ts';
 
 export type AppSettings = {
 	animationsEnabled: boolean;
@@ -66,23 +62,17 @@ export const APP_SETTINGS_SCHEMA = z.object({
 export function storedAppSettingsSchema(localeFallback: Locale) {
 	return z
 		.object({
-			animationsEnabled: z
-				.boolean()
-				.catch(DEFAULT_APP_SETTINGS.animationsEnabled),
+			animationsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.animationsEnabled),
 			hintsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.hintsEnabled),
 			autoRecolor: z.boolean().catch(DEFAULT_APP_SETTINGS.autoRecolor),
-			persistWorkspace: z
-				.boolean()
-				.catch(DEFAULT_APP_SETTINGS.persistWorkspace),
+			persistWorkspace: z.boolean().catch(DEFAULT_APP_SETTINGS.persistWorkspace),
 			maxPaletteColors: z
 				.number()
 				.int()
 				.min(1)
 				.max(256)
 				.catch(DEFAULT_APP_SETTINGS.maxPaletteColors),
-			defaultMapping: MAPPING_MODE_SCHEMA.catch(
-				DEFAULT_APP_SETTINGS.defaultMapping
-			),
+			defaultMapping: MAPPING_MODE_SCHEMA.catch(DEFAULT_APP_SETTINGS.defaultMapping),
 			locale: LOCALE_SCHEMA.catch(localeFallback)
 		})
 		.catch({ ...DEFAULT_APP_SETTINGS, locale: localeFallback });

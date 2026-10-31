@@ -13,10 +13,7 @@
 	} from '#app/i18n/locales.ts';
 	import { LocalizedError } from '#app/i18n/localized-error.ts';
 	import { type AppSettings } from '#app/state/settings/model.ts';
-	import {
-		clearSavedAppData,
-		importAppSettings
-	} from '#app/state/settings/repository.ts';
+	import { clearSavedAppData, importAppSettings } from '#app/state/settings/repository.ts';
 	import {
 		replaceSettings,
 		resetSettings as restoreDefaults,
@@ -24,11 +21,7 @@
 		settings,
 		updateSetting
 	} from '#app/state/settings/store.svelte.ts';
-	import {
-		clearWorkspace,
-		loadWorkspace,
-		saveWorkspace
-	} from '#app/state/workspace.ts';
+	import { clearWorkspace, loadWorkspace, saveWorkspace } from '#app/state/workspace.ts';
 	import { MAPPING_OPTIONS } from '#core/recolor.ts';
 
 	let error = $state<{
@@ -37,13 +30,13 @@
 	} | null>(null);
 
 	const mappingOptions = $derived(
-		MAPPING_OPTIONS.map(option => ({
+		MAPPING_OPTIONS.map((option) => ({
 			value: option.value,
 			label: $t(option.labelKey)
 		}))
 	);
 	const localeOptions = $derived(
-		SUPPORTED_LOCALES.map(value => ({ value, label: LOCALE_LABELS[value] }))
+		SUPPORTED_LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] }))
 	);
 
 	/** Clears the banner after a successful save, or reports a failed one. */
@@ -76,10 +69,7 @@
 			await clearWorkspace();
 			error = null;
 		} catch (cause) {
-			console.error(
-				'Could not clear saved workspace after disabling persistence',
-				cause
-			);
+			console.error('Could not clear saved workspace after disabling persistence', cause);
 			error = { id: 'settings.errorWorkspaceClear' };
 		}
 	}
@@ -126,19 +116,14 @@
 		input.value = '';
 	}
 
-	async function updateDefaultMapping(
-		mapping: AppSettings['defaultMapping']
-	): Promise<void> {
+	async function updateDefaultMapping(mapping: AppSettings['defaultMapping']): Promise<void> {
 		saveOrReport(updateSetting('defaultMapping', mapping));
 
 		try {
 			const workspace = await loadWorkspace();
 			if (workspace) await saveWorkspace({ ...workspace, mapping });
 		} catch (cause) {
-			console.error(
-				'Could not save default mapping to current workspace',
-				cause
-			);
+			console.error('Could not save default mapping to current workspace', cause);
 			error = { id: 'settings.errorMappingSave' };
 		}
 	}
@@ -163,51 +148,48 @@
 </script>
 
 <svelte:head>
-	<title>{$t("settings.metaTitle")}</title>
-	<meta
-		name="description"
-		content={$t("settings.metaDescription")}
-	/>
+	<title>{$t('settings.metaTitle')}</title>
+	<meta name="description" content={$t('settings.metaDescription')} />
 	<link rel="canonical" href="https://recolor.pages.dev/settings/" />
 </svelte:head>
 
 <main class="box-border flex w-full flex-1 flex-col items-center gap-8 px-3 py-12 sm:px-4">
 	<section class="flex w-full max-w-215 flex-col gap-8" aria-labelledby="settings-title">
 		<Typography id="settings-title" as="h1" variant="page-title" class="m-0">
-			{$t("settings.title")}
+			{$t('settings.title')}
 		</Typography>
 
 		<div class="grid gap-8">
 			<div class="grid gap-2">
 				<Typography as="h2" variant="section-label" class="m-0">
-					{$t("settings.groupInterface")}
+					{$t('settings.groupInterface')}
 				</Typography>
 				<div class="grid">
-					<SettingRow title={$t("settings.languageTitle")} hint={$t("settings.languageDesc")}>
+					<SettingRow title={$t('settings.languageTitle')} hint={$t('settings.languageDesc')}>
 						{#snippet control()}
 							<Dropdown
 								class="w-full sm:w-50"
 								value={settings.locale}
 								options={localeOptions}
-								label={$t("settings.languageAria")}
+								label={$t('settings.languageAria')}
 								onchange={updateLocale}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t("settings.animationsTitle")} hint={$t("settings.animationsDesc")}>
+					<SettingRow title={$t('settings.animationsTitle')} hint={$t('settings.animationsDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.animationsEnabled}
-								label={$t("settings.animationsTitle")}
+								label={$t('settings.animationsTitle')}
 								onchange={updateAnimations}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t("settings.hintsTitle")} hint={$t("settings.hintsDesc")}>
+					<SettingRow title={$t('settings.hintsTitle')} hint={$t('settings.hintsDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.hintsEnabled}
-								label={$t("settings.hintsTitle")}
+								label={$t('settings.hintsTitle')}
 								onchange={updateHints}
 							/>
 						{/snippet}
@@ -217,41 +199,41 @@
 
 			<div class="grid gap-2">
 				<Typography as="h2" variant="section-label" class="m-0">
-					{$t("settings.groupRecolor")}
+					{$t('settings.groupRecolor')}
 				</Typography>
 				<div class="grid">
-					<SettingRow title={$t("settings.autoRecolorTitle")} hint={$t("settings.autoRecolorDesc")}>
+					<SettingRow title={$t('settings.autoRecolorTitle')} hint={$t('settings.autoRecolorDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.autoRecolor}
-								label={$t("settings.autoRecolorTitle")}
+								label={$t('settings.autoRecolorTitle')}
 								onchange={updateAutoRecolor}
 							/>
 						{/snippet}
 					</SettingRow>
 					<SettingRow
 						stacked
-						title={$t("settings.maxColorsTitle")}
-						hint={$t("settings.maxColorsDesc")}
+						title={$t('settings.maxColorsTitle')}
+						hint={$t('settings.maxColorsDesc')}
 					>
 						{#snippet control()}
 							<PixelSlider
 								value={settings.maxPaletteColors}
 								min={1}
 								max={256}
-								label={$t("settings.maxColorsTitle")}
+								label={$t('settings.maxColorsTitle')}
 								showLabel={false}
 								onchange={updateMaxPaletteColors}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow stacked title={$t("settings.mappingTitle")} hint={$t("settings.mappingDesc")}>
+					<SettingRow stacked title={$t('settings.mappingTitle')} hint={$t('settings.mappingDesc')}>
 						{#snippet control()}
 							<Dropdown
 								class="w-full"
 								value={settings.defaultMapping}
 								options={mappingOptions}
-								label={$t("settings.mappingAria")}
+								label={$t('settings.mappingAria')}
 								onchange={updateDefaultMapping}
 							/>
 						{/snippet}
@@ -261,19 +243,19 @@
 
 			<div class="grid gap-2">
 				<Typography as="h2" variant="section-label" class="m-0">
-					{$t("settings.groupData")}
+					{$t('settings.groupData')}
 				</Typography>
 				<div class="grid">
-					<SettingRow title={$t("settings.persistTitle")} hint={$t("settings.persistDesc")}>
+					<SettingRow title={$t('settings.persistTitle')} hint={$t('settings.persistDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.persistWorkspace}
-								label={$t("settings.persistTitle")}
+								label={$t('settings.persistTitle')}
 								onchange={updatePersistWorkspace}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow stacked title={$t("settings.backupTitle")} hint={$t("settings.backupDesc")}>
+					<SettingRow stacked title={$t('settings.backupTitle')} hint={$t('settings.backupDesc')}>
 						{#snippet control()}
 							<div class="flex flex-wrap gap-3">
 								<button
@@ -281,42 +263,42 @@
 									type="button"
 									onclick={exportSettings}
 								>
-									{$t("settings.export")}
+									{$t('settings.export')}
 								</button>
 								<label
-									class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)]"
+									class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)] hover:bg-panel-hover"
 								>
-									{$t("settings.import")}
+									{$t('settings.import')}
 									<input
 										class="sr-only"
 										type="file"
 										accept="application/json,.json"
-										aria-label={$t("settings.importAria")}
+										aria-label={$t('settings.importAria')}
 										onchange={handleImportSelection}
 									/>
 								</label>
 							</div>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t("settings.resetTitle")} hint={$t("settings.resetDesc")}>
+					<SettingRow title={$t('settings.resetTitle')} hint={$t('settings.resetDesc')}>
 						{#snippet control()}
 							<button
 								class="min-h-11 cursor-pointer border-2 border-btn-edge bg-panel px-3 py-2 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
 								type="button"
 								onclick={resetSettings}
 							>
-								{$t("settings.resetBtn")}
+								{$t('settings.resetBtn')}
 							</button>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t("settings.clearTitle")} hint={$t("settings.clearDesc")}>
+					<SettingRow title={$t('settings.clearTitle')} hint={$t('settings.clearDesc')}>
 						{#snippet control()}
 							<button
 								class="min-h-11 cursor-pointer border-2 border-(--sw-red) bg-panel px-3 py-2 text-base text-(--sw-red) shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-(--sw-red) hover:text-panel"
 								type="button"
 								onclick={handleClearAppData}
 							>
-								{$t("settings.clearBtn")}
+								{$t('settings.clearBtn')}
 							</button>
 						{/snippet}
 					</SettingRow>
@@ -326,12 +308,7 @@
 	</section>
 
 	{#if error}
-		<Typography
-			as="p"
-			variant="body"
-			class="w-full max-w-215 text-(--sw-red)"
-			role="alert"
-		>
+		<Typography as="p" variant="body" class="w-full max-w-215 text-(--sw-red)" role="alert">
 			{$t(error.id, { values: error.values })}
 		</Typography>
 	{/if}

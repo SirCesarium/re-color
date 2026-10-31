@@ -18,9 +18,7 @@ describe('ImageInputs', () => {
 		await fireEvent.drop(paletteZone, { dataTransfer: { files: [textFile] } });
 
 		await waitFor(() => {
-			expect(screen.getAllByRole('alert')[0].textContent).toBe(
-				'Choose a valid PNG image.'
-			);
+			expect(screen.getAllByRole('alert')[0].textContent).toBe('Choose a valid PNG image.');
 		});
 	});
 });

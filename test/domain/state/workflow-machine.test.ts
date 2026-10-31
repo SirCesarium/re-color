@@ -33,18 +33,12 @@ describe('mappingSignature', () => {
 			{ r: 240, g: 200, b: 96, active: false }
 		];
 
-		expect(mappingSignature('luminance', colors)).toBe(
-			'luminance:10,20,30,1;240,200,96,0'
-		);
+		expect(mappingSignature('luminance', colors)).toBe('luminance:10,20,30,1;240,200,96,0');
 	});
 
 	test('marks an inactive color apart from the same active one', () => {
-		const active = mappingSignature('nearest', [
-			{ r: 1, g: 2, b: 3, active: true }
-		]);
-		const inactive = mappingSignature('nearest', [
-			{ r: 1, g: 2, b: 3, active: false }
-		]);
+		const active = mappingSignature('nearest', [{ r: 1, g: 2, b: 3, active: true }]);
+		const inactive = mappingSignature('nearest', [{ r: 1, g: 2, b: 3, active: false }]);
 
 		expect(active).not.toBe(inactive);
 	});
@@ -81,11 +75,7 @@ describe('isErrorHint', () => {
 
 describe('buttonHint', () => {
 	test('reports no colors once ready with nothing active', () => {
-		const hint = buttonHint(
-			snapshot({ ready: true, noActiveColors: true }),
-			'luminance:',
-			null
-		);
+		const hint = buttonHint(snapshot({ ready: true, noActiveColors: true }), 'luminance:', null);
 
 		expect(hint).toBe('workflow.noColors');
 	});
@@ -214,10 +204,7 @@ describe('shouldRecomposeExclusions', () => {
 	});
 
 	test('stays quiet when there is no result', () => {
-		const fires = shouldRecomposeExclusions(
-			snapshot({ hasResult: false }),
-			'1,2'
-		);
+		const fires = shouldRecomposeExclusions(snapshot({ hasResult: false }), '1,2');
 
 		expect(fires).toBe(false);
 	});

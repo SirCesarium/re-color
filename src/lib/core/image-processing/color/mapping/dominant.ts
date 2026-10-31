@@ -11,22 +11,18 @@ import { fillUnmapped, pairByRank } from './shared.ts';
  * @param input Source keys, active palette, pixel counts, weights, and fallback policy.
  * @returns A mapping for the dominant key and the ranked remainder.
  */
-export function mapDominant(
-	input: ColorMappingInput
-): ReadonlyMap<number, Rgb> {
+export function mapDominant(input: ColorMappingInput): ReadonlyMap<number, Rgb> {
 	const { keys, palette, counts, config } = input;
 	const result = new Map<number, Rgb>();
 
 	if (keys.length === 0 || palette.length === 0) return result;
 
-	const first = [...keys].sort(
-		(a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0)
-	)[0];
+	const first = [...keys].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0))[0];
 
 	result.set(first, palette[0]);
 
 	const rest = keys
-		.filter(key => key !== first)
+		.filter((key) => key !== first)
 		.sort(
 			(a, b) =>
 				luminance(keyToRgb(a), config.luminanceWeights) -
@@ -34,11 +30,7 @@ export function mapDominant(
 		);
 	const restPalette = palette
 		.slice(1)
-		.sort(
-			(a, b) =>
-				luminance(a, config.luminanceWeights) -
-				luminance(b, config.luminanceWeights)
-		);
+		.sort((a, b) => luminance(a, config.luminanceWeights) - luminance(b, config.luminanceWeights));
 
 	pairByRank(rest, restPalette, result);
 

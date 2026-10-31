@@ -127,18 +127,12 @@ export function makeIndexedPng(
 }
 
 /** Builds the Adam7-interlaced scanline data for 8-bit RGBA pixels. */
-export function makeAdam7RgbaData(
-	width: number,
-	height: number,
-	pixels: number[][]
-): Uint8Array {
+export function makeAdam7RgbaData(width: number, height: number, pixels: number[][]): Uint8Array {
 	const bytes: number[] = [];
 
 	for (const pass of ADAM7_PASSES) {
-		const passWidth =
-			width <= pass.x ? 0 : Math.ceil((width - pass.x) / pass.dx);
-		const passHeight =
-			height <= pass.y ? 0 : Math.ceil((height - pass.y) / pass.dy);
+		const passWidth = width <= pass.x ? 0 : Math.ceil((width - pass.x) / pass.dx);
+		const passHeight = height <= pass.y ? 0 : Math.ceil((height - pass.y) / pass.dy);
 		if (passWidth === 0 || passHeight === 0) continue;
 
 		for (let row = 0; row < passHeight; row++) {
@@ -172,30 +166,17 @@ export function makeSampledPng(options: SampledPngOptions): Uint8Array {
 	} = options;
 
 	if (pixels.length !== width * height) {
-		throw new Error(
-			'makeSampledPng: expected one sample entry per pixel position'
-		);
+		throw new Error('makeSampledPng: expected one sample entry per pixel position');
 	}
 
 	const channels = CHANNELS[colorType];
-	if (!channels)
-		throw new Error(`makeSampledPng: unsupported color type ${colorType}`);
+	if (!channels) throw new Error(`makeSampledPng: unsupported color type ${colorType}`);
 
-	const chunks = [
-		chunk('IHDR', header(width, height, bitDepth, colorType, interlace))
-	];
+	const chunks = [chunk('IHDR', header(width, height, bitDepth, colorType, interlace))];
 	if (plte) chunks.push(chunk('PLTE', new Uint8Array(plte.flat())));
 	if (trns) chunks.push(chunk('tRNS', new Uint8Array(trns)));
 
-	const scanlines = buildScanlines(
-		width,
-		height,
-		channels,
-		bitDepth,
-		pixels,
-		interlace,
-		filter
-	);
+	const scanlines = buildScanlines(width, height, channels, bitDepth, pixels, interlace, filter);
 	chunks.push(chunk('IDAT', zlibSync(scanlines)));
 	chunks.push(chunk('IEND', new Uint8Array()));
 
@@ -211,15 +192,12 @@ function buildScanlines(
 	interlace: 0 | 1,
 	filter: Filter | ((y: number) => number)
 ): Uint8Array {
-	const passes =
-		interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
+	const passes = interlace === 0 ? [{ x: 0, y: 0, dx: 1, dy: 1 }] : ADAM7_PASSES;
 	const bytes: number[] = [];
 
 	for (const pass of passes) {
-		const passWidth =
-			width <= pass.x ? 0 : Math.ceil((width - pass.x) / pass.dx);
-		const passHeight =
-			height <= pass.y ? 0 : Math.ceil((height - pass.y) / pass.dy);
+		const passWidth = width <= pass.x ? 0 : Math.ceil((width - pass.x) / pass.dx);
+		const passHeight = height <= pass.y ? 0 : Math.ceil((height - pass.y) / pass.dy);
 		if (passWidth === 0 || passHeight === 0) continue;
 
 		const rowBytes = Math.ceil((passWidth * channels * bitDepth) / 8);
@@ -248,16 +226,11 @@ function buildScanlines(
 	return new Uint8Array(bytes);
 }
 
-function resolveFilter(
-	filter: Filter | ((y: number) => number),
-	y: number
-): Filter {
+function resolveFilter(filter: Filter | ((y: number) => number), y: number): Filter {
 	const filterType = typeof filter === 'function' ? filter(y) : filter;
 
 	if (!Number.isInteger(filterType) || filterType < 0 || filterType > 4) {
-		throw new Error(
-			`makeSampledPng: unsupported row filter ${filterType} for row ${y}`
-		);
+		throw new Error(`makeSampledPng: unsupported row filter ${filterType} for row ${y}`);
 	}
 
 	return filterType as Filter;
@@ -299,8 +272,7 @@ function filterRow(
 	for (let index = 0; index < raw.length; index++) {
 		const left = index >= bytesPerPixel ? raw[index - bytesPerPixel] : 0;
 		const above = previous[index] ?? 0;
-		const upperLeft =
-			index >= bytesPerPixel ? (previous[index - bytesPerPixel] ?? 0) : 0;
+		const upperLeft = index >= bytesPerPixel ? (previous[index - bytesPerPixel] ?? 0) : 0;
 
 		switch (filter) {
 			case 0:
@@ -316,8 +288,7 @@ function filterRow(
 				out[index] = (raw[index] - Math.floor((left + above) / 2)) & 255;
 				break;
 			case 4:
-				out[index] =
-					(raw[index] - paethPredictor(left, above, upperLeft)) & 255;
+				out[index] = (raw[index] - paethPredictor(left, above, upperLeft)) & 255;
 				break;
 		}
 	}
@@ -325,18 +296,13 @@ function filterRow(
 	return out;
 }
 
-function paethPredictor(
-	left: number,
-	above: number,
-	upperLeft: number
-): number {
+function paethPredictor(left: number, above: number, upperLeft: number): number {
 	const estimate = left + above - upperLeft;
 	const leftDistance = Math.abs(estimate - left);
 	const aboveDistance = Math.abs(estimate - above);
 	const upperLeftDistance = Math.abs(estimate - upperLeft);
 
-	if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance)
-		return left;
+	if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) return left;
 	return aboveDistance <= upperLeftDistance ? above : upperLeft;
 }
 

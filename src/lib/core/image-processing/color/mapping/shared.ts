@@ -18,9 +18,7 @@ export function pairByRank(
 
 	for (let index = 0; index < keys.length; index++) {
 		const colorIndex =
-			keys.length === 1
-				? 0
-				: Math.round((index * (colors.length - 1)) / (keys.length - 1));
+			keys.length === 1 ? 0 : Math.round((index * (colors.length - 1)) / (keys.length - 1));
 
 		result.set(keys[index], colors[colorIndex]);
 	}

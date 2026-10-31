@@ -1,8 +1,5 @@
 import { onDestroy, onMount, untrack } from 'svelte';
-import type {
-	MappingMode,
-	PaletteColor
-} from '#core/image-processing/index.ts';
+import type { MappingMode, PaletteColor } from '#core/image-processing/index.ts';
 import { OUTPUT_CONFIG, OUTPUT_EXTENSIONS } from '#core/recolor.ts';
 import type { MessageKey } from '../../i18n/locales.ts';
 import { settings, updateSetting } from '../settings/store.svelte.ts';
@@ -75,9 +72,7 @@ export function createRecolorWorkflow() {
 	});
 
 	const ready = $derived(state.palette !== null && state.sprite !== null);
-	const activeColors = $derived(
-		state.colors.filter(color => color.active).length
-	);
+	const activeColors = $derived(state.colors.filter((color) => color.active).length);
 	const noActiveColors = $derived(activeColors === 0);
 	const mappingSig = $derived(mappingSignature(state.mapping, state.colors));
 	const exclusionSig = $derived(exclusionSignature(state.excludedPixels));
@@ -196,21 +191,20 @@ export function createRecolorWorkflow() {
 		if (!Number.isInteger(index) || index < 0) return;
 
 		state.excludedPixels = state.excludedPixels.includes(index)
-			? state.excludedPixels.filter(pixel => pixel !== index)
+			? state.excludedPixels.filter((pixel) => pixel !== index)
 			: [...state.excludedPixels, index];
 	}
 
 	function setPixelExclusion(indexes: readonly number[], excluded: boolean) {
-		const next = new Set(state.excludedPixels);
+		const valid = indexes.filter(
+			(index, position) =>
+				Number.isInteger(index) && index >= 0 && indexes.indexOf(index) === position
+		);
+		const current = state.excludedPixels;
 
-		for (const index of indexes) {
-			if (!Number.isInteger(index) || index < 0) continue;
-
-			if (excluded) next.add(index);
-			else next.delete(index);
-		}
-
-		state.excludedPixels = [...next];
+		state.excludedPixels = excluded
+			? [...current, ...valid.filter((index) => !current.includes(index))]
+			: current.filter((index) => !valid.includes(index));
 	}
 
 	// ── Reactive effects ──────────────────────────────────────────────────

@@ -6,7 +6,7 @@ const english = en as Record<string, string>;
 const spanish = es as Record<string, string>;
 
 const placeholders = (message: string) =>
-	[...message.matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort();
+	[...message.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
 test('Spanish defines exactly the same keys as English', () => {
 	expect(Object.keys(spanish).sort()).toEqual(Object.keys(english).sort());
@@ -20,8 +20,6 @@ test('no translation is empty', () => {
 
 test('translations keep the same placeholders as English', () => {
 	for (const [key, message] of Object.entries(english)) {
-		expect(placeholders(spanish[key]), `es:${key}`).toEqual(
-			placeholders(message)
-		);
+		expect(placeholders(spanish[key]), `es:${key}`).toEqual(placeholders(message));
 	}
 });

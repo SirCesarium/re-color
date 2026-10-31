@@ -6,15 +6,9 @@ import type { createRecolorWorkflow } from '../../src/lib/app/state/workflow/sto
 // The workflow drives the real engine, which paints pixels on a canvas jsdom
 // cannot provide. Swap it for controllable fakes so orchestration, timing, and
 // URL handling can be exercised deterministically.
-vi.mock(
-	'../../src/lib/core/image-processing/index.ts',
-	() => import('./support/fake-engine.ts')
-);
+vi.mock('../../src/lib/core/image-processing/index.ts', () => import('./support/fake-engine.ts'));
 
-import {
-	settings,
-	updateSetting
-} from '../../src/lib/app/state/settings/store.svelte.ts';
+import { settings, updateSetting } from '../../src/lib/app/state/settings/store.svelte.ts';
 import {
 	composeExcludedPixels,
 	deferred,
@@ -30,7 +24,7 @@ type Workflow = ReturnType<typeof createRecolorWorkflow>;
 async function settle(): Promise<void> {
 	for (let i = 0; i < 6; i++) {
 		await tick();
-		await new Promise(resolve => setTimeout(resolve, 0));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 	}
 }
 
@@ -39,7 +33,7 @@ function mountWorkflow(): { workflow: Workflow } {
 
 	render(WorkflowHarness, {
 		props: {
-			onReady: instance => {
+			onReady: (instance) => {
 				workflow = instance;
 			}
 		}

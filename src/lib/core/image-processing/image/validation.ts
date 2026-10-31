@@ -49,11 +49,7 @@ export async function validateImageFile(file: Blob): Promise<void> {
 		throw new ValidationError('notPng');
 	}
 
-	const view = new DataView(
-		header.buffer,
-		header.byteOffset,
-		header.byteLength
-	);
+	const view = new DataView(header.buffer, header.byteOffset, header.byteLength);
 	const width = view.getUint32(16);
 	const height = view.getUint32(20);
 

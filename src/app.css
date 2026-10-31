@@ -3,7 +3,6 @@
  * .animations-disabled toggle, and focus-visible outlines must win over any
  * component-level animation or outline regardless of specificity.
  */
-/* biome-ignore-all lint/complexity/noImportantStyles: deliberate accessibility overrides */
 @import 'tailwindcss';
 @import '@fontsource/silkscreen/latin-400.css';
 @import '@fontsource/silkscreen/latin-700.css';
@@ -172,8 +171,7 @@
 }
 
 @utility checker-pattern {
-	background:
-		conic-gradient(
+	background: conic-gradient(
 			var(--panel) 0 25%,
 			transparent 0 50%,
 			var(--panel) 0 75%,
@@ -212,15 +210,8 @@
 		-moz-osx-font-smoothing: grayscale;
 		background-color: var(--bg);
 		background-image:
-			linear-gradient(
-				color-mix(in srgb, var(--text) 5%, transparent) 1px,
-				transparent 1px
-			),
-			linear-gradient(
-				90deg,
-				color-mix(in srgb, var(--text) 5%, transparent) 1px,
-				transparent 1px
-			);
+			linear-gradient(color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px),
+			linear-gradient(90deg, color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px);
 		background-size: 16px 16px;
 		color: var(--text);
 	}

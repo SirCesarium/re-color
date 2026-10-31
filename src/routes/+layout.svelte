@@ -11,7 +11,7 @@
 		if (!('serviceWorker' in navigator)) return;
 
 		void navigator.serviceWorker.ready
-			.then(registration => registration.update())
+			.then((registration) => registration.update())
 			.catch((error: unknown) => {
 				console.warn('Could not check for app updates', error);
 			});

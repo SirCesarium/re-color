@@ -20,9 +20,7 @@
 <div
 	class="grid gap-3 py-3.5 {divider
 		? 'border-t border-border first:border-t-0 first:pt-0'
-		: ''} {stacked
-		? ''
-		: 'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'}"
+		: ''} {stacked ? '' : 'sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'}"
 >
 	<div class="grid min-w-0 gap-1">
 		<Typography as="span" variant="control-label">{title}</Typography>

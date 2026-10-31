@@ -2,9 +2,7 @@
 
 import { decodePng } from './png.ts';
 
-type DecodeResponse =
-	| { width: number; height: number; pixels: ArrayBuffer }
-	| { error: string };
+type DecodeResponse = { width: number; height: number; pixels: ArrayBuffer } | { error: string };
 
 self.addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
 	try {
@@ -19,8 +17,7 @@ self.addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
 		self.postMessage(response, [pixels]);
 	} catch (error) {
 		const response: DecodeResponse = {
-			error:
-				error instanceof Error ? error.message : 'Could not decode PNG image.'
+			error: error instanceof Error ? error.message : 'Could not decode PNG image.'
 		};
 
 		self.postMessage(response);
