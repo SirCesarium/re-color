@@ -10,7 +10,7 @@ COPY . .
 RUN bun run build && rm -f build/_headers
 
 
-FROM nginx:1.31.7-alpine AS runtime
+FROM nginx:1.31.8-alpine AS runtime
 
 LABEL org.opencontainers.image.title="re-color" \
       org.opencontainers.image.description="Static build of the re-color SvelteKit app"
