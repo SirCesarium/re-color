@@ -1,3 +1,12 @@
 {
-	"recommendations": ["svelte.svelte-vscode", "biomejs.biome"]
+	"recommendations": [
+		"svelte.svelte-vscode",
+		"bradlc.vscode-tailwindcss",
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"formulahendry.auto-rename-tag",
+		"formulahendry.auto-close-tag",
+		"ms-azuretools.vscode-docker",
+		"eamodio.gitlens"
+	]
 }

@@ -13,15 +13,22 @@
 		}
 	},
 	"postCreateCommand": "bun install --frozen-lockfile",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts"
+		}
+	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"svelte.svelte-vscode",
 				"bradlc.vscode-tailwindcss",
-				"ardenivanov.svelte-intellisense",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"formulahendry.auto-rename-tag",
+				"formulahendry.auto-close-tag",
 				"ms-azuretools.vscode-docker",
-				"eamodio.gitlens",
-				"biomejs.biome"
+				"eamodio.gitlens"
 			]
 		}
 	}
