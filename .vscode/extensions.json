@@ -2,6 +2,7 @@
 	"recommendations": [
 		"svelte.svelte-vscode",
 		"bradlc.vscode-tailwindcss",
+		"ardenivanov.svelte-intellisense",
 		"dbaeumer.vscode-eslint",
 		"esbenp.prettier-vscode",
 		"formulahendry.auto-rename-tag",
