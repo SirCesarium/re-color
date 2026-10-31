@@ -1,8 +1,4 @@
-import type {
-	ColorMappingConfig,
-	ColorMappingInput,
-	Rgb
-} from '../../types.ts';
+import type { ColorMappingConfig, ColorMappingInput, Rgb } from '../../types.ts';
 import { mapDominant } from './dominant.ts';
 import { mapByLuminance } from './luminance.ts';
 import { mapNearest } from './nearest.ts';

@@ -90,9 +90,7 @@ test('roundtrips image blobs with their names', async () => {
 	}
 	expect(restored.palette.name).toBe('palette.png');
 	expect(restored.palette.blob.type).toBe('image/png');
-	expect([
-		...new Uint8Array(await restored.palette.blob.arrayBuffer())
-	]).toEqual([...bytes]);
+	expect([...new Uint8Array(await restored.palette.blob.arrayBuffer())]).toEqual([...bytes]);
 	expect(restored?.sprite?.name).toBe('sprite.png');
 	expect(restored?.mapping).toBe('dominant');
 });
@@ -117,11 +115,7 @@ test('clearing saved app data removes settings, hints, legacy keys, and the work
 	await clearSavedAppData();
 
 	expect(await loadWorkspace()).toBeNull();
-	for (const key of [
-		APP_SETTINGS_KEY,
-		'recolor.mapping',
-		...HINT_STORAGE_KEYS
-	]) {
+	for (const key of [APP_SETTINGS_KEY, 'recolor.mapping', ...HINT_STORAGE_KEYS]) {
 		expect(localStorage.getItem(key)).toBeNull();
 	}
 });
@@ -132,8 +126,7 @@ test('resetting hints keeps the saved settings untouched', async () => {
 
 	resetHints();
 
-	for (const key of HINT_STORAGE_KEYS)
-		expect(localStorage.getItem(key)).toBeNull();
+	for (const key of HINT_STORAGE_KEYS) expect(localStorage.getItem(key)).toBeNull();
 	expect(localStorage.getItem(APP_SETTINGS_KEY)).toBe('{"maxPaletteColors":8}');
 
 	localStorage.removeItem(APP_SETTINGS_KEY);

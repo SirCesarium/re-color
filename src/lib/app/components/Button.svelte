@@ -70,13 +70,16 @@
 >
 	{#if variant === 'primary'}
 		<span
-			class="absolute inset-y-0 left-0 transition-[width] duration-120 ease-linear {busy ? 'animate-[fill-sweep_600ms_linear_infinite]' : ''}"
+			class="absolute inset-y-0 left-0 transition-[width] duration-120 ease-linear {busy
+				? 'animate-[fill-sweep_600ms_linear_infinite]'
+				: ''}"
 			style="background-color: color-mix(in srgb, var(--btn-fg) 22%, transparent); background-image: repeating-linear-gradient(90deg, color-mix(in srgb, var(--btn-fg) 55%, transparent) 0 8px, transparent 8px 16px)"
 			style:width="{fill}%"
 		></span>
 		<span class="relative z-1">
 			{#if busy}
-				<span class={cancelOnBusy ? 'group-hover/cancel:hidden group-focus-visible/cancel:hidden' : ''}
+				<span
+					class={cancelOnBusy ? 'group-hover/cancel:hidden group-focus-visible/cancel:hidden' : ''}
 					>{busyLabel ?? $t('button.processing')}</span
 				>
 				{#if cancelOnBusy}

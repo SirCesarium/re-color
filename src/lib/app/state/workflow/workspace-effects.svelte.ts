@@ -1,8 +1,5 @@
 import { untrack } from 'svelte';
-import type {
-	MappingMode,
-	PaletteColor
-} from '#core/image-processing/index.ts';
+import type { MappingMode, PaletteColor } from '#core/image-processing/index.ts';
 import { settings } from '../settings/store.svelte.ts';
 import {
 	clearWorkspace,
@@ -29,10 +26,7 @@ type WorkspaceHost = {
  * first restore settles, so an empty initial state cannot clobber a saved
  * session.
  */
-export function watchWorkspace(
-	state: WorkspaceHost,
-	isRestoreCancelled: () => boolean
-): void {
+export function watchWorkspace(state: WorkspaceHost, isRestoreCancelled: () => boolean): void {
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
 	$effect(() => {
@@ -94,7 +88,7 @@ async function restoreWorkspace(
 						type: 'image/png'
 					})
 				: null;
-			state.colors = workspace.colors.map(color => ({ ...color }));
+			state.colors = workspace.colors.map((color) => ({ ...color }));
 			state.excludedPixels = workspace.excludedPixels;
 		}
 	} catch (error) {

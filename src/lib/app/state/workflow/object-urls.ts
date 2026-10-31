@@ -21,10 +21,7 @@ export function releaseUrl(
 }
 
 /** Revokes both addresses of a result, each exactly once even when equal. */
-export function revokeResultUrls(result: {
-	url: string;
-	previewUrl: string;
-}): void {
+export function revokeResultUrls(result: { url: string; previewUrl: string }): void {
 	for (const url of new Set([result.url, result.previewUrl])) {
 		URL.revokeObjectURL(url);
 	}

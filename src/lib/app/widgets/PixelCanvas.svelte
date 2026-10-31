@@ -1,10 +1,7 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
 
-	import {
-		fitImageInViewport,
-		pixelAtPoint
-	} from '#core/geometry/pixel-coords.ts';
+	import { fitImageInViewport, pixelAtPoint } from '#core/geometry/pixel-coords.ts';
 	import { linePoints } from '#core/geometry/stroke-line.ts';
 
 	let {
@@ -19,10 +16,7 @@
 		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
 		onTogglePixel?: (pixelIndex: number) => void;
-		onSetPixelExclusion?: (
-			pixelIndexes: readonly number[],
-			excluded: boolean
-		) => void;
+		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
 		onInteract?: () => void;
 	} = $props();
 
@@ -66,9 +60,7 @@
 
 		image.onerror = () => {
 			if (!cancelled) {
-				console.error(
-					'Could not load the original sprite for live pixel exclusion'
-				);
+				console.error('Could not load the original sprite for live pixel exclusion');
 				previewError = true;
 			}
 		};
@@ -164,12 +156,7 @@
 
 		if (!imageRect) return null;
 
-		return pixelAtPoint(
-			{ x: clientX, y: clientY },
-			bounds,
-			imageRect,
-			dimensions
-		);
+		return pixelAtPoint({ x: clientX, y: clientY }, bounds, imageRect, dimensions);
 	}
 
 	function getHoverStyle() {
@@ -196,8 +183,7 @@
 		const size = dimensions;
 
 		if (lastPixel && size) {
-			const lastIndex =
-				pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
+			const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
 
 			if (lastPixel.index !== lastIndex) {
 				pointerStroke.dragging = true;
@@ -246,8 +232,7 @@
 
 		if (!pixel || !size || pointerStroke?.pointerId !== event.pointerId) return;
 
-		const lastIndex =
-			pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
+		const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
 
 		if (!pointerStroke.dragging && pixel.index !== lastIndex) {
 			pointerStroke.dragging = true;
@@ -265,7 +250,7 @@
 		// Every pixel between the last point and this one, so a fast drag
 		// leaves no gaps in the stroke.
 		const segment = new Set(
-			linePoints(stroke.lastPixel, pixel).map(point => {
+			linePoints(stroke.lastPixel, pixel).map((point) => {
 				const index = point.y * size.width + point.x;
 				stroke.indexes.add(index);
 
@@ -281,10 +266,7 @@
 		}
 	}
 
-	function paintPixels(
-		indexes: ReadonlySet<number>,
-		image: HTMLImageElement | null
-	) {
+	function paintPixels(indexes: ReadonlySet<number>, image: HTMLImageElement | null) {
 		if (!canvas || !image || !dimensions || indexes.size === 0) return;
 
 		const context = canvas.getContext('2d');
@@ -350,7 +332,7 @@
 
 {#if imageUrl && dimensions && !previewError}
 	<button
-		class="absolute inset-0 overflow-hidden touch-none cursor-crosshair p-0 border-0 bg-transparent text-left"
+		class="absolute inset-0 cursor-crosshair touch-none overflow-hidden border-0 bg-transparent p-0 text-left"
 		bind:this={viewport}
 		type="button"
 		aria-label={$t('result.canvasAria')}
@@ -368,15 +350,24 @@
 		></canvas>
 		{#if hoverPixel}
 			<span
-				class="pointer-events-none absolute border border-accent shadow-[inset_0_0_0_1px_var(--panel)] [@media(hover:none)]:hidden pointer-coarse:hidden"
+				class="pointer-events-none absolute border border-accent shadow-[inset_0_0_0_1px_var(--panel)] pointer-coarse:hidden [@media(hover:none)]:hidden"
 				style={getHoverStyle()}
 			></span>
 		{/if}
 	</button>
 {:else if imageUrl && previewError}
-	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text" role="alert">{$t('result.previewError')}</div>
+	<div
+		class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text"
+		role="alert"
+	>
+		{$t('result.previewError')}
+	</div>
 {:else if imageUrl}
-	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">{$t('result.loading')}</div>
+	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">
+		{$t('result.loading')}
+	</div>
 {:else}
-	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">{$t('result.empty')}</div>
+	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">
+		{$t('result.empty')}
+	</div>
 {/if}

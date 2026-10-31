@@ -10,10 +10,7 @@ import {
 } from './model.ts';
 
 export const APP_SETTINGS_KEY = 'recolor.settings';
-export const HINT_STORAGE_KEYS = [
-	'recolor.hintSeen',
-	'recolor.resultPixelHelpSeen'
-] as const;
+export const HINT_STORAGE_KEYS = ['recolor.hintSeen', 'recolor.resultPixelHelpSeen'] as const;
 export const SETTINGS_EXPORT_FORMAT = 're-color-settings';
 export const SETTINGS_EXPORT_VERSION = 1;
 
@@ -22,9 +19,7 @@ export function exportAppSettings(settings: AppSettings): string {
 		{
 			format: SETTINGS_EXPORT_FORMAT,
 			version: SETTINGS_EXPORT_VERSION,
-			settings: Object.fromEntries(
-				APP_SETTING_KEYS.map(key => [key, settings[key]])
-			)
+			settings: Object.fromEntries(APP_SETTING_KEYS.map((key) => [key, settings[key]]))
 		},
 		null,
 		2
@@ -87,11 +82,7 @@ export function parseAppSettings(
 export async function clearSavedAppData(): Promise<void> {
 	await clearWorkspace();
 
-	for (const key of [
-		APP_SETTINGS_KEY,
-		'recolor.mapping',
-		...HINT_STORAGE_KEYS
-	]) {
+	for (const key of [APP_SETTINGS_KEY, 'recolor.mapping', ...HINT_STORAGE_KEYS]) {
 		localStorage.removeItem(key);
 	}
 }

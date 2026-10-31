@@ -39,10 +39,7 @@ test('extracts indexed PNG palette samples without applying gamma metadata', asy
 		[233, 176, 21]
 	];
 	const pixels = Array.from({ length: 256 }, (_, index) => (index * 9) % 10);
-	const png = makeIndexedPng(16, 16, palette, pixels, [
-		0,
-		...Array(9).fill(255)
-	]);
+	const png = makeIndexedPng(16, 16, palette, pixels, [0, ...Array(9).fill(255)]);
 
 	const colors = await extractColorsFromFile(
 		pngBlob(png),
@@ -52,9 +49,7 @@ test('extracts indexed PNG palette samples without applying gamma metadata', asy
 
 	expect(colors).toHaveLength(9);
 	expect(new Set(colors.map(({ r, g, b }) => `${r},${g},${b}`)).size).toBe(9);
-	expect(colors.some(({ r, g, b }) => r === 253 && g === 245 && b === 95)).toBe(
-		true
-	);
+	expect(colors.some(({ r, g, b }) => r === 253 && g === 245 && b === 95)).toBe(true);
 });
 
 test('decodes interlaced RGBA PNG pixels into their original row-major order', () => {
@@ -98,35 +93,19 @@ test('extracts packed 4-bit indexed PNG samples exactly', async () => {
 });
 
 test('accepts PNG images up to the configured dimensions', async () => {
-	const png = makeIndexedPng(
-		512,
-		512,
-		[[20, 40, 60]],
-		Array(512 * 512).fill(0),
-		[255]
-	);
+	const png = makeIndexedPng(512, 512, [[20, 40, 60]], Array(512 * 512).fill(0), [255]);
 
 	await expect(validateImageFile(pngBlob(png))).resolves.toBeUndefined();
 });
 
 test('yields to the event loop while extracting a maximum-size palette image', async () => {
-	const png = makeIndexedPng(
-		512,
-		512,
-		[[20, 40, 60]],
-		Array(512 * 512).fill(0),
-		[255]
-	);
+	const png = makeIndexedPng(512, 512, [[20, 40, 60]], Array(512 * 512).fill(0), [255]);
 	let timerRan = false;
 	setTimeout(() => {
 		timerRan = true;
 	}, 0);
 
-	await extractColorsFromFile(
-		pngBlob(png),
-		{ maxColors: 64, alphaThreshold: 128 },
-		canvasConfig
-	);
+	await extractColorsFromFile(pngBlob(png), { maxColors: 64, alphaThreshold: 128 }, canvasConfig);
 
 	expect(timerRan).toBe(true);
 });
@@ -152,9 +131,7 @@ test('PNG decoder rejects excessive dimensions before inflating image data', () 
 		chunk('IEND', new Uint8Array())
 	]);
 
-	expect(() => decodePng(png)).toThrow(
-		'PNG dimensions exceed the supported 512 × 512 pixel limit'
-	);
+	expect(() => decodePng(png)).toThrow('PNG dimensions exceed the supported 512 × 512 pixel limit');
 });
 
 test('palette extraction and recoloring reject files that are not PNG', async () => {
@@ -163,11 +140,7 @@ test('palette extraction and recoloring reject files that are not PNG', async ()
 	});
 
 	await expect(
-		extractColorsFromFile(
-			invalidFile,
-			{ maxColors: 64, alphaThreshold: 128 },
-			canvasConfig
-		)
+		extractColorsFromFile(invalidFile, { maxColors: 64, alphaThreshold: 128 }, canvasConfig)
 	).rejects.toMatchObject({ code: 'notPng' });
 
 	await expect(

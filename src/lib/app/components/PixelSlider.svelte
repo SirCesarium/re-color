@@ -18,9 +18,7 @@
 	} = $props();
 
 	let progress = $derived(((value - min) / (max - min)) * 100);
-	let inputId = $derived(
-		`pixel-slider-${label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`
-	);
+	let inputId = $derived(`pixel-slider-${label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`);
 	let draft = $state('');
 
 	$effect(() => {
@@ -46,7 +44,7 @@
 	<div class="flex items-center justify-between gap-3 text-xs text-text-dim">
 		<label class:sr-only={!showLabel} for={inputId}>{label}</label>
 		<input
-			class="box-border ms-auto w-18 appearance-none border-2 border-btn-edge bg-panel-sunken px-2 py-0.75 text-center text-sm tabular-nums text-text shadow-[2px_2px_0_var(--btn-shadow)] focus-visible:outline-none"
+			class="ms-auto box-border w-18 appearance-none border-2 border-btn-edge bg-panel-sunken px-2 py-0.75 text-center text-sm text-text tabular-nums shadow-[2px_2px_0_var(--btn-shadow)] focus-visible:outline-none"
 			id="{inputId}-number"
 			type="text"
 			inputmode="numeric"

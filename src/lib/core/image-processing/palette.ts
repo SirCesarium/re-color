@@ -1,12 +1,7 @@
 import { keyToRgb, rgbToKey } from './color/metrics.ts';
 import { validateExtractionConfig } from './config-schema.ts';
 import type { CanvasConfig } from './image/canvas.ts';
-import {
-	context2d,
-	createCanvas,
-	loadImage,
-	readPixels
-} from './image/canvas.ts';
+import { context2d, createCanvas, loadImage, readPixels } from './image/canvas.ts';
 import { yieldToBrowser } from './image/scheduler.ts';
 import { validateImageFile } from './image/validation.ts';
 import type { PaletteColor, PaletteExtractionConfig } from './types.ts';
@@ -56,19 +51,13 @@ export async function extractColorsFromFile(
 	const image = await loadImage(file);
 
 	try {
-		return await colorsFromRgbaAsync(
-			image.pixels ?? readPixels(image, canvas).data,
-			config
-		);
+		return await colorsFromRgbaAsync(image.pixels ?? readPixels(image, canvas).data, config);
 	} finally {
 		image.close();
 	}
 }
 
-function colorsFromRgba(
-	data: Uint8ClampedArray,
-	config: PaletteExtractionConfig
-): PaletteColor[] {
+function colorsFromRgba(data: Uint8ClampedArray, config: PaletteExtractionConfig): PaletteColor[] {
 	const counts = new Map<number, number>();
 
 	for (let index = 0; index < data.length; index += 4) {

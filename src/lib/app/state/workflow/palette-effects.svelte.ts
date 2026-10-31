@@ -1,8 +1,5 @@
 import { untrack } from 'svelte';
-import {
-	extractColorsFromFile,
-	type PaletteColor
-} from '#core/image-processing/index.ts';
+import { extractColorsFromFile, type PaletteColor } from '#core/image-processing/index.ts';
 import { CANVAS_CONFIG, PALETTE_CONFIG } from '#core/recolor.ts';
 import { settings } from '../settings/store.svelte.ts';
 
@@ -40,20 +37,14 @@ export function watchPaletteColors(state: PaletteHost): void {
 		state.paletteColorsLoaded = false;
 		const previousColors = untrack(() => state.colors);
 
-		void extractColorsFromFile(
-			file,
-			{ ...PALETTE_CONFIG, maxColors },
-			CANVAS_CONFIG
-		)
-			.then(colors => {
+		void extractColorsFromFile(file, { ...PALETTE_CONFIG, maxColors }, CANVAS_CONFIG)
+			.then((colors) => {
 				if (cancelled) return;
 
-				state.colors = colors.map(color => {
+				state.colors = colors.map((color) => {
 					const previous = previousColors.find(
-						candidate =>
-							candidate.r === color.r &&
-							candidate.g === color.g &&
-							candidate.b === color.b
+						(candidate) =>
+							candidate.r === color.r && candidate.g === color.g && candidate.b === color.b
 					);
 
 					return previous ? { ...color, active: previous.active } : color;

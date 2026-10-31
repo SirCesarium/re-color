@@ -1,9 +1,6 @@
 import { expect, test } from 'vitest';
 import { LocalizedError } from '../../../src/lib/app/i18n/localized-error.ts';
-import {
-	DEFAULT_APP_SETTINGS,
-	isMappingMode
-} from '../../../src/lib/app/state/settings/model.ts';
+import { DEFAULT_APP_SETTINGS, isMappingMode } from '../../../src/lib/app/state/settings/model.ts';
 import {
 	exportAppSettings,
 	importAppSettings,
@@ -26,15 +23,11 @@ function importFailure(json: string): LocalizedError {
 test('uses the built-in app settings when saved preferences are absent or invalid', () => {
 	expect(parseAppSettings(null)).toEqual(DEFAULT_APP_SETTINGS);
 	expect(parseAppSettings('{ invalid json')).toEqual(DEFAULT_APP_SETTINGS);
-	expect(parseAppSettings(JSON.stringify({ maxPaletteColors: 257 }))).toEqual(
+	expect(parseAppSettings(JSON.stringify({ maxPaletteColors: 257 }))).toEqual(DEFAULT_APP_SETTINGS);
+	expect(parseAppSettings(JSON.stringify({ maxPaletteColors: 0 }))).toEqual(DEFAULT_APP_SETTINGS);
+	expect(parseAppSettings(JSON.stringify({ defaultMapping: 'unknown' }))).toEqual(
 		DEFAULT_APP_SETTINGS
 	);
-	expect(parseAppSettings(JSON.stringify({ maxPaletteColors: 0 }))).toEqual(
-		DEFAULT_APP_SETTINGS
-	);
-	expect(
-		parseAppSettings(JSON.stringify({ defaultMapping: 'unknown' }))
-	).toEqual(DEFAULT_APP_SETTINGS);
 });
 
 test('restores valid saved preferences', () => {
@@ -90,12 +83,10 @@ test('exports and imports only versioned app settings', () => {
 });
 
 test('rejects unsupported or invalid settings exports', () => {
-	expect(() => importAppSettings('{ invalid json')).toThrow(
-		'settings.importInvalidJson'
+	expect(() => importAppSettings('{ invalid json')).toThrow('settings.importInvalidJson');
+	expect(() => importAppSettings(JSON.stringify({ format: 'other', version: 1 }))).toThrow(
+		'settings.importWrongFormat'
 	);
-	expect(() =>
-		importAppSettings(JSON.stringify({ format: 'other', version: 1 }))
-	).toThrow('settings.importWrongFormat');
 	expect(() =>
 		importAppSettings(
 			JSON.stringify({
@@ -176,9 +167,7 @@ test('recovers each invalid field individually without discarding valid ones', (
 	);
 
 	// Only the tampered boolean reverts; every other preference survives.
-	expect(restored.animationsEnabled).toBe(
-		DEFAULT_APP_SETTINGS.animationsEnabled
-	);
+	expect(restored.animationsEnabled).toBe(DEFAULT_APP_SETTINGS.animationsEnabled);
 	expect(restored.hintsEnabled).toBe(false);
 	expect(restored.maxPaletteColors).toBe(32);
 	expect(restored.defaultMapping).toBe('nearest');
@@ -245,9 +234,7 @@ test('rejects exports whose settings are missing or not an object', () => {
 	).toThrow('settings.importInvalidPreferences');
 
 	expect(() =>
-		importAppSettings(
-			JSON.stringify({ format: 're-color-settings', version: 1, settings: 7 })
-		)
+		importAppSettings(JSON.stringify({ format: 're-color-settings', version: 1, settings: 7 }))
 	).toThrow('settings.importInvalidPreferences');
 });
 

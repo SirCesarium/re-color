@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/7bd850c8-d3ed-44b3-8350-7cd14f139fb0
 
 ### Any image is a palette
 
-Extract a color palette from a reference sprite and __re-colorize__ another one. re::color pulls up to **64 colors** (configurable from 1 to 256) out of the reference image and uses them to repaint your sprite.
+Extract a color palette from a reference sprite and **re-colorize** another one. re::color pulls up to **64 colors** (configurable from 1 to 256) out of the reference image and uses them to repaint your sprite.
 
 ### Three ways to map colors
 
@@ -101,7 +101,7 @@ The CI runs these five commands on every push and pull request. Run them before 
 
 ```bash
 bun run check        # svelte-check
-bun run lint         # biome check
+bun run lint         # prettier + eslint
 bun run test:domain  # domain tier — Vitest under node, no DOM
 bun run test:ui      # ui tier — Vitest under jsdom
 bun run build

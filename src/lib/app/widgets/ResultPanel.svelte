@@ -19,10 +19,7 @@
 		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
 		onTogglePixel?: (pixelIndex: number) => void;
-		onSetPixelExclusion?: (
-			pixelIndexes: readonly number[],
-			excluded: boolean
-		) => void;
+		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
 		onDownload?: () => void;
 	} = $props();
 
@@ -55,14 +52,16 @@
 </script>
 
 <section
-	class="animate-[rise_380ms_ease-out_240ms_backwards] flex w-full max-w-120 flex-col gap-2"
+	class="flex w-full max-w-120 animate-[rise_380ms_ease-out_240ms_backwards] flex-col gap-2"
 	aria-label={$t('result.section')}
 >
 	<Typography as="span" variant="section-label">{$t('result.section')}</Typography>
 	<div
 		class="group/result relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
-		<div class="pointer-events-none absolute inset-0 checker-pattern opacity-35 group-hover/result:animate-[drift_4s_linear_infinite]"></div>
+		<div
+			class="pointer-events-none absolute inset-0 opacity-35 checker-pattern group-hover/result:animate-[drift_4s_linear_infinite]"
+		></div>
 		<PixelCanvas
 			{imageUrl}
 			{spriteFile}
@@ -74,7 +73,7 @@
 
 		{#if imageUrl}
 			{#if helpVisible}
-				<div class="absolute top-2 left-2 right-2 z-10">
+				<div class="absolute top-2 right-2 left-2 z-10">
 					<Hint
 						class="text-left text-xs leading-[1.35]"
 						arrow="down"

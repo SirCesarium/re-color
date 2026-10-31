@@ -44,5 +44,5 @@ export function revokedObjectUrls(): readonly string[] {
 
 /** URLs created but never revoked — anything here has leaked. */
 export function leakedObjectUrls(): readonly string[] {
-	return created.filter(url => !revoked.includes(url));
+	return created.filter((url) => !revoked.includes(url));
 }

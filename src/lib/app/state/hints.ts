@@ -5,8 +5,7 @@ function initialHints(): boolean {
 	if (typeof localStorage === 'undefined') return true;
 
 	try {
-		return parseAppSettings(localStorage.getItem(APP_SETTINGS_KEY))
-			.hintsEnabled;
+		return parseAppSettings(localStorage.getItem(APP_SETTINGS_KEY)).hintsEnabled;
 	} catch {
 		return true;
 	}

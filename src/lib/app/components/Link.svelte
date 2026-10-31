@@ -23,11 +23,6 @@
 	};
 </script>
 
-<a
-	class="underline {variants[variant]} {className}"
-	{href}
-	{target}
-	{rel}
->
+<a class="underline {variants[variant]} {className}" {href} {target} {rel}>
 	{@render children()}
 </a>

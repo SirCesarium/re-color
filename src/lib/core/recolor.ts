@@ -37,10 +37,7 @@ export const TRANSPARENCY_CONFIG: TransparencyConfig = {
 	opaqueAlpha: 255
 };
 
-export const PROCESSING_CONFIG: Omit<
-	RecolorConfig['processing'],
-	'onProgress' | 'signal'
-> = {
+export const PROCESSING_CONFIG: Omit<RecolorConfig['processing'], 'onProgress' | 'signal'> = {
 	chunkDurationMs: 6,
 	progress: {
 		start: 0,
@@ -56,10 +53,7 @@ export const OUTPUT_CONFIG: RecolorConfig['output'] = {
 	mimeType: 'image/png'
 };
 
-export const OUTPUT_EXTENSIONS: Record<
-	RecolorConfig['output']['mimeType'],
-	string
-> = {
+export const OUTPUT_EXTENSIONS: Record<RecolorConfig['output']['mimeType'], string> = {
 	'image/png': 'png',
 	'image/jpeg': 'jpg',
 	'image/webp': 'webp'

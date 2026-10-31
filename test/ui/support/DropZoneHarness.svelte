@@ -12,12 +12,6 @@
 	let file = $state<File | null>(null);
 </script>
 
-<DropZone
-	label="Palette"
-	hint="Reference image"
-	variant="ref"
-	{validate}
-	bind:file
-/>
+<DropZone label="Palette" hint="Reference image" variant="ref" {validate} bind:file />
 
 <span data-testid="accepted">{file ? 'accepted' : 'empty'}</span>

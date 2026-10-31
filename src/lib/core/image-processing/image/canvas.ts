@@ -142,7 +142,7 @@ function decodePngInWorker(
 		);
 		worker.addEventListener(
 			'error',
-			event => {
+			(event) => {
 				worker.terminate();
 				reject(new Error(`PNG decoder worker failed: ${event.message}`));
 			},
@@ -169,8 +169,7 @@ export async function composeExcludedPixels(
 	await validateImageFile(originalFile);
 	const response = await fetch(baseUrl);
 
-	if (!response.ok)
-		throw new Error(`Could not read the recolored image: ${response.status}`);
+	if (!response.ok) throw new Error(`Could not read the recolored image: ${response.status}`);
 
 	const base = await loadImage(await response.blob());
 
@@ -187,14 +186,8 @@ export async function composeExcludedPixels(
 			const pixelCount = base.width * base.height;
 
 			for (const pixelIndex of excludedPixels) {
-				if (
-					!Number.isInteger(pixelIndex) ||
-					pixelIndex < 0 ||
-					pixelIndex >= pixelCount
-				) {
-					throw new RangeError(
-						`excludedPixels contains an invalid pixel index: ${pixelIndex}`
-					);
+				if (!Number.isInteger(pixelIndex) || pixelIndex < 0 || pixelIndex >= pixelCount) {
+					throw new RangeError(`excludedPixels contains an invalid pixel index: ${pixelIndex}`);
 				}
 
 				const channelIndex = pixelIndex * 4;
@@ -272,14 +265,9 @@ export function context2d(
  * @returns Four RGBA bytes per pixel.
  * @throws If the image has neither samples nor a drawable source, or the canvas fails.
  */
-export function readPixels(
-	image: LoadedImage,
-	config: CanvasConfig
-): ImageData {
-	if (image.pixels)
-		return new ImageData(image.pixels, image.width, image.height);
-	if (!image.source)
-		throw new Error('Decoded image does not have a readable source');
+export function readPixels(image: LoadedImage, config: CanvasConfig): ImageData {
+	if (image.pixels) return new ImageData(image.pixels, image.width, image.height);
+	if (!image.source) throw new Error('Decoded image does not have a readable source');
 
 	const context = context2d(createCanvas(image.width, image.height), config);
 
@@ -306,7 +294,7 @@ export function toBlobUrl(
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		canvas.toBlob(
-			blob => {
+			(blob) => {
 				if (!blob) {
 					reject(new Error(`Could not encode the image as ${config.mimeType}`));
 
@@ -314,11 +302,7 @@ export function toBlobUrl(
 				}
 
 				if (blob.type !== config.mimeType) {
-					reject(
-						new Error(
-							`Image encoder returned ${blob.type} instead of ${config.mimeType}`
-						)
-					);
+					reject(new Error(`Image encoder returned ${blob.type} instead of ${config.mimeType}`));
 
 					return;
 				}

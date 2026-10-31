@@ -35,7 +35,7 @@
 </script>
 
 <div
-	class="relative overflow-hidden grid bg-panel border-2 border-btn-edge shadow-[4px_4px_0_var(--btn-shadow)] grid-cols-[repeat(var(--option-count),minmax(0,1fr))] max-[420px]:grid-cols-1 {className}"
+	class="relative grid grid-cols-[repeat(var(--option-count),minmax(0,1fr))] overflow-hidden border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)] max-[420px]:grid-cols-1 {className}"
 	role="group"
 	aria-label={label}
 	style:--option-count={options.length}
@@ -52,8 +52,11 @@
 			}}
 		>
 			<span
-				class="min-w-0 text-base leading-[1.2] text-center wrap-break-word transition-transform duration-120 ease-out group-active/seg:[text-shadow:1px_1px_0_var(--btn-shadow)] {value === option.value ? 'animate-[pop_220ms_ease-out]' : ''}"
-			>{option.label}</span>
+				class="min-w-0 text-center text-base leading-[1.2] wrap-break-word transition-transform duration-120 ease-out group-active/seg:[text-shadow:1px_1px_0_var(--btn-shadow)] {value ===
+				option.value
+					? 'animate-[pop_220ms_ease-out]'
+					: ''}">{option.label}</span
+			>
 		</button>
 	{/each}
 </div>

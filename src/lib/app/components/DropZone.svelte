@@ -22,15 +22,9 @@
 	let selectionId = 0;
 	let previewedFile: File | null = null;
 
-	const hoverColor = $derived(
-		variant === 'ref' ? 'hover:text-ref' : 'hover:text-sprite-base'
-	);
-	const accentColor = $derived(
-		variant === 'ref' ? 'var(--ref)' : 'var(--sprite-base)'
-	);
-	const tagColor = $derived(
-		variant === 'ref' ? 'text-ref' : 'text-sprite-base'
-	);
+	const hoverColor = $derived(variant === 'ref' ? 'hover:text-ref' : 'hover:text-sprite-base');
+	const accentColor = $derived(variant === 'ref' ? 'var(--ref)' : 'var(--sprite-base)');
+	const tagColor = $derived(variant === 'ref' ? 'text-ref' : 'text-sprite-base');
 
 	$effect(() => {
 		const url = preview;
@@ -98,7 +92,10 @@
 </script>
 
 <label
-	class="relative flex aspect-square h-auto flex-1 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden bg-panel px-3 text-center text-border-dash transition-[color,background-color] duration-120 ease-out drop-pattern hover:animate-[ants_500ms_linear_infinite] hover:bg-panel-hover has-[input:focus-visible]:shadow-[0_0_0_2px_var(--btn-edge)] max-[420px]:w-full max-[420px]:flex-none {hoverColor} {preview !== null ? 'bg-panel-sunken' : ''}"
+	class="relative flex aspect-square h-auto flex-1 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden bg-panel drop-pattern px-3 text-center text-border-dash transition-[color,background-color] duration-120 ease-out hover:animate-[ants_500ms_linear_infinite] hover:bg-panel-hover has-[input:focus-visible]:shadow-[0_0_0_2px_var(--btn-edge)] max-[420px]:w-full max-[420px]:flex-none {hoverColor} {preview !==
+	null
+		? 'bg-panel-sunken'
+		: ''}"
 	ondragover={onDragOver}
 	ondragleave={onDragLeave}
 	ondrop={onDrop}
@@ -126,19 +123,25 @@
 			aria-hidden="true"
 		>
 			<span
-				class="absolute inset-0 opacity-30 animate-[hint-drift_1.1s_linear_infinite]"
+				class="absolute inset-0 animate-[hint-drift_1.1s_linear_infinite] opacity-30"
 				style="background: conic-gradient({accentColor} 0 25%, transparent 0 50%, {accentColor} 0 75%, transparent 0) 0 0 / var(--checker-size) var(--checker-size)"
 			></span>
 			<span class="relative w-full overflow-hidden">
-				<span class="flex w-max items-center gap-4 whitespace-nowrap animate-[hint-slide_4s_linear_infinite]">
+				<span
+					class="flex w-max animate-[hint-slide_4s_linear_infinite] items-center gap-4 whitespace-nowrap"
+				>
 					{#each Array(6) as _, i (i)}
-						<span class="text-[clamp(14px,4vw,20px)] font-bold leading-none text-pop [text-shadow:2px_2px_0_var(--btn-edge)]">{$t('dropzone.dropIt')}</span>
+						<span
+							class="text-[clamp(14px,4vw,20px)] leading-none font-bold text-pop [text-shadow:2px_2px_0_var(--btn-edge)]"
+							>{$t('dropzone.dropIt')}</span
+						>
 					{/each}
 				</span>
 			</span>
 		</span>
 	{:else if preview}
-		<span class="pointer-events-none absolute inset-0 checker-pattern opacity-50" aria-hidden="true"></span>
+		<span class="pointer-events-none absolute inset-0 opacity-50 checker-pattern" aria-hidden="true"
+		></span>
 		<img
 			class="pointer-events-none relative h-full w-full object-contain [image-rendering:pixelated]"
 			src={preview}

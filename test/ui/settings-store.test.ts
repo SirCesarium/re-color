@@ -2,10 +2,7 @@ import { get } from 'svelte/store';
 import { locale } from 'svelte-i18n';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { hintsEnabled } from '../../src/lib/app/state/hints.ts';
-import {
-	type AppSettings,
-	DEFAULT_APP_SETTINGS
-} from '../../src/lib/app/state/settings/model.ts';
+import { type AppSettings, DEFAULT_APP_SETTINGS } from '../../src/lib/app/state/settings/model.ts';
 import {
 	APP_SETTINGS_KEY,
 	exportAppSettings,
@@ -20,10 +17,7 @@ import {
 
 /** Writes a settings blob the way the app would find it on a return visit. */
 function saveSettings(overrides: Partial<AppSettings>): void {
-	localStorage.setItem(
-		APP_SETTINGS_KEY,
-		JSON.stringify({ ...DEFAULT_APP_SETTINGS, ...overrides })
-	);
+	localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify({ ...DEFAULT_APP_SETTINGS, ...overrides }));
 }
 
 beforeEach(() => {
@@ -66,15 +60,11 @@ describe('updateSetting', () => {
 	it('toggles the animations-disabled class on the document', () => {
 		updateSetting('animationsEnabled', false);
 
-		expect(
-			document.documentElement.classList.contains('animations-disabled')
-		).toBe(true);
+		expect(document.documentElement.classList.contains('animations-disabled')).toBe(true);
 
 		updateSetting('animationsEnabled', true);
 
-		expect(
-			document.documentElement.classList.contains('animations-disabled')
-		).toBe(false);
+		expect(document.documentElement.classList.contains('animations-disabled')).toBe(false);
 	});
 
 	it('switches the active locale', () => {
@@ -105,9 +95,7 @@ describe('replaceSettings', () => {
 
 		expect(get(locale)).toBe('es');
 		expect(get(hintsEnabled)).toBe(false);
-		expect(
-			document.documentElement.classList.contains('animations-disabled')
-		).toBe(true);
+		expect(document.documentElement.classList.contains('animations-disabled')).toBe(true);
 	});
 
 	it('persists the whole replacement', () => {

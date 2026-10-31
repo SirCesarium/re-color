@@ -45,8 +45,6 @@ describe('linePoints', () => {
 	});
 
 	test('a zero-length line is a single point', () => {
-		expect(linePoints({ x: 5, y: 5 }, { x: 5, y: 5 })).toEqual([
-			{ x: 5, y: 5 }
-		]);
+		expect(linePoints({ x: 5, y: 5 }, { x: 5, y: 5 })).toEqual([{ x: 5, y: 5 }]);
 	});
 });

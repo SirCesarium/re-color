@@ -1,16 +1,8 @@
 import { MAPPING_STORAGE_KEY } from '#core/recolor.ts';
 import { localeFromNavigator, setLocale } from '../../i18n/index.ts';
 import { hintsEnabled } from '../hints.ts';
-import {
-	type AppSettings,
-	DEFAULT_APP_SETTINGS,
-	isMappingMode
-} from './model.ts';
-import {
-	APP_SETTINGS_KEY,
-	exportAppSettings,
-	parseAppSettings
-} from './repository.ts';
+import { type AppSettings, DEFAULT_APP_SETTINGS, isMappingMode } from './model.ts';
+import { APP_SETTINGS_KEY, exportAppSettings, parseAppSettings } from './repository.ts';
 
 // The app's one copy of the user's preferences. A module-level rune means the
 // workflow store and the settings page read the same reactive object rather
@@ -59,10 +51,7 @@ function persist(): boolean {
  */
 function applySideEffects(): void {
 	if (typeof document !== 'undefined') {
-		document.documentElement.classList.toggle(
-			'animations-disabled',
-			!settings.animationsEnabled
-		);
+		document.documentElement.classList.toggle('animations-disabled', !settings.animationsEnabled);
 	}
 
 	setLocale(settings.locale);
@@ -78,10 +67,7 @@ export function loadSettings(): AppSettings {
 }
 
 /** Changes one preference, applying side effects and persisting in one step. */
-export function updateSetting<K extends keyof AppSettings>(
-	key: K,
-	value: AppSettings[K]
-): boolean {
+export function updateSetting<K extends keyof AppSettings>(key: K, value: AppSettings[K]): boolean {
 	settings[key] = value;
 	applySideEffects();
 

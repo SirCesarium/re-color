@@ -1,22 +1,18 @@
 import { z } from 'zod';
 import type { PaletteExtractionConfig, RecolorConfig } from './types.ts';
 
-const BYTE_RANGE_MESSAGE = (name: string) =>
-	`${name} must be an integer between zero and 255`;
-const CHUNK_DURATION_MESSAGE =
-	'processing.chunkDurationMs must be greater than zero';
+const BYTE_RANGE_MESSAGE = (name: string) => `${name} must be an integer between zero and 255`;
+const CHUNK_DURATION_MESSAGE = 'processing.chunkDurationMs must be greater than zero';
 const PROGRESS_MESSAGE =
 	'processing.progress values must be ordered fractions between zero and one';
-const WEIGHTS_MESSAGE = (name: string, index: number) =>
-	`${name}[${index}] must be non-negative`;
+const WEIGHTS_MESSAGE = (name: string, index: number) => `${name}[${index}] must be non-negative`;
 const QUALITY_MESSAGE = 'output.quality must be between zero and one';
 const MAX_COLORS_MESSAGE = 'maxColors must be a non-negative integer';
 const PRESERVE_ALPHA_MESSAGE = 'transparency.preserveAlpha must be a boolean';
 const CANVAS_FLAG_MESSAGE = 'canvas.willReadFrequently must be a boolean';
 const COLOR_SPACE_MESSAGE = 'canvas.colorSpace must be srgb or display-p3';
 const SIGNAL_MESSAGE = 'processing.signal must be an AbortSignal';
-const EXCLUDED_PIXELS_MESSAGE =
-	'excludedPixels entries must be non-negative integers';
+const EXCLUDED_PIXELS_MESSAGE = 'excludedPixels entries must be non-negative integers';
 
 /**
  * Runs the schema and, on failure, throws the first issue's message as a
@@ -28,9 +24,7 @@ function assertValid(schema: z.ZodType, value: unknown): void {
 	const result = schema.safeParse(value);
 
 	if (!result.success) {
-		throw new RangeError(
-			result.error.issues[0]?.message ?? 'Invalid configuration'
-		);
+		throw new RangeError(result.error.issues[0]?.message ?? 'Invalid configuration');
 	}
 }
 
@@ -38,11 +32,7 @@ function assertValid(schema: z.ZodType, value: unknown): void {
 function byteField(name: string) {
 	const message = BYTE_RANGE_MESSAGE(name);
 
-	return z
-		.number({ error: message })
-		.int(message)
-		.min(0, message)
-		.max(255, message);
+	return z.number({ error: message }).int(message).min(0, message).max(255, message);
 }
 
 /** Exactly three finite, non-negative numbers, one per RGB channel. */
@@ -57,11 +47,7 @@ function weightsField(name: string) {
 		}
 
 		for (const [index, weight] of weights.entries()) {
-			if (
-				typeof weight !== 'number' ||
-				!Number.isFinite(weight) ||
-				weight < 0
-			) {
+			if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) {
 				ctx.addIssue({ code: 'custom', message: WEIGHTS_MESSAGE(name, index) });
 			}
 		}
@@ -72,7 +58,7 @@ function weightsField(name: string) {
 function functionField(name: string) {
 	const message = `${name} must be a function`;
 
-	return z.custom<unknown>(value => typeof value === 'function', {
+	return z.custom<unknown>((value) => typeof value === 'function', {
 		error: message
 	});
 }
@@ -95,7 +81,7 @@ const PROGRESS_SCHEMA = z
 		];
 
 		if (
-			values.some(value => value < 0 || value > 1) ||
+			values.some((value) => value < 0 || value > 1) ||
 			values.some((value, index) => index > 0 && value < values[index - 1])
 		) {
 			ctx.addIssue({ code: 'custom', message: PROGRESS_MESSAGE });
@@ -103,14 +89,11 @@ const PROGRESS_SCHEMA = z
 	});
 
 const MAPPING_MODES = ['nearest', 'luminance', 'dominant'] as const;
-const MAPPING_MODE_MESSAGE =
-	'mapping.mode must be one of nearest, luminance, dominant';
+const MAPPING_MODE_MESSAGE = 'mapping.mode must be one of nearest, luminance, dominant';
 const MAPPING_FALLBACKS = ['first-active', 'unmapped'] as const;
-const FALLBACK_MESSAGE =
-	'mapping.fallback must be one of first-active, unmapped';
+const FALLBACK_MESSAGE = 'mapping.fallback must be one of first-active, unmapped';
 const OUTPUT_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
-const MIME_TYPE_MESSAGE =
-	'output.mimeType must be one of image/png, image/jpeg, image/webp';
+const MIME_TYPE_MESSAGE = 'output.mimeType must be one of image/png, image/jpeg, image/webp';
 
 const RECOLOR_CONFIG_SCHEMA = z.object({
 	canvas: z.object({
@@ -125,7 +108,7 @@ const RECOLOR_CONFIG_SCHEMA = z.object({
 	processing: z.object({
 		chunkDurationMs: z
 			.number({ error: CHUNK_DURATION_MESSAGE })
-			.refine(value => value > 0, CHUNK_DURATION_MESSAGE),
+			.refine((value) => value > 0, CHUNK_DURATION_MESSAGE),
 		progress: PROGRESS_SCHEMA,
 		onProgress: functionField('processing.onProgress'),
 		yieldToMain: functionField('processing.yieldToMain'),
@@ -172,8 +155,6 @@ export function validateRecolorConfig(config: RecolorConfig): void {
 }
 
 /** Same idea for the palette-extraction config. */
-export function validateExtractionConfig(
-	config: PaletteExtractionConfig
-): void {
+export function validateExtractionConfig(config: PaletteExtractionConfig): void {
 	assertValid(PALETTE_EXTRACTION_SCHEMA, config);
 }
