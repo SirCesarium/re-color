@@ -4,11 +4,46 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="dark light" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="any" />
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="192x192"
+			href="%sveltekit.assets%/icons/icon-192.png"
+		/>
 		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
 		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
 		<meta name="theme-color" content="#282828" media="(prefers-color-scheme: dark)" />
 		<meta name="theme-color" content="#f2e5bc" media="(prefers-color-scheme: light)" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebSite",
+						"@id": "https://recolor.pages.dev/#website",
+						"name": "re::color",
+						"alternateName": ["recolor", "recolor.pages.dev"],
+						"url": "https://recolor.pages.dev/"
+					},
+					{
+						"@type": "WebApplication",
+						"@id": "https://recolor.pages.dev/#app",
+						"name": "re::color",
+						"url": "https://recolor.pages.dev/",
+						"applicationCategory": "DesignApplication",
+						"operatingSystem": "Any",
+						"offers": {
+							"@type": "Offer",
+							"price": "0",
+							"priceCurrency": "USD"
+						},
+						"description": "Free online tool to recolor a pixel art sprite with any image's palette. Private, no uploads, runs in your browser."
+					}
+				]
+			}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
