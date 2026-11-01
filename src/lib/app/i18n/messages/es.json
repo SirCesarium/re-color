@@ -24,7 +24,7 @@
 	"mapping.luminance": "Orden de luminancia",
 	"mapping.dominant": "Color dominante",
 	"result.section": "Resultado",
-	"result.canvasAria": "Vista previa interactiva del sprite. Toca o haz clic en un píxel para alternar su recoloreo. Usa las flechas para seleccionar y Espacio para alternar.",
+	"result.canvasAria": "Vista previa interactiva del sprite. Toca o haz clic en un píxel para alternar su recoloreo. Usa las flechas para seleccionar y Espacio para alternar. Usa la rueda del mouse para hacer zoom y arrastra con el botón central o derecho para desplazarte.",
 	"result.download": "Descargar",
 	"result.previewError": "No se pudo cargar la vista previa",
 	"result.loading": "Cargando vista previa...",
@@ -109,6 +109,7 @@
 	"notFound.message": "La página que buscas no existe o se ha movido.",
 	"notFound.back": "Volver al inicio",
 	"result.pixelHelp": "Puedes excluir píxeles del intercambio de paleta haciendo clic/pintando sobre ellos.",
+	"result.zoomReset": "Restablecer zoom (actualmente {percent}%)",
 	"settings.groupInterface": "Interfaz",
 	"settings.groupRecolor": "Recoloreo",
 	"settings.groupData": "Datos locales"

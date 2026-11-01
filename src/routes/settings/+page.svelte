@@ -151,6 +151,7 @@
 	<title>{$t('settings.metaTitle')}</title>
 	<meta name="description" content={$t('settings.metaDescription')} />
 	<link rel="canonical" href="https://recolor.pages.dev/settings/" />
+	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <main class="box-border flex w-full flex-1 flex-col items-center gap-8 px-3 py-12 sm:px-4">

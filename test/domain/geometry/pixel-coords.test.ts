@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { fitImageInViewport, pixelAtPoint } from '../../../src/lib/core/geometry/pixel-coords.ts';
+import {
+	clampImageTransform,
+	fitImageInViewport,
+	imageRectFor,
+	MAX_NATIVE_ZOOM,
+	pixelAtPoint,
+	zoomImageAtPoint,
+	zoomLimits
+} from '../../../src/lib/core/geometry/pixel-coords.ts';
 
 describe('fitImageInViewport', () => {
 	test('scales to the limiting axis and centers on both', () => {
@@ -88,5 +96,86 @@ describe('pixelAtPoint', () => {
 		const rect = { left: 0, top: 0, scale: 0 };
 
 		expect(pixelAtPoint({ x: 0, y: 0 }, offset, rect, image)).toBeNull();
+	});
+});
+
+describe('zoomLimits', () => {
+	test('starts at the fit scale and caps large images at the native maximum', () => {
+		const limits = zoomLimits({ width: 200, height: 200 }, { width: 512, height: 512 });
+
+		expect(limits.min).toBeCloseTo(200 / 512);
+		expect(limits.max).toBe(MAX_NATIVE_ZOOM);
+	});
+
+	test('small images can zoom to twice their fit scale', () => {
+		const limits = zoomLimits({ width: 200, height: 200 }, { width: 8, height: 8 });
+
+		expect(limits.min).toBe(25);
+		expect(limits.max).toBe(50);
+	});
+});
+
+describe('imageRectFor', () => {
+	test('centers the scaled image and applies the offset', () => {
+		const rect = imageRectFor(
+			{ width: 200, height: 100 },
+			{ width: 10, height: 10 },
+			{ zoom: 4, offsetX: 6, offsetY: -2 }
+		);
+
+		expect(rect).toEqual({ left: 86, top: 28, scale: 4 });
+	});
+});
+
+describe('clampImageTransform', () => {
+	test('centers an image smaller than the viewport', () => {
+		const clamped = clampImageTransform(
+			{ width: 200, height: 200 },
+			{ width: 10, height: 10 },
+			{ zoom: 4, offsetX: 30, offsetY: -30 }
+		);
+
+		expect(clamped).toEqual({ zoom: 4, offsetX: 0, offsetY: 0 });
+	});
+
+	test('stops a zoomed image at the viewport edges', () => {
+		const clamped = clampImageTransform(
+			{ width: 100, height: 100 },
+			{ width: 10, height: 10 },
+			{ zoom: 20, offsetX: 500, offsetY: -500 }
+		);
+
+		expect(clamped.offsetX).toBe(50);
+		expect(clamped.offsetY).toBe(-50);
+	});
+});
+
+describe('zoomImageAtPoint', () => {
+	test('keeps the image point under the cursor fixed', () => {
+		const viewport = { width: 100, height: 100 };
+		const image = { width: 10, height: 10 };
+		const before = { zoom: 10, offsetX: 0, offsetY: 0 };
+		const point = { x: 30, y: 70 };
+		const after = zoomImageAtPoint(viewport, image, before, point, 20);
+		const beforeRect = imageRectFor(viewport, image, before);
+		const afterRect = imageRectFor(viewport, image, after);
+		const imageX = (point.x - beforeRect.left) / beforeRect.scale;
+		const imageY = (point.y - beforeRect.top) / beforeRect.scale;
+
+		expect(afterRect.left + imageX * afterRect.scale).toBeCloseTo(point.x);
+		expect(afterRect.top + imageY * afterRect.scale).toBeCloseTo(point.y);
+	});
+
+	test('clamps the offset when the cursor sits on an edge', () => {
+		const after = zoomImageAtPoint(
+			{ width: 100, height: 100 },
+			{ width: 10, height: 10 },
+			{ zoom: 10, offsetX: 0, offsetY: 0 },
+			{ x: 100, y: 100 },
+			20
+		);
+
+		expect(after.offsetX).toBe(-50);
+		expect(after.offsetY).toBe(-50);
 	});
 });

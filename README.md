@@ -40,7 +40,7 @@ Extract a color palette from a reference sprite and **re-colorize** another one.
 
 ### Pixel-level control
 
-Tap any pixel in the live preview to exclude it from the recolor.
+Tap any pixel in the live preview to exclude it from the recolor. Zoom with the mouse wheel and pan with the middle or right button.
 
 <img width="1025" height="560" alt="image" src="https://github.com/user-attachments/assets/a7baed56-1518-474b-9832-a69773f1d478" />
 
@@ -77,9 +77,6 @@ re::color is a PWA: install it from your browser and it runs standalone and offl
 | Format         | PNG       |
 | Max dimensions | 512 × 512 |
 | Max file size  | 2 MiB     |
-
-> [!NOTE]
-> Currently, this project is designed for small pixel art, such as 8x8px or 16x16px or even 32x32px. For larger images, you might experience some issues with the tool for excluding pixels from recoloring. Improvements to the UX in this area are planned for the near future.
 
 ## Privacy
 
