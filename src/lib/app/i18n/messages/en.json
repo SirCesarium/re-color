@@ -24,7 +24,7 @@
 	"mapping.luminance": "Luminance order",
 	"mapping.dominant": "Dominant color",
 	"result.section": "Result",
-	"result.canvasAria": "Interactive sprite preview. Tap or click a pixel to toggle recoloring. Use arrow keys to select and Space to toggle.",
+	"result.canvasAria": "Interactive sprite preview. Tap or click a pixel to toggle recoloring. Use arrow keys to select and Space to toggle. Use the mouse wheel to zoom and drag with the middle or right button to pan.",
 	"result.download": "Download",
 	"result.previewError": "Could not load preview",
 	"result.loading": "Loading preview...",
@@ -109,6 +109,7 @@
 	"notFound.message": "The page you are looking for does not exist or has moved.",
 	"notFound.back": "Back to recolor",
 	"result.pixelHelp": "You can exclude pixels from palette swap by clicking/painting on them.",
+	"result.zoomReset": "Reset zoom (currently {percent}%)",
 	"settings.groupInterface": "Interface",
 	"settings.groupRecolor": "Recoloring",
 	"settings.groupData": "Local data"
