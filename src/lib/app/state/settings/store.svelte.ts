@@ -1,5 +1,4 @@
 import { MAPPING_STORAGE_KEY } from '#core/recolor.ts';
-import { localeFromNavigator, setLocale } from '../../i18n/index.ts';
 import { hintsEnabled } from '../hints.ts';
 import { type AppSettings, DEFAULT_APP_SETTINGS, isMappingMode } from './model.ts';
 import { APP_SETTINGS_KEY, exportAppSettings, parseAppSettings } from './repository.ts';
@@ -15,7 +14,7 @@ function readStored(): AppSettings {
 
 	try {
 		const stored = localStorage.getItem(APP_SETTINGS_KEY);
-		const parsed = parseAppSettings(stored, localeFromNavigator());
+		const parsed = parseAppSettings(stored);
 
 		if (!stored) {
 			const legacy = localStorage.getItem(MAPPING_STORAGE_KEY);
@@ -54,7 +53,6 @@ function applySideEffects(): void {
 		document.documentElement.classList.toggle('animations-disabled', !settings.animationsEnabled);
 	}
 
-	setLocale(settings.locale);
 	hintsEnabled.set(settings.hintsEnabled);
 }
 

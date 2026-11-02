@@ -1,7 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
-// Registers the message catalogs and the locale so $t resolves real text.
-import '../../src/lib/app/i18n/index.ts';
 import ImageInputs from '../../src/lib/app/widgets/ImageInputs.svelte';
 
 describe('ImageInputs', () => {

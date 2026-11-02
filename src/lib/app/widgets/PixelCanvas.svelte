@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
-
+	import { t } from '#app/text/index.ts';
 	import {
 		clampImageTransform,
 		imageRectFor,
@@ -481,7 +480,7 @@
 			bind:clientWidth={viewportWidth}
 			bind:clientHeight={viewportHeight}
 			type="button"
-			aria-label={$t('result.canvasAria')}
+			aria-label={t('result.canvasAria')}
 			onpointerup={onPointerUp}
 			onpointerdown={onPointerDown}
 			onpointermove={onPointerMove}
@@ -513,9 +512,7 @@
 			<button
 				class="absolute right-1 bottom-1 z-10 cursor-pointer border-2 border-btn-edge bg-panel px-1.5 py-0.5 text-xs text-text shadow-[2px_2px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
 				type="button"
-				aria-label={$t('result.zoomReset', {
-					values: { percent: Math.round(zoom * 100) }
-				})}
+				aria-label={t('result.zoomReset', { percent: Math.round(zoom * 100) })}
 				onclick={resetZoom}
 			>
 				{Math.round(zoom * 100)}%
@@ -527,14 +524,14 @@
 		class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text"
 		role="alert"
 	>
-		{$t('result.previewError')}
+		{t('result.previewError')}
 	</div>
 {:else if imageUrl}
 	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">
-		{$t('result.loading')}
+		{t('result.loading')}
 	</div>
 {:else}
 	<div class="relative border border-border bg-panel-sunken px-4 py-2 text-base text-text">
-		{$t('result.empty')}
+		{t('result.empty')}
 	</div>
 {/if}

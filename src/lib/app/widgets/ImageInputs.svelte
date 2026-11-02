@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
 	import DropZone from '#app/components/DropZone.svelte';
-	import type { MessageKey } from '#app/i18n/locales.ts';
+	import { type MessageKey, t } from '#app/text/index.ts';
 	import { type ValidationCode, ValidationError, validateImageFile } from '#lib';
 
 	let {
@@ -22,7 +21,7 @@
 	};
 
 	// DropZone renders whatever key we hand back, so the widget owns the
-	// translation of domain failures into a message.
+	// mapping of domain failures into a message.
 	async function acceptImage(candidate: File): Promise<string | null> {
 		try {
 			await validateImageFile(candidate);
@@ -36,18 +35,18 @@
 
 <section
 	class="flex w-full max-w-120 animate-[rise_380ms_ease-out_80ms_backwards] gap-4 max-[420px]:flex-col min-[900px]:col-start-1"
-	aria-label={$t('inputs.aria')}
+	aria-label={t('inputs.aria')}
 >
 	<DropZone
-		label={$t('inputs.palette')}
-		hint={$t('inputs.paletteHint')}
+		label={t('inputs.palette')}
+		hint={t('inputs.paletteHint')}
 		variant="ref"
 		validate={acceptImage}
 		bind:file={palette}
 	/>
 	<DropZone
-		label={$t('inputs.sprite')}
-		hint={$t('inputs.spriteHint')}
+		label={t('inputs.sprite')}
+		hint={t('inputs.spriteHint')}
 		variant="base"
 		validate={acceptImage}
 		bind:file={sprite}

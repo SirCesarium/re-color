@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { t } from 'svelte-i18n';
 	import Hint from '#app/components/Hint.svelte';
 	import { hintsEnabled } from '#app/state/hints.ts';
+	import { t } from '#app/text/index.ts';
 	import { cssRgb, type PaletteColor } from '#lib';
 
 	let {
@@ -94,7 +94,7 @@
 					style:--c={cssRgb(color)}
 					type="button"
 					aria-pressed={color.active}
-					aria-label={color.active ? $t('palette.disable') : $t('palette.enable')}
+					aria-label={color.active ? t('palette.disable') : t('palette.enable')}
 					onclick={() => toggle(index)}
 				></button>
 			{/each}
@@ -103,7 +103,7 @@
 		<Hint
 			placement="above"
 			hintsEnabled={$hintsEnabled}
-			text={hintVisible ? $t('palette.toggleHint') : null}
+			text={hintVisible ? t('palette.toggleHint') : null}
 		/>
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">

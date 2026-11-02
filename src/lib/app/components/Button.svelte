@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { t } from 'svelte-i18n';
+	import { t } from '#app/text/index.ts';
 
 	let {
 		variant = 'primary',
@@ -65,7 +65,7 @@
 	{type}
 	disabled={disabled || (busy && !cancelOnBusy)}
 	aria-busy={busy}
-	aria-label={busy && cancelOnBusy ? (cancelLabel ?? $t('button.cancel')) : ariaLabel}
+	aria-label={busy && cancelOnBusy ? (cancelLabel ?? t('button.cancel')) : ariaLabel}
 	{onclick}
 >
 	{#if variant === 'primary'}
@@ -80,11 +80,11 @@
 			{#if busy}
 				<span
 					class={cancelOnBusy ? 'group-hover/cancel:hidden group-focus-visible/cancel:hidden' : ''}
-					>{busyLabel ?? $t('button.processing')}</span
+					>{busyLabel ?? t('button.processing')}</span
 				>
 				{#if cancelOnBusy}
 					<span class="hidden group-hover/cancel:inline group-focus-visible/cancel:inline"
-						>{cancelLabel ?? $t('button.cancel')}</span
+						>{cancelLabel ?? t('button.cancel')}</span
 					>
 				{/if}
 			{:else}

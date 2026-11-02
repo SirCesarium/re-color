@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
+	import { t } from '#app/text/index.ts';
 	import Typography from '#app/components/Typography.svelte';
 
 	let {
@@ -104,7 +104,7 @@
 		class="sr-only"
 		type="file"
 		accept="image/png,.png"
-		aria-label={$t('dropzone.upload', { values: { label } })}
+		aria-label={t('dropzone.upload', { label })}
 		onchange={onInput}
 	/>
 
@@ -113,7 +113,7 @@
 			class="absolute right-1 bottom-1 left-1 z-10 border border-(--sw-red) bg-panel px-2 py-1 text-xs text-(--sw-red)"
 			role="alert"
 		>
-			{$t(error)}
+			{t(error)}
 		</span>
 	{/if}
 
@@ -133,7 +133,7 @@
 					{#each Array(6) as _, i (i)}
 						<span
 							class="text-[clamp(14px,4vw,20px)] leading-none font-bold text-pop [text-shadow:2px_2px_0_var(--btn-edge)]"
-							>{$t('dropzone.dropIt')}</span
+							>{t('dropzone.dropIt')}</span
 						>
 					{/each}
 				</span>

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { t } from 'svelte-i18n';
 	import Button from '#app/components/Button.svelte';
 	import Hint from '#app/components/Hint.svelte';
 	import Typography from '#app/components/Typography.svelte';
 	import { hintsEnabled } from '#app/state/hints.ts';
+	import { t } from '#app/text/index.ts';
 	import PixelCanvas from '#app/widgets/PixelCanvas.svelte';
 
 	let {
@@ -53,9 +53,9 @@
 
 <section
 	class="flex w-full max-w-120 animate-[rise_380ms_ease-out_240ms_backwards] flex-col gap-2"
-	aria-label={$t('result.section')}
+	aria-label={t('result.section')}
 >
-	<Typography as="span" variant="section-label">{$t('result.section')}</Typography>
+	<Typography as="span" variant="section-label">{t('result.section')}</Typography>
 	<div
 		class="group/result relative flex aspect-square h-auto items-center justify-center overflow-hidden border border-border bg-panel-sunken"
 	>
@@ -79,7 +79,7 @@
 						arrow="down"
 						tailOffset="18px"
 						hintsEnabled={$hintsEnabled}
-						text={$t('result.pixelHelp')}
+						text={t('result.pixelHelp')}
 						onDismiss={dismissHelp}
 					/>
 				</div>
@@ -87,6 +87,6 @@
 		{/if}
 	</div>
 	{#if imageUrl}
-		<Button onclick={onDownload}>{$t('result.download')}</Button>
+		<Button onclick={onDownload}>{t('result.download')}</Button>
 	{/if}
 </section>

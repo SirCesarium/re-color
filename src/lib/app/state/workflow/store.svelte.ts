@@ -1,7 +1,7 @@
 import { onDestroy, onMount, untrack } from 'svelte';
 import type { MappingMode, PaletteColor } from '#core/image-processing/index.ts';
 import { OUTPUT_CONFIG, OUTPUT_EXTENSIONS } from '#core/recolor.ts';
-import type { MessageKey } from '../../i18n/locales.ts';
+import type { MessageKey } from '../../text/index.ts';
 import { settings, updateSetting } from '../settings/store.svelte.ts';
 import {
 	buttonHint as deriveButtonHint,

@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import type { RequestHandler } from './$types';
+import { absoluteUrl } from '#app/site.ts';
+import type { RequestHandler } from './$types.ts';
 
-const SITE_URL = 'https://recolor.pages.dev';
 const PAGES = ['/', '/privacy/'];
 
 export const prerender = true;
@@ -27,10 +27,10 @@ export const GET: RequestHandler = () => {
 	const lastmod = lastModified();
 
 	const urls = PAGES.map(
-		(path) => `	<url>
-		<loc>${SITE_URL}${path}</loc>
-		<lastmod>${lastmod}</lastmod>
-	</url>`
+		(path) => `\t<url>
+\t\t<loc>${absoluteUrl(path)}</loc>
+\t\t<lastmod>${lastmod}</lastmod>
+\t</url>`
 	).join('\n');
 
 	const body = `<?xml version="1.0" encoding="UTF-8"?>

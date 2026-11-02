@@ -9,8 +9,8 @@ export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 export type ValidationCode = 'tooLarge' | 'notPng' | 'empty' | 'tooBig';
 
 /**
- * The domain's rejection. Carries a plain code — never a display string or an
- * i18n key — so this layer stays independent of how the app words errors.
+ * The domain's rejection. Carries a plain code — never a display string or a
+ * message key — so this layer stays independent of how the app words errors.
  */
 export class ValidationError extends Error {
 	readonly code: ValidationCode;
