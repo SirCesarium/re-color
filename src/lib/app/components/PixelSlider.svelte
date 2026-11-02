@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
+	import { t } from '#app/text/index.ts';
 
 	let {
 		value,
@@ -51,7 +51,7 @@
 			pattern="[0-9]*"
 			autocomplete="off"
 			bind:value={draft}
-			aria-label={$t('form.valueAria', { values: { label } })}
+			aria-label={t('form.valueAria', { label })}
 			oninput={updateFromInput}
 			onblur={commitNumber}
 		/>

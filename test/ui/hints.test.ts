@@ -1,8 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-// Registers the message catalogs and the locale so $t resolves real text.
-import '../../src/lib/app/i18n/index.ts';
 import { hintsEnabled } from '../../src/lib/app/state/hints.ts';
 import PaletteStrip from '../../src/lib/app/widgets/PaletteStrip.svelte';
 import ResultPanel from '../../src/lib/app/widgets/ResultPanel.svelte';

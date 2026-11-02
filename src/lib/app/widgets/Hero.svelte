@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
+	import { t } from '#app/text/index.ts';
 	import Typography from '#app/components/Typography.svelte';
 	import Wordmark from '#app/components/Wordmark.svelte';
 	import PaletteStrip from '#app/widgets/PaletteStrip.svelte';
@@ -13,7 +13,7 @@
 >
 	<Wordmark />
 	<Typography as="h1" variant="tagline">
-		{$t('hero.tagline1')}<br />{$t('hero.tagline2')}
+		{t('hero.tagline1')}<br />{t('hero.tagline2')}
 	</Typography>
 	<PaletteStrip
 		bind:colors

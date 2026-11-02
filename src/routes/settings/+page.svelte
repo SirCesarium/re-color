@@ -1,17 +1,10 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
 	import Dropdown from '#app/components/Dropdown.svelte';
 	import PixelSlider from '#app/components/PixelSlider.svelte';
 	import SettingRow from '#app/components/SettingRow.svelte';
 	import SwitchButton from '#app/components/SwitchButton.svelte';
 	import Typography from '#app/components/Typography.svelte';
-	import {
-		LOCALE_LABELS,
-		type Locale,
-		type MessageKey,
-		SUPPORTED_LOCALES
-	} from '#app/i18n/locales.ts';
-	import { LocalizedError } from '#app/i18n/localized-error.ts';
+	import { absoluteUrl } from '#app/site.ts';
 	import { type AppSettings } from '#app/state/settings/model.ts';
 	import { clearSavedAppData, importAppSettings } from '#app/state/settings/repository.ts';
 	import {
@@ -22,6 +15,8 @@
 		updateSetting
 	} from '#app/state/settings/store.svelte.ts';
 	import { clearWorkspace, loadWorkspace, saveWorkspace } from '#app/state/workspace.ts';
+	import { MessageError } from '#app/text/errors.ts';
+	import { type MessageKey, t } from '#app/text/index.ts';
 	import { MAPPING_OPTIONS } from '#core/recolor.ts';
 
 	let error = $state<{
@@ -32,20 +27,14 @@
 	const mappingOptions = $derived(
 		MAPPING_OPTIONS.map((option) => ({
 			value: option.value,
-			label: $t(option.labelKey)
+			label: t(option.labelKey)
 		}))
 	);
-	const localeOptions = $derived(
-		SUPPORTED_LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] }))
-	);
+	const url = absoluteUrl('/settings/');
 
 	/** Clears the banner after a successful save, or reports a failed one. */
 	function saveOrReport(saved: boolean): void {
 		error = saved ? null : { id: 'settings.errorSave' };
-	}
-
-	function updateLocale(locale: Locale): void {
-		saveOrReport(updateSetting('locale', locale));
 	}
 
 	function updateAnimations(enabled: boolean): void {
@@ -104,7 +93,7 @@
 		} catch (cause) {
 			console.error('Could not import settings file', cause);
 			error =
-				cause instanceof LocalizedError
+				cause instanceof MessageError
 					? { id: cause.messageId, values: cause.values }
 					: { id: 'settings.errorImport' };
 		}
@@ -129,13 +118,13 @@
 	}
 
 	function resetSettings(): void {
-		if (!confirm($t('settings.resetConfirm'))) return;
+		if (!confirm(t('settings.resetConfirm'))) return;
 
 		saveOrReport(restoreDefaults());
 	}
 
 	async function handleClearAppData(): Promise<void> {
-		if (!confirm($t('settings.clearConfirm'))) return;
+		if (!confirm(t('settings.clearConfirm'))) return;
 
 		try {
 			await clearSavedAppData();
@@ -148,49 +137,38 @@
 </script>
 
 <svelte:head>
-	<title>{$t('settings.metaTitle')}</title>
-	<meta name="description" content={$t('settings.metaDescription')} />
-	<link rel="canonical" href="https://recolor.pages.dev/settings/" />
+	<title>{t('settings.metaTitle')}</title>
+	<meta name="description" content={t('settings.metaDescription')} />
+	<link rel="canonical" href={url} />
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <main class="box-border flex w-full flex-1 flex-col items-center gap-8 px-3 py-12 sm:px-4">
 	<section class="flex w-full max-w-215 flex-col gap-8" aria-labelledby="settings-title">
 		<Typography id="settings-title" as="h1" variant="page-title" class="m-0">
-			{$t('settings.title')}
+			{t('settings.title')}
 		</Typography>
 
 		<div class="grid gap-8">
 			<div class="grid gap-2">
 				<Typography as="h2" variant="section-label" class="m-0">
-					{$t('settings.groupInterface')}
+					{t('settings.groupInterface')}
 				</Typography>
 				<div class="grid">
-					<SettingRow title={$t('settings.languageTitle')} hint={$t('settings.languageDesc')}>
-						{#snippet control()}
-							<Dropdown
-								class="w-full sm:w-50"
-								value={settings.locale}
-								options={localeOptions}
-								label={$t('settings.languageAria')}
-								onchange={updateLocale}
-							/>
-						{/snippet}
-					</SettingRow>
-					<SettingRow title={$t('settings.animationsTitle')} hint={$t('settings.animationsDesc')}>
+					<SettingRow title={t('settings.animationsTitle')} hint={t('settings.animationsDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.animationsEnabled}
-								label={$t('settings.animationsTitle')}
+								label={t('settings.animationsTitle')}
 								onchange={updateAnimations}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t('settings.hintsTitle')} hint={$t('settings.hintsDesc')}>
+					<SettingRow title={t('settings.hintsTitle')} hint={t('settings.hintsDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.hintsEnabled}
-								label={$t('settings.hintsTitle')}
+								label={t('settings.hintsTitle')}
 								onchange={updateHints}
 							/>
 						{/snippet}
@@ -200,41 +178,41 @@
 
 			<div class="grid gap-2">
 				<Typography as="h2" variant="section-label" class="m-0">
-					{$t('settings.groupRecolor')}
+					{t('settings.groupRecolor')}
 				</Typography>
 				<div class="grid">
-					<SettingRow title={$t('settings.autoRecolorTitle')} hint={$t('settings.autoRecolorDesc')}>
+					<SettingRow title={t('settings.autoRecolorTitle')} hint={t('settings.autoRecolorDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.autoRecolor}
-								label={$t('settings.autoRecolorTitle')}
+								label={t('settings.autoRecolorTitle')}
 								onchange={updateAutoRecolor}
 							/>
 						{/snippet}
 					</SettingRow>
 					<SettingRow
 						stacked
-						title={$t('settings.maxColorsTitle')}
-						hint={$t('settings.maxColorsDesc')}
+						title={t('settings.maxColorsTitle')}
+						hint={t('settings.maxColorsDesc')}
 					>
 						{#snippet control()}
 							<PixelSlider
 								value={settings.maxPaletteColors}
 								min={1}
 								max={256}
-								label={$t('settings.maxColorsTitle')}
+								label={t('settings.maxColorsTitle')}
 								showLabel={false}
 								onchange={updateMaxPaletteColors}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow stacked title={$t('settings.mappingTitle')} hint={$t('settings.mappingDesc')}>
+					<SettingRow stacked title={t('settings.mappingTitle')} hint={t('settings.mappingDesc')}>
 						{#snippet control()}
 							<Dropdown
 								class="w-full"
 								value={settings.defaultMapping}
 								options={mappingOptions}
-								label={$t('settings.mappingAria')}
+								label={t('settings.mappingAria')}
 								onchange={updateDefaultMapping}
 							/>
 						{/snippet}
@@ -244,19 +222,19 @@
 
 			<div class="grid gap-2">
 				<Typography as="h2" variant="section-label" class="m-0">
-					{$t('settings.groupData')}
+					{t('settings.groupData')}
 				</Typography>
 				<div class="grid">
-					<SettingRow title={$t('settings.persistTitle')} hint={$t('settings.persistDesc')}>
+					<SettingRow title={t('settings.persistTitle')} hint={t('settings.persistDesc')}>
 						{#snippet control()}
 							<SwitchButton
 								checked={settings.persistWorkspace}
-								label={$t('settings.persistTitle')}
+								label={t('settings.persistTitle')}
 								onchange={updatePersistWorkspace}
 							/>
 						{/snippet}
 					</SettingRow>
-					<SettingRow stacked title={$t('settings.backupTitle')} hint={$t('settings.backupDesc')}>
+					<SettingRow stacked title={t('settings.backupTitle')} hint={t('settings.backupDesc')}>
 						{#snippet control()}
 							<div class="flex flex-wrap gap-3">
 								<button
@@ -264,42 +242,42 @@
 									type="button"
 									onclick={exportSettings}
 								>
-									{$t('settings.export')}
+									{t('settings.export')}
 								</button>
 								<label
 									class="inline-flex min-h-11 cursor-pointer items-center justify-center border-2 border-btn-edge bg-panel px-3 py-1.5 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors focus-within:shadow-[0_0_0_2px_var(--btn-edge),3px_3px_0_var(--btn-shadow)] hover:bg-panel-hover"
 								>
-									{$t('settings.import')}
+									{t('settings.import')}
 									<input
 										class="sr-only"
 										type="file"
 										accept="application/json,.json"
-										aria-label={$t('settings.importAria')}
+										aria-label={t('settings.importAria')}
 										onchange={handleImportSelection}
 									/>
 								</label>
 							</div>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t('settings.resetTitle')} hint={$t('settings.resetDesc')}>
+					<SettingRow title={t('settings.resetTitle')} hint={t('settings.resetDesc')}>
 						{#snippet control()}
 							<button
 								class="min-h-11 cursor-pointer border-2 border-btn-edge bg-panel px-3 py-2 text-base text-text shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-panel-hover"
 								type="button"
 								onclick={resetSettings}
 							>
-								{$t('settings.resetBtn')}
+								{t('settings.resetBtn')}
 							</button>
 						{/snippet}
 					</SettingRow>
-					<SettingRow title={$t('settings.clearTitle')} hint={$t('settings.clearDesc')}>
+					<SettingRow title={t('settings.clearTitle')} hint={t('settings.clearDesc')}>
 						{#snippet control()}
 							<button
 								class="min-h-11 cursor-pointer border-2 border-(--sw-red) bg-panel px-3 py-2 text-base text-(--sw-red) shadow-[3px_3px_0_var(--btn-shadow)] transition-colors hover:bg-(--sw-red) hover:text-panel"
 								type="button"
 								onclick={handleClearAppData}
 							>
-								{$t('settings.clearBtn')}
+								{t('settings.clearBtn')}
 							</button>
 						{/snippet}
 					</SettingRow>
@@ -310,7 +288,7 @@
 
 	{#if error}
 		<Typography as="p" variant="body" class="w-full max-w-215 text-(--sw-red)" role="alert">
-			{$t(error.id, { values: error.values })}
+			{t(error.id, error.values)}
 		</Typography>
 	{/if}
 </main>

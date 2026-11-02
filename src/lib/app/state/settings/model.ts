@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { MappingMode } from '#core/image-processing/index.ts';
-import { DEFAULT_LOCALE, LOCALE_SCHEMA, type Locale } from '../../i18n/locales.ts';
 
 export type AppSettings = {
 	animationsEnabled: boolean;
@@ -9,7 +8,6 @@ export type AppSettings = {
 	persistWorkspace: boolean;
 	maxPaletteColors: number;
 	defaultMapping: MappingMode;
-	locale: Locale;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -18,8 +16,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 	autoRecolor: true,
 	persistWorkspace: true,
 	maxPaletteColors: 64,
-	defaultMapping: 'luminance',
-	locale: DEFAULT_LOCALE
+	defaultMapping: 'luminance'
 };
 
 const MAPPING_MODES = [
@@ -35,15 +32,14 @@ export const APP_SETTING_KEYS = [
 	'autoRecolor',
 	'persistWorkspace',
 	'maxPaletteColors',
-	'defaultMapping',
-	'locale'
+	'defaultMapping'
 ] as const satisfies readonly (keyof AppSettings)[];
 
 /**
  * The schema for imported settings documents.
  *
- * `locale` and `hintsEnabled` are optional so that version 1 exports, which
- * predate them, still import.
+ * `hintsEnabled` is optional so that version 1 exports, which predate it,
+ * still import.
  */
 export const APP_SETTINGS_SCHEMA = z.object({
 	animationsEnabled: z.boolean(),
@@ -51,15 +47,14 @@ export const APP_SETTINGS_SCHEMA = z.object({
 	autoRecolor: z.boolean(),
 	persistWorkspace: z.boolean(),
 	maxPaletteColors: z.number().int().min(1).max(256),
-	defaultMapping: MAPPING_MODE_SCHEMA,
-	locale: LOCALE_SCHEMA.optional()
+	defaultMapping: MAPPING_MODE_SCHEMA
 });
 
 /**
  * The same fields, but for settings we read back from storage: anything
  * missing or corrupt falls back to its own default instead of blowing up.
  */
-export function storedAppSettingsSchema(localeFallback: Locale) {
+export function storedAppSettingsSchema() {
 	return z
 		.object({
 			animationsEnabled: z.boolean().catch(DEFAULT_APP_SETTINGS.animationsEnabled),
@@ -72,10 +67,9 @@ export function storedAppSettingsSchema(localeFallback: Locale) {
 				.min(1)
 				.max(256)
 				.catch(DEFAULT_APP_SETTINGS.maxPaletteColors),
-			defaultMapping: MAPPING_MODE_SCHEMA.catch(DEFAULT_APP_SETTINGS.defaultMapping),
-			locale: LOCALE_SCHEMA.catch(localeFallback)
+			defaultMapping: MAPPING_MODE_SCHEMA.catch(DEFAULT_APP_SETTINGS.defaultMapping)
 		})
-		.catch({ ...DEFAULT_APP_SETTINGS, locale: localeFallback });
+		.catch(DEFAULT_APP_SETTINGS);
 }
 
 export function isMappingMode(value: unknown): value is MappingMode {

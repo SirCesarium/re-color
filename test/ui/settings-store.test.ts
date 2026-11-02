@@ -1,5 +1,4 @@
 import { get } from 'svelte/store';
-import { locale } from 'svelte-i18n';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { hintsEnabled } from '../../src/lib/app/state/hints.ts';
 import { type AppSettings, DEFAULT_APP_SETTINGS } from '../../src/lib/app/state/settings/model.ts';
@@ -30,10 +29,7 @@ beforeEach(() => {
 
 describe('reading settings', () => {
 	it('falls back to defaults when nothing is saved', () => {
-		expect(settings).toEqual({
-			...DEFAULT_APP_SETTINGS,
-			locale: settings.locale
-		});
+		expect(settings).toEqual(DEFAULT_APP_SETTINGS);
 	});
 
 	it('reads saved settings back from localStorage', () => {
@@ -67,12 +63,6 @@ describe('updateSetting', () => {
 		expect(document.documentElement.classList.contains('animations-disabled')).toBe(false);
 	});
 
-	it('switches the active locale', () => {
-		updateSetting('locale', 'es');
-
-		expect(get(locale)).toBe('es');
-	});
-
 	it('keeps the help-hints store in sync', () => {
 		updateSetting('hintsEnabled', false);
 
@@ -81,11 +71,10 @@ describe('updateSetting', () => {
 });
 
 describe('replaceSettings', () => {
-	it('applies locale, hints, and animations together', () => {
+	it('applies hints and animations together', () => {
 		const imported = importAppSettings(
 			exportAppSettings({
 				...DEFAULT_APP_SETTINGS,
-				locale: 'es',
 				hintsEnabled: false,
 				animationsEnabled: false
 			})
@@ -93,7 +82,6 @@ describe('replaceSettings', () => {
 
 		replaceSettings(imported);
 
-		expect(get(locale)).toBe('es');
 		expect(get(hintsEnabled)).toBe(false);
 		expect(document.documentElement.classList.contains('animations-disabled')).toBe(true);
 	});
@@ -101,7 +89,6 @@ describe('replaceSettings', () => {
 	it('persists the whole replacement', () => {
 		replaceSettings({
 			...DEFAULT_APP_SETTINGS,
-			locale: settings.locale,
 			maxPaletteColors: 4
 		});
 

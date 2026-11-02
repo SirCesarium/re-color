@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { LocalizedError } from '../../../src/lib/app/i18n/localized-error.ts';
+import { MessageError } from '../../../src/lib/app/text/errors.ts';
 import { DEFAULT_APP_SETTINGS, isMappingMode } from '../../../src/lib/app/state/settings/model.ts';
 import {
 	exportAppSettings,
@@ -7,12 +7,11 @@ import {
 	parseAppSettings
 } from '../../../src/lib/app/state/settings/repository.ts';
 
-/** Runs an import that must fail and returns the localized rejection. */
-function importFailure(json: string): LocalizedError {
+function importFailure(json: string): MessageError {
 	try {
 		importAppSettings(json);
 	} catch (cause) {
-		if (cause instanceof LocalizedError) return cause;
+		if (cause instanceof MessageError) return cause;
 
 		throw cause;
 	}
@@ -39,8 +38,7 @@ test('restores valid saved preferences', () => {
 				autoRecolor: false,
 				persistWorkspace: false,
 				maxPaletteColors: 256,
-				defaultMapping: 'nearest',
-				locale: 'es'
+				defaultMapping: 'nearest'
 			})
 		)
 	).toEqual({
@@ -49,8 +47,7 @@ test('restores valid saved preferences', () => {
 		autoRecolor: false,
 		persistWorkspace: false,
 		maxPaletteColors: 256,
-		defaultMapping: 'nearest',
-		locale: 'es'
+		defaultMapping: 'nearest'
 	});
 });
 
@@ -67,8 +64,7 @@ test('exports and imports only versioned app settings', () => {
 		autoRecolor: false,
 		persistWorkspace: false,
 		maxPaletteColors: 180,
-		defaultMapping: 'dominant' as const,
-		locale: 'es' as const
+		defaultMapping: 'dominant' as const
 	};
 	const exported = exportAppSettings(settings);
 	const document = JSON.parse(exported);
@@ -107,22 +103,7 @@ test('rejects unsupported or invalid settings exports', () => {
 	).toThrow('settings.importInvalidPreferences');
 });
 
-test('uses the browser locale when saved preferences predate it', () => {
-	expect(parseAppSettings(null, 'es')).toEqual({
-		...DEFAULT_APP_SETTINGS,
-		locale: 'es'
-	});
-	expect(parseAppSettings(JSON.stringify({ locale: 'de' }), 'es')).toEqual({
-		...DEFAULT_APP_SETTINGS,
-		locale: 'es'
-	});
-	expect(parseAppSettings(JSON.stringify({ locale: 'es' }), 'en')).toEqual({
-		...DEFAULT_APP_SETTINGS,
-		locale: 'es'
-	});
-});
-
-test('imports version 1 exports without a locale setting', () => {
+test('imports version 1 exports without a hints setting', () => {
 	const legacy = JSON.stringify({
 		format: 're-color-settings',
 		version: 1,
@@ -141,8 +122,7 @@ test('imports version 1 exports without a locale setting', () => {
 		autoRecolor: true,
 		persistWorkspace: true,
 		maxPaletteColors: 64,
-		defaultMapping: 'luminance',
-		locale: 'en'
+		defaultMapping: 'luminance'
 	});
 });
 
@@ -161,8 +141,7 @@ test('recovers each invalid field individually without discarding valid ones', (
 			autoRecolor: false,
 			persistWorkspace: false,
 			maxPaletteColors: 32,
-			defaultMapping: 'nearest',
-			locale: 'es'
+			defaultMapping: 'nearest'
 		})
 	);
 
@@ -171,7 +150,6 @@ test('recovers each invalid field individually without discarding valid ones', (
 	expect(restored.hintsEnabled).toBe(false);
 	expect(restored.maxPaletteColors).toBe(32);
 	expect(restored.defaultMapping).toBe('nearest');
-	expect(restored.locale).toBe('es');
 });
 
 test('ignores unknown stored keys', () => {

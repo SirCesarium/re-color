@@ -60,12 +60,6 @@ Auto-apply the result, maximum palette colors, default mapping mode, animations 
 
 <img width="973" height="818" alt="image" src="https://github.com/user-attachments/assets/250f99df-8096-4e60-83c5-341a633067b9" />
 
-### Available in English and Spanish
-
-The interface follows your browser language on first visit, and you can switch anytime in settings.
-
-<img width="911" height="268" alt="image" src="https://github.com/user-attachments/assets/8ebf6028-67f8-4779-a2d3-1aeaa2c8e0bc" />
-
 ### Install it as an app
 
 re::color is a PWA: install it from your browser and it runs standalone and offline.

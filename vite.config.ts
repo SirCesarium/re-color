@@ -11,7 +11,7 @@ export default defineConfig({
 		tailwindcss(),
 		sveltekit({
 			prerender: {
-				entries: ['*', '/sitemap.xml']
+				entries: ['*', '/', '/privacy/', '/settings/', '/sitemap.xml']
 			},
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.

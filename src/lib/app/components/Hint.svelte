@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-	import { t } from 'svelte-i18n';
+	import { t } from '#app/text/index.ts';
 	import Typography from '#app/components/Typography.svelte';
 
 	let {
@@ -50,7 +50,7 @@
 			<button
 				class="shrink-0 cursor-pointer border-0 bg-transparent px-0.5 py-0 font-[inherit] leading-none text-inherit"
 				type="button"
-				aria-label={$t('hint.dismiss')}
+				aria-label={t('hint.dismiss')}
 				onclick={onDismiss}
 			>
 				&times;

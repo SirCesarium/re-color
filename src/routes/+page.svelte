@@ -1,53 +1,53 @@
 <script lang="ts">
-	import { t } from 'svelte-i18n';
 	import Button from '#app/components/Button.svelte';
 	import Hint from '#app/components/Hint.svelte';
 	import Typography from '#app/components/Typography.svelte';
+	import { absoluteUrl } from '#app/site.ts';
 	import { hintsEnabled } from '#app/state/hints.ts';
 	import { createRecolorWorkflow } from '#app/state/workflow/store.svelte.ts';
 	import Hero from '#app/widgets/Hero.svelte';
 	import ImageInputs from '#app/widgets/ImageInputs.svelte';
 	import ResultPanel from '#app/widgets/ResultPanel.svelte';
+	import { t } from '#app/text/index.ts';
 	import { MAPPING_OPTIONS } from '#core/recolor.ts';
 	import Dropdown from '#lib/app/components/Dropdown.svelte';
 
 	const workflow = createRecolorWorkflow();
 
-	const mappingOptions = $derived(
-		MAPPING_OPTIONS.map((option) => ({
-			value: option.value,
-			label: $t(option.labelKey)
-		}))
-	);
+	const url = absoluteUrl('/');
+
+	const mappingOptions = MAPPING_OPTIONS.map((option) => ({
+		value: option.value,
+		label: t(option.labelKey)
+	}));
 
 	function confirmClearFormData() {
-		if (confirm($t('home.clearFormConfirm'))) {
+		if (confirm(t('home.clearFormConfirm'))) {
 			workflow.clearFormData();
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>{$t('home.title')}</title>
-	<meta name="description" content={$t('home.description')} />
-	<link rel="canonical" href="https://recolor.pages.dev/" />
+	<title>{t('home.title')}</title>
+	<meta name="description" content={t('home.description')} />
+	<link rel="canonical" href={url} />
 
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="re::color" />
-	<meta property="og:locale" content="en_US" />
-	<meta property="og:url" content="https://recolor.pages.dev/" />
+	<meta property="og:url" content={url} />
 	<meta property="og:title" content="re::color" />
-	<meta property="og:description" content={$t('home.ogDescription')} />
+	<meta property="og:description" content={t('home.ogDescription')} />
 	<meta property="og:image" content="https://recolor.pages.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta property="og:image:alt" content={$t('meta.ogAlt')} />
+	<meta property="og:image:alt" content={t('meta.ogAlt')} />
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="re::color" />
-	<meta name="twitter:description" content={$t('home.ogDescription')} />
+	<meta name="twitter:description" content={t('home.ogDescription')} />
 	<meta name="twitter:image" content="https://recolor.pages.dev/og.png" />
-	<meta name="twitter:image:alt" content={$t('meta.ogAlt')} />
+	<meta name="twitter:image:alt" content={t('meta.ogAlt')} />
 </svelte:head>
 
 <main
@@ -63,7 +63,7 @@
 			type="button"
 			onclick={confirmClearFormData}
 		>
-			{$t('home.clearForm')}
+			{t('home.clearForm')}
 		</button>
 		<Button
 			disabled={!workflow.state.busy && (!workflow.ready || workflow.noActiveColors)}
@@ -72,12 +72,12 @@
 			progress={workflow.state.progress}
 			onclick={workflow.handleRecolor}
 		>
-			{$t('home.recolor')}
+			{t('home.recolor')}
 		</Button>
 		<Hint
 			error={workflow.buttonHintIsError}
 			hintsEnabled={$hintsEnabled}
-			text={workflow.buttonHint ? $t(workflow.buttonHint) : null}
+			text={workflow.buttonHint ? t(workflow.buttonHint) : null}
 		/>
 	</div>
 	<div
@@ -85,13 +85,13 @@
 	>
 		<section
 			class="flex w-full max-w-120 animate-[rise_380ms_ease-out_200ms_backwards] flex-col gap-2"
-			aria-label={$t('home.mappingAria')}
+			aria-label={t('home.mappingAria')}
 		>
-			<Typography as="span" variant="section-label">{$t('home.mappingSection')}</Typography>
+			<Typography as="span" variant="section-label">{t('home.mappingSection')}</Typography>
 			<Dropdown
 				bind:value={workflow.state.mapping}
 				options={mappingOptions}
-				label={$t('home.mappingAria')}
+				label={t('home.mappingAria')}
 			/>
 		</section>
 		<ResultPanel
