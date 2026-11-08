@@ -1,0 +1,151 @@
+name: Bug report
+description: Report a problem with re::color
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below so we can reproduce and fix the issue.
+
+        Before opening a new issue, please search the existing issues to avoid duplicates.
+
+        > [!IMPORTANT]
+        > re::color runs entirely in your browser. Never attach private artwork or personal images to an issue; reproduce the problem with a public or generated sample sprite instead.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of the bug.
+      placeholder: What went wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps that trigger the bug, including the mapping mode and palette settings used.
+      placeholder: |
+        1. Load a 64x64 PNG sprite as the sprite and a 32x32 PNG as the palette
+        2. Select "Luminance order" with 16 colors
+        3. Click a pixel to exclude it
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened? Include any error message shown in the app.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Brave
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser_version
+    attributes:
+      label: Browser version
+      description: Where to find it varies per browser; paste the full version string if you can.
+      placeholder: "Example: Firefox 135.0.1"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Device and operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS / iPadOS
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: app_mode
+    attributes:
+      label: How are you running re::color?
+      options:
+        - In a browser tab (recolor.pages.dev)
+        - Installed as a PWA
+        - Self-hosted build
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The site does not display a version. If self-hosting, paste the commit or build date; otherwise leave the date you last saw it working.
+      placeholder: "Commit abc1234, or 2026-11-01"
+
+  - type: textarea
+    id: settings
+    attributes:
+      label: Relevant settings
+      description: Anything from the home screen or /settings that could matter.
+      placeholder: |
+        Mapping mode: Dominant color
+        Max palette colors: 32
+        Auto-apply: on
+        Persist workspace: on
+        Pixel exclusions: 2 pixels
+        Installed PWA: yes
+
+  - type: textarea
+    id: images
+    attributes:
+      label: Image details
+      description: Format, dimensions, and file size of the sprites involved. Do not attach private artwork.
+      placeholder: |
+        Sprite: PNG, 64x64, 4 KiB
+        Palette: PNG, 32x32, 1 KiB
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Paste any errors from the browser console or the service worker, if there are any.
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add any other context, screenshots of the UI, or a minimal sample sprite that helps explain the problem.
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched the existing issues and this is not a duplicate.
+          required: true
+        - label: I have not attached private artwork or personal images.
+          required: true
