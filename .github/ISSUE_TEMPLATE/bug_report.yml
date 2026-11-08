@@ -1,7 +1,7 @@
 name: Bug report
 description: Report a problem with re::color
-title: "[Bug]: "
-labels: ["bug"]
+title: '[Bug]: '
+labels: ['bug']
 body:
   - type: markdown
     attributes:
@@ -70,7 +70,7 @@ body:
     attributes:
       label: Browser version
       description: Where to find it varies per browser; paste the full version string if you can.
-      placeholder: "Example: Firefox 135.0.1"
+      placeholder: 'Example: Firefox 135.0.1'
 
   - type: dropdown
     id: os
@@ -103,7 +103,7 @@ body:
     attributes:
       label: Version or commit
       description: The site does not display a version. If self-hosting, paste the commit or build date; otherwise leave the date you last saw it working.
-      placeholder: "Commit abc1234, or 2026-11-01"
+      placeholder: 'Commit abc1234, or 2026-11-01'
 
   - type: textarea
     id: settings
