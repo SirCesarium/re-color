@@ -143,12 +143,12 @@
 		<span class="pointer-events-none absolute inset-0 opacity-50 checker-pattern" aria-hidden="true"
 		></span>
 		<img
-			class="pointer-events-none relative h-full w-full object-contain [image-rendering:pixelated]"
+			class="pointer-events-none relative h-full w-full animate-[pop_180ms_ease-out] object-contain [image-rendering:pixelated]"
 			src={preview}
 			alt=""
 		/>
 		<span
-			class="pointer-events-none absolute top-1.5 left-1.5 border border-border bg-panel px-1.5 py-1 text-base leading-none {tagColor}"
+			class="pointer-events-none absolute top-1.5 left-1.5 animate-[hint-in_150ms_ease-out] border border-border bg-panel px-1.5 py-1 text-base leading-none {tagColor}"
 		>
 			{label}
 		</span>

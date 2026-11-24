@@ -62,14 +62,7 @@
 		<div
 			class="pointer-events-none absolute inset-0 opacity-35 checker-pattern group-hover/result:animate-[drift_4s_linear_infinite]"
 		></div>
-		<PixelCanvas
-			{imageUrl}
-			{spriteFile}
-			{excludedPixels}
-			{onTogglePixel}
-			{onSetPixelExclusion}
-			onInteract={dismissHelp}
-		/>
+		<PixelCanvas {imageUrl} {spriteFile} {excludedPixels} {onTogglePixel} {onSetPixelExclusion} />
 
 		{#if imageUrl}
 			{#if helpVisible}
@@ -86,7 +79,11 @@
 			{/if}
 		{/if}
 	</div>
-	{#if imageUrl}
-		<Button onclick={onDownload}>{t('result.download')}</Button>
-	{/if}
+	<div class="min-h-12">
+		{#if imageUrl}
+			<div class="animate-[rise_200ms_ease-out]">
+				<Button onclick={onDownload}>{t('result.download')}</Button>
+			</div>
+		{/if}
+	</div>
 </section>
