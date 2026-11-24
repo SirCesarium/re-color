@@ -9,6 +9,8 @@ export type Rgb = {
 export type PaletteColor = Rgb & {
 	/** Inactive colors are never offered to the mapping strategy. */
 	active: boolean;
+	/** True when added manually by the user rather than extracted from the palette image. */
+	custom?: boolean;
 };
 
 export type MappingMode = 'nearest' | 'luminance' | 'dominant';

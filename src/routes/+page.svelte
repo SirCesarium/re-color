@@ -26,7 +26,48 @@
 			workflow.clearFormData();
 		}
 	}
+
+	function onWindowKeyDown(event: KeyboardEvent) {
+		if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+
+		const key = event.key.toLowerCase();
+		const isUndoKey = key === 'z' || event.code === 'KeyZ';
+		const isRedoKey = key === 'y' || event.code === 'KeyY';
+		if (!isUndoKey && !isRedoKey) return;
+
+		const target = event.target;
+		if (
+			target instanceof HTMLInputElement &&
+			target.type !== 'button' &&
+			target.type !== 'checkbox' &&
+			target.type !== 'radio' &&
+			target.type !== 'color'
+		) {
+			return;
+		}
+		if (
+			target instanceof HTMLTextAreaElement ||
+			(target instanceof HTMLElement && target.isContentEditable)
+		) {
+			return;
+		}
+
+		if (isRedoKey || event.shiftKey) {
+			if (workflow.canRedo) {
+				event.preventDefault();
+				workflow.redo();
+			}
+			return;
+		}
+
+		if (workflow.canUndo) {
+			event.preventDefault();
+			workflow.undo();
+		}
+	}
 </script>
+
+<svelte:window onkeydown={onWindowKeyDown} />
 
 <svelte:head>
 	<title>{t('home.title')}</title>
@@ -53,7 +94,7 @@
 <main
 	class="box-border flex w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12 min-[900px]:mx-auto min-[900px]:grid min-[900px]:max-w-260 min-[900px]:grid-cols-[1fr_1fr] min-[900px]:content-center min-[900px]:justify-items-start min-[900px]:gap-x-16 min-[900px]:gap-y-8"
 >
-	<Hero bind:colors={workflow.state.colors} />
+	<Hero bind:colors={workflow.state.colors} onColorsChange={workflow.recordColorChange} />
 	<ImageInputs bind:palette={workflow.state.palette} bind:sprite={workflow.state.sprite} />
 	<div
 		class="flex w-full max-w-120 animate-[rise_380ms_ease-out_160ms_backwards] flex-col gap-4 min-[900px]:col-start-1 min-[900px]:justify-self-stretch"
@@ -74,11 +115,13 @@
 		>
 			{t('home.recolor')}
 		</Button>
-		<Hint
-			error={workflow.buttonHintIsError}
-			hintsEnabled={$hintsEnabled}
-			text={workflow.buttonHint ? t(workflow.buttonHint) : null}
-		/>
+		<div class="flex min-h-10 items-start">
+			<Hint
+				error={workflow.buttonHintIsError}
+				hintsEnabled={$hintsEnabled}
+				text={workflow.buttonHint ? t(workflow.buttonHint) : null}
+			/>
+		</div>
 	</div>
 	<div
 		class="flex w-full max-w-120 flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"

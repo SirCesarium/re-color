@@ -115,7 +115,9 @@ function buildWorkspace(state: WorkspaceHost): PersistedWorkspace {
 				}
 			: null,
 		mapping: state.mapping,
-		colors: state.colors.map(({ r, g, b, active }) => ({ r, g, b, active })),
+		colors: state.colors.map(({ r, g, b, active, custom }) =>
+			custom ? { r, g, b, active, custom } : { r, g, b, active }
+		),
 		excludedPixels: [...state.excludedPixels]
 	};
 }

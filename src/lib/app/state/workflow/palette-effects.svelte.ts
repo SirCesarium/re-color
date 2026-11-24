@@ -41,14 +41,27 @@ export function watchPaletteColors(state: PaletteHost): void {
 			.then((colors) => {
 				if (cancelled) return;
 
-				state.colors = colors.map((color) => {
+				const extracted = colors.map((color) => {
 					const previous = previousColors.find(
 						(candidate) =>
-							candidate.r === color.r && candidate.g === color.g && candidate.b === color.b
+							!candidate.custom &&
+							candidate.r === color.r &&
+							candidate.g === color.g &&
+							candidate.b === color.b
 					);
 
 					return previous ? { ...color, active: previous.active } : color;
 				});
+				const customColors = previousColors.filter(
+					(candidate) =>
+						candidate.custom &&
+						!extracted.some(
+							(color) =>
+								color.r === candidate.r && color.g === candidate.g && color.b === candidate.b
+						)
+				);
+
+				state.colors = [...extracted, ...customColors];
 				state.paletteColorsLoaded = true;
 			})
 			.catch((error: unknown) => {

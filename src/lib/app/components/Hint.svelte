@@ -32,10 +32,10 @@
 
 {#if visible}
 	<div
-		class="relative max-w-full self-center border-2 border-btn-edge bg-panel px-3 py-2 text-balance whitespace-normal shadow-[3px_3px_0_var(--shadow)] {placement ===
+		class="max-w-full self-center border-2 border-btn-edge bg-panel px-3 py-2 text-balance whitespace-normal shadow-[3px_3px_0_var(--shadow)] {placement ===
 		'above'
-			? 'absolute right-0 bottom-[calc(100%+12px)] left-0 mx-auto w-max animate-[hint-in-above_200ms_ease-out]'
-			: 'animate-[hint-in_200ms_ease-out]'} {onDismiss !== undefined
+			? 'absolute bottom-[calc(100%+12px)] left-0 z-20 w-max animate-[hint-in-above_200ms_ease-out]'
+			: 'relative animate-[hint-in_200ms_ease-out]'} {onDismiss !== undefined
 			? 'pointer-events-auto flex items-start gap-2'
 			: 'pointer-events-none'} {className}"
 		role="status"

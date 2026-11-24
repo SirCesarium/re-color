@@ -5,7 +5,13 @@
 	import PaletteStrip from '#app/widgets/PaletteStrip.svelte';
 	import type { PaletteColor } from '#lib';
 
-	let { colors = $bindable([]) }: { colors: PaletteColor[] } = $props();
+	let {
+		colors = $bindable([]),
+		onColorsChange
+	}: {
+		colors: PaletteColor[];
+		onColorsChange?: (previous: PaletteColor[]) => void;
+	} = $props();
 </script>
 
 <header
@@ -15,8 +21,5 @@
 	<Typography as="h1" variant="tagline">
 		{t('hero.tagline1')}<br />{t('hero.tagline2')}
 	</Typography>
-	<PaletteStrip
-		bind:colors
-		class="min-[900px]:justify-start [&_.hint.above]:min-[900px]:mx-0 [&_.hint.above]:min-[900px]:mr-auto"
-	/>
+	<PaletteStrip bind:colors {onColorsChange} class="min-[900px]:justify-start" />
 </header>
