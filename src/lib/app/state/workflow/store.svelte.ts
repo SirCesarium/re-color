@@ -112,6 +112,21 @@ export function createRecolorWorkflow() {
 	// repopulate what the user just cleared.
 	let workspaceRestoreCancelled = false;
 
+	type HistoryEntry =
+		{ kind: 'colors'; colors: PaletteColor[] } | { kind: 'pixels'; excludedPixels: number[] };
+
+	const MAX_HISTORY = 100;
+	let undoStack = $state<HistoryEntry[]>([]);
+	let redoStack = $state<HistoryEntry[]>([]);
+
+	const canUndo = $derived(undoStack.length > 0);
+	const canRedo = $derived(redoStack.length > 0);
+
+	function pushHistory(entry: HistoryEntry) {
+		undoStack = [...undoStack.slice(-(MAX_HISTORY - 1)), entry];
+		redoStack = [];
+	}
+
 	onMount(() => {
 		// The settings store loads preferences at import; seed the live mapping
 		// from the saved default and mark restore done so the mapping-sync
@@ -161,6 +176,8 @@ export function createRecolorWorkflow() {
 
 		workspaceRestoreCancelled = true;
 		clearResult();
+		undoStack = [];
+		redoStack = [];
 		state.palette = null;
 		state.sprite = null;
 		state.colors = [];
@@ -187,9 +204,14 @@ export function createRecolorWorkflow() {
 		void pipeline.startRecolor();
 	}
 
+	function recordColorChange(previous: readonly PaletteColor[]) {
+		pushHistory({ kind: 'colors', colors: previous.map((color) => ({ ...color })) });
+	}
+
 	function toggleExcludedPixel(index: number) {
 		if (!Number.isInteger(index) || index < 0) return;
 
+		pushHistory({ kind: 'pixels', excludedPixels: [...state.excludedPixels] });
 		state.excludedPixels = state.excludedPixels.includes(index)
 			? state.excludedPixels.filter((pixel) => pixel !== index)
 			: [...state.excludedPixels, index];
@@ -201,10 +223,44 @@ export function createRecolorWorkflow() {
 				Number.isInteger(index) && index >= 0 && indexes.indexOf(index) === position
 		);
 		const current = state.excludedPixels;
-
-		state.excludedPixels = excluded
+		const next = excluded
 			? [...current, ...valid.filter((index) => !current.includes(index))]
 			: current.filter((index) => !valid.includes(index));
+
+		if (next.length === current.length) return;
+
+		pushHistory({ kind: 'pixels', excludedPixels: [...current] });
+		state.excludedPixels = next;
+	}
+
+	function undo() {
+		const entry = undoStack.at(-1);
+		if (!entry) return;
+
+		undoStack = undoStack.slice(0, -1);
+
+		if (entry.kind === 'colors') {
+			redoStack = [...redoStack, { kind: 'colors', colors: state.colors.map((c) => ({ ...c })) }];
+			state.colors = entry.colors.map((c) => ({ ...c }));
+		} else {
+			redoStack = [...redoStack, { kind: 'pixels', excludedPixels: [...state.excludedPixels] }];
+			state.excludedPixels = [...entry.excludedPixels];
+		}
+	}
+
+	function redo() {
+		const entry = redoStack.at(-1);
+		if (!entry) return;
+
+		redoStack = redoStack.slice(0, -1);
+
+		if (entry.kind === 'colors') {
+			undoStack = [...undoStack, { kind: 'colors', colors: state.colors.map((c) => ({ ...c })) }];
+			state.colors = entry.colors.map((c) => ({ ...c }));
+		} else {
+			undoStack = [...undoStack, { kind: 'pixels', excludedPixels: [...state.excludedPixels] }];
+			state.excludedPixels = [...entry.excludedPixels];
+		}
 	}
 
 	// ── Reactive effects ──────────────────────────────────────────────────
@@ -231,6 +287,17 @@ export function createRecolorWorkflow() {
 
 		untrack(() => {
 			state.excludedPixels = [];
+			undoStack = undoStack.filter((entry) => entry.kind !== 'pixels');
+			redoStack = redoStack.filter((entry) => entry.kind !== 'pixels');
+		});
+	});
+
+	$effect(() => {
+		void state.palette;
+
+		untrack(() => {
+			undoStack = undoStack.filter((entry) => entry.kind !== 'colors');
+			redoStack = redoStack.filter((entry) => entry.kind !== 'colors');
 		});
 	});
 
@@ -326,10 +393,19 @@ export function createRecolorWorkflow() {
 		get buttonHintIsError() {
 			return hintIsError;
 		},
+		get canUndo() {
+			return canUndo;
+		},
+		get canRedo() {
+			return canRedo;
+		},
 		clearFormData,
 		handleRecolor,
+		recordColorChange,
 		toggleExcludedPixel,
 		setPixelExclusion,
+		undo,
+		redo,
 		downloadResult
 	};
 }
