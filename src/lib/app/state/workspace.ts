@@ -5,7 +5,7 @@ export type PersistedWorkspace = {
 	palette: { name: string; blob: Blob } | null;
 	sprite: { name: string; blob: Blob } | null;
 	mapping: MappingMode;
-	colors: { r: number; g: number; b: number; active: boolean }[];
+	colors: { r: number; g: number; b: number; active: boolean; custom?: boolean }[];
 	excludedPixels: number[];
 };
 
