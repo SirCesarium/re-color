@@ -91,4 +91,28 @@ describe('pixel help dismissal', () => {
 			expect(screen.queryByRole('button', { name: 'Dismiss help' })).toBeNull();
 		});
 	});
+
+	it('keeps the palette hint floating on pointer move and closes it from the dismiss button', async () => {
+		hintsEnabled.set(true);
+
+		const { container } = render(PaletteStrip, { colors: [{ ...color }] });
+
+		const dismiss = await screen.findByRole('button', { name: 'Dismiss help' });
+		const bubble = dismiss.closest('[role="status"]');
+
+		expect(bubble?.classList.contains('absolute')).toBe(true);
+		expect(bubble?.classList.contains('relative')).toBe(false);
+
+		const wrap = container.querySelector('.wrap');
+		if (wrap) {
+			await fireEvent.pointerMove(wrap, { clientX: 10, clientY: 10 });
+		}
+		expect(screen.queryByRole('button', { name: 'Dismiss help' })).not.toBeNull();
+
+		await fireEvent.click(dismiss);
+
+		await waitFor(() => {
+			expect(screen.queryByRole('button', { name: 'Dismiss help' })).toBeNull();
+		});
+	});
 });
