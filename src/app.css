@@ -222,6 +222,12 @@
 		outline: none !important;
 	}
 
+	::selection {
+		background-color: var(--btn-bg);
+		color: var(--btn-fg);
+		text-shadow: none;
+	}
+
 	:focus-visible {
 		outline: 2px solid var(--btn-edge) !important;
 		outline-offset: 2px !important;
