@@ -3,17 +3,39 @@
 	import { t } from '#app/text/index.ts';
 
 	const sections = [
-		{ id: 'how', labelKey: 'sections.how.label', titleKey: 'sections.how.title' },
-		{ id: 'examples', labelKey: 'sections.examples.label', titleKey: 'sections.examples.title' },
-		{ id: 'limits', labelKey: 'sections.limits.label', titleKey: 'sections.limits.title' }
-	];
-
-	// Placeholder copy lives here instead of messages.json so the real strings
-	// do not inherit a translation key that will be deleted.
-	const lorem = [
-		'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-		'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-		'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.'
+		{
+			id: 'how',
+			labelKey: 'sections.how.label',
+			titleKey: 'sections.how.title',
+			summaryKey: 'sections.how.summary',
+			imageSrc: '/img/workflow-preview.png',
+			mobileSrc: '/img/workflow-preview-mobile.png',
+			imageAltKey: 'sections.how.imageAlt',
+			width: 1520,
+			height: 720
+		},
+		{
+			id: 'examples',
+			labelKey: 'sections.examples.label',
+			titleKey: 'sections.examples.title',
+			summaryKey: 'sections.examples.summary',
+			imageSrc: '/img/examples-preview.png',
+			mobileSrc: '/img/examples-preview-mobile.png',
+			imageAltKey: 'sections.examples.imageAlt',
+			width: 1520,
+			height: 720
+		},
+		{
+			id: 'limits',
+			labelKey: 'sections.limits.label',
+			titleKey: 'sections.limits.title',
+			summaryKey: 'sections.limits.summary',
+			imageSrc: '/img/limits-preview.png',
+			mobileSrc: '/img/limits-preview-mobile.png',
+			imageAltKey: 'sections.limits.imageAlt',
+			width: 1280,
+			height: 600
+		}
 	];
 </script>
 
@@ -27,12 +49,19 @@
 		<div class="mx-auto w-full max-w-260 px-4 py-16 min-[900px]:py-24">
 			<Typography as="span" variant="section-label">{t(section.labelKey)}</Typography>
 			<Typography as="h2" variant="page-title" class="mt-3">{t(section.titleKey)}</Typography>
+			<Typography variant="muted" class="mt-5 max-w-[65ch]">{t(section.summaryKey)}</Typography>
 
-			<div class="mt-6 flex max-w-[65ch] flex-col gap-5">
-				{#each [lorem[index % lorem.length], lorem[(index + 1) % lorem.length]] as paragraph, paragraphIndex (paragraphIndex)}
-					<Typography variant="muted">{paragraph}</Typography>
-				{/each}
-			</div>
+			<picture class="mt-8 block w-full max-w-240">
+				<source media="(max-width: 639px)" srcset={section.mobileSrc} />
+				<img
+					src={section.imageSrc}
+					alt={t(section.imageAltKey)}
+					width={section.width}
+					height={section.height}
+					loading="lazy"
+					class="block h-auto w-full border border-border"
+				/>
+			</picture>
 		</div>
 	</section>
 {/each}
