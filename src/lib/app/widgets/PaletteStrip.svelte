@@ -23,6 +23,7 @@
 	let hexInput = $state('#458588');
 
 	let hoverCapable = $state(false);
+	let hovered = $state(false);
 	let expanded = $state(false);
 	let expandedMax = $state(0);
 	let scrollable = $state(false);
@@ -130,8 +131,27 @@
 	}
 
 	function collapse() {
+		// The add form only fits in the expanded layer; dropping it back into the
+		// capped slot would push it over the page below.
+		if (adding || hovered) return;
+
 		expanded = false;
 		scrollable = false;
+	}
+
+	function onPointerEnter() {
+		hovered = true;
+		expand();
+	}
+
+	function onPointerLeave() {
+		hovered = false;
+		collapse();
+	}
+
+	function finishAdd() {
+		adding = false;
+		if (!hovered) collapse();
 	}
 
 	function onSwatchTransitionEnd(event: TransitionEvent) {
@@ -204,7 +224,7 @@
 	}
 
 	function closeAdd() {
-		adding = false;
+		finishAdd();
 	}
 
 	function confirmAdd() {
@@ -226,7 +246,7 @@
 			commitColors([...colors, { ...rgb, active: true, custom: true }]);
 		}
 
-		adding = false;
+		finishAdd();
 	}
 
 	function onHexKeyDown(event: KeyboardEvent) {
@@ -258,8 +278,8 @@
 					: 'relative shadow-[3px_3px_0_var(--btn-shadow)]'}"
 				role="group"
 				aria-label={t('palette.section')}
-				onmouseenter={expand}
-				onmouseleave={collapse}
+				onmouseenter={onPointerEnter}
+				onmouseleave={onPointerLeave}
 				onfocusin={expand}
 				onfocusout={onFocusOut}
 			>
