@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import Hint from '#app/components/Hint.svelte';
-	import Typography from '#app/components/Typography.svelte';
 	import { hintsEnabled } from '#app/state/hints.ts';
 	import { t } from '#app/text/index.ts';
 	import { cssRgb, type PaletteColor, type Rgb } from '#lib';
@@ -23,6 +22,16 @@
 	let adding = $state(false);
 	let hexInput = $state('#458588');
 
+	let hoverCapable = $state(false);
+	let expanded = $state(false);
+	let expandedMax = $state(0);
+	let scrollable = $state(false);
+	let overflowing = $state(false);
+	let slotHeight = $state<number | null>(null);
+
+	let panelEl = $state<HTMLDivElement>();
+	let swatchEl = $state<HTMLDivElement>();
+
 	const HINT_KEY = 'recolor.hintSeen';
 	const MAX_HINTS = 2;
 
@@ -35,6 +44,31 @@
 	onMount(() => {
 		const seen = Number(localStorage.getItem(HINT_KEY) ?? 0);
 		hintAllowed = seen < MAX_HINTS;
+
+		const query =
+			typeof window.matchMedia === 'function'
+				? window.matchMedia('(hover: hover) and (pointer: fine)')
+				: null;
+
+		if (!query) return;
+
+		const sync = () => {
+			hoverCapable = query.matches;
+		};
+
+		const onResize = () => {
+			void tick().then(measure);
+		};
+
+		sync();
+		query.addEventListener('change', sync);
+		window.addEventListener('resize', onResize);
+		void tick().then(measure);
+
+		return () => {
+			query.removeEventListener('change', sync);
+			window.removeEventListener('resize', onResize);
+		};
 	});
 
 	$effect(() => {
@@ -51,6 +85,62 @@
 
 		hintVisible = true;
 	});
+
+	$effect(() => {
+		scheduleMeasure(colors.length, adding, hoverCapable, hintVisible);
+	});
+
+	function scheduleMeasure(
+		_count: number,
+		_adding: boolean,
+		_hoverCapable: boolean,
+		_hintVisible: boolean
+	) {
+		void tick().then(measure);
+	}
+
+	function measure() {
+		if (!hoverCapable || expanded || !panelEl || !swatchEl) {
+			if (!hoverCapable) {
+				slotHeight = null;
+				overflowing = false;
+			}
+			return;
+		}
+
+		slotHeight = panelEl.offsetHeight;
+		overflowing = swatchEl.scrollHeight > swatchEl.clientHeight + 1;
+	}
+
+	function expand() {
+		if (!hoverCapable || expanded || !swatchEl) return;
+
+		const cap = Math.round(window.innerHeight * 0.55);
+		expandedMax = Math.min(swatchEl.scrollHeight, cap);
+		scrollable = false;
+		expanded = true;
+	}
+
+	function collapse() {
+		expanded = false;
+		scrollable = false;
+	}
+
+	function onSwatchTransitionEnd(event: TransitionEvent) {
+		if (event.propertyName !== 'max-height') return;
+
+		if (expanded) {
+			scrollable = true;
+			return;
+		}
+
+		void tick().then(measure);
+	}
+
+	function onFocusOut(event: FocusEvent) {
+		if (panelEl?.contains(event.relatedTarget as Node | null)) return;
+		collapse();
+	}
 
 	function toHex(color: Rgb): string {
 		const channel = (value: number) => value.toString(16).padStart(2, '0');
@@ -143,40 +233,74 @@
 </script>
 
 <div
-	class="wrap relative mt-4 flex w-full {colors.length > 0
+	class="relative mt-4 flex w-full {colors.length > 0
 		? 'justify-start text-left'
 		: 'justify-center'} {className}"
 	role="presentation"
 >
 	{#if colors.length > 0}
 		<div
-			class="mx-auto flex w-full max-w-120 animate-[rise_220ms_ease-out_backwards] flex-col gap-2 min-[900px]:mx-0"
+			class="relative mx-auto w-full max-w-120 animate-[rise_220ms_ease-out_backwards] min-[900px]:mx-0"
+			style:height={slotHeight ? `${slotHeight}px` : undefined}
 		>
-			<div class="flex flex-wrap items-center justify-between gap-2">
-				<div class="flex items-baseline gap-2">
-					<Typography as="span" variant="section-label">{t('palette.section')}</Typography>
-					<span
-						class="text-xs {activeCount === 0 ? 'text-pop' : 'text-text-dim'}"
-						data-testid="palette-count"
-					>
-						{t('palette.count', { active: String(activeCount), total: String(colors.length) })}
-					</span>
-				</div>
-				{#if activeCount < colors.length}
-					<button
-						type="button"
-						class="cursor-pointer border-0 bg-transparent p-0 text-xs text-text-dim underline decoration-dotted underline-offset-4 hover:text-text"
-						onclick={enableAll}
-					>
-						{t('palette.enableAll')}
-					</button>
-				{/if}
-			</div>
-
 			<div
-				class="flex flex-col gap-3 border-2 border-btn-edge bg-panel p-3 shadow-[3px_3px_0_var(--btn-shadow)]"
+				bind:this={panelEl}
+				class="flex flex-col border-2 border-btn-edge bg-panel transition-[box-shadow] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] {expanded
+					? 'absolute inset-x-0 top-0 z-20 shadow-[6px_6px_0_var(--btn-shadow)]'
+					: 'relative shadow-[3px_3px_0_var(--btn-shadow)]'}"
+				role="group"
+				aria-label={t('palette.section')}
+				onmouseenter={expand}
+				onmouseleave={collapse}
+				onfocusin={expand}
+				onfocusout={onFocusOut}
 			>
-				<div class="flex flex-wrap items-center justify-start gap-2">
+				<div
+					class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border px-3 py-1.5"
+				>
+					<div class="flex items-baseline gap-2">
+						<span class="text-sm text-ok">{t('palette.section')}</span>
+						<span
+							class="text-xs {activeCount === 0 ? 'text-pop' : 'text-text'}"
+							data-testid="palette-count"
+						>
+							{t('palette.count', { active: String(activeCount), total: String(colors.length) })}
+						</span>
+					</div>
+					{#if activeCount < colors.length}
+						<button
+							type="button"
+							class="cursor-pointer border-0 bg-transparent p-0 text-[11px] text-text-dim underline decoration-dotted underline-offset-4 hover:text-text"
+							onclick={enableAll}
+						>
+							{t('palette.enableAll')}
+						</button>
+					{/if}
+				</div>
+
+				{#if hintVisible}
+					<div class="border-b border-border bg-panel-sunken">
+						<Hint
+							placement="flow"
+							arrow="none"
+							class="w-full border-0! bg-transparent! px-3! py-2! text-left text-[11px] leading-[1.4] text-text-dim shadow-none!"
+							hintsEnabled={$hintsEnabled}
+							text={t('palette.toggleHint')}
+							onDismiss={dismiss}
+						/>
+					</div>
+				{/if}
+
+				<div
+					bind:this={swatchEl}
+					class="flex flex-wrap items-center justify-start gap-2 p-3 transition-[max-height] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)] {expanded
+						? scrollable
+							? 'fine-pointer:overflow-y-auto'
+							: 'fine-pointer:overflow-hidden'
+						: 'fine-pointer:max-h-28 fine-pointer:overflow-hidden'}"
+					style:max-height={expanded ? `${expandedMax}px` : undefined}
+					ontransitionend={onSwatchTransitionEnd}
+				>
 					{#each colors as color, index (index)}
 						{@const hex = toHex(color)}
 						{#if color.custom}
@@ -231,7 +355,7 @@
 
 				{#if adding}
 					<div
-						class="flex animate-[hint-in_150ms_ease-out] flex-wrap items-center justify-start gap-2 border-t border-border pt-3"
+						class="flex animate-[hint-in_150ms_ease-out] flex-wrap items-center justify-start gap-2 border-t border-border px-3 py-3"
 					>
 						<input
 							type="color"
@@ -261,7 +385,7 @@
 						</button>
 						<button
 							type="button"
-							class="flex h-9 w-9 cursor-pointer items-center justify-center border-2 border-border bg-panel-sunken text-sm font-bold text-text-dim transition-colors hover:border-btn-edge hover:text-text"
+							class="flex h-9 w-9 cursor-pointer items-center justify-center border-2 border-border bg-panel-sunken text-lg font-bold text-pop hover:border-btn-edge"
 							aria-label={t('palette.addCancel')}
 							onclick={closeAdd}
 						>
@@ -269,19 +393,15 @@
 						</button>
 					</div>
 				{/if}
+
+				{#if overflowing && !expanded}
+					<div
+						aria-hidden="true"
+						class="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-panel to-transparent"
+					></div>
+				{/if}
 			</div>
 		</div>
-
-		{#if hintVisible}
-			<Hint
-				placement="above"
-				class="text-left text-xs leading-[1.35]"
-				tailOffset="18px"
-				hintsEnabled={$hintsEnabled}
-				text={t('palette.toggleHint')}
-				onDismiss={dismiss}
-			/>
-		{/if}
 	{:else}
 		<div class="flex flex-wrap justify-center gap-1" aria-hidden="true">
 			{#each PLACEHOLDER as key (key)}

@@ -41,7 +41,7 @@
 	"palette.addHexAria": "Hex color code",
 	"palette.addConfirm": "Add",
 	"palette.addCancel": "Cancel",
-	"palette.toggleHint": "You can click a color to exclude it from the recolor",
+	"palette.toggleHint": "Click a color to exclude or include it.",
 	"footer.settings": "Settings",
 	"footer.home": "Home",
 	"footer.privacy": "Privacy",
