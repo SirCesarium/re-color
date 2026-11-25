@@ -124,4 +124,4 @@ docker run -d -p 8080:80 --name re-color-app re-color
 
 ## License
 
-[MIT © SirCesarium](./LICENSE)
+Distributed under the [MPL-2.0](./LICENSE) License.
