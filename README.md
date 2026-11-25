@@ -34,13 +34,13 @@ Extract a color palette from a reference sprite and **re-colorize** another one.
 - **Luminance order**: sorts both sprite and palette by brightness and pairs them, so shading survives the swap.
 - **Dominant color**: finds your sprite's most-used color and pins it to the palette's dominant, then fills in the rest.
 
-<img width="512" height="129" alt="image" src="https://github.com/user-attachments/assets/1fcdcf29-0cac-46c4-aee5-4ef3a0cc2003" />
+<img width="512" alt="image" src="https://github.com/user-attachments/assets/1fcdcf29-0cac-46c4-aee5-4ef3a0cc2003" />
 
 ### Pixel-level control
 
 Tap any pixel in the live preview to exclude it from the recolor. Zoom with the mouse wheel and pan with the middle or right button.
 
-<img width="1025" height="560" alt="image" src="https://github.com/user-attachments/assets/a7baed56-1518-474b-9832-a69773f1d478" />
+<img width="1025" alt="image" src="https://github.com/user-attachments/assets/a7baed56-1518-474b-9832-a69773f1d478" />
 
 ### Download the result
 
@@ -50,13 +50,13 @@ Export the recolored sprite as a PNG, same dimensions as your input, named `<nam
 
 The current palette, sprite, mapping mode and pixel exclusions are saved locally (IndexedDB), so a refresh doesn't lose your work. You can turn this off in settings.
 
-<img width="907" height="128" alt="image" src="https://github.com/user-attachments/assets/19447af9-8824-4797-9b92-443884635fdc" />
+<img width="907" alt="image" src="https://github.com/user-attachments/assets/19447af9-8824-4797-9b92-443884635fdc" />
 
 ### Preferences that stick
 
 Auto-apply the result, maximum palette colors, default mapping mode, animations and help hints, all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
 
-<img width="973" height="818" alt="image" src="https://github.com/user-attachments/assets/250f99df-8096-4e60-83c5-341a633067b9" />
+<img width="973" alt="image" src="https://github.com/user-attachments/assets/250f99df-8096-4e60-83c5-341a633067b9" />
 
 ### Install it as an app
 
