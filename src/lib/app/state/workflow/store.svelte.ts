@@ -15,6 +15,7 @@ import {
 } from './machine.ts';
 import { revokeResultUrls } from './object-urls.ts';
 import { createOperationScope } from './operations.ts';
+import { paintExclusions, type PixelPaintMode } from './paint.ts';
 import { watchPaletteColors } from './palette-effects.svelte.ts';
 import { createPipeline } from './pipeline.ts';
 import { watchWorkspace } from './workspace-effects.svelte.ts';
@@ -217,19 +218,12 @@ export function createRecolorWorkflow() {
 			: [...state.excludedPixels, index];
 	}
 
-	function setPixelExclusion(indexes: readonly number[], excluded: boolean) {
-		const valid = indexes.filter(
-			(index, position) =>
-				Number.isInteger(index) && index >= 0 && indexes.indexOf(index) === position
-		);
-		const current = state.excludedPixels;
-		const next = excluded
-			? [...current, ...valid.filter((index) => !current.includes(index))]
-			: current.filter((index) => !valid.includes(index));
+	function applyPixelPaint(indexes: readonly number[], mode: PixelPaintMode) {
+		const next = paintExclusions(state.excludedPixels, indexes, mode);
 
-		if (next.length === current.length) return;
+		if (!next) return;
 
-		pushHistory({ kind: 'pixels', excludedPixels: [...current] });
+		pushHistory({ kind: 'pixels', excludedPixels: [...state.excludedPixels] });
 		state.excludedPixels = next;
 	}
 
@@ -403,7 +397,7 @@ export function createRecolorWorkflow() {
 		handleRecolor,
 		recordColorChange,
 		toggleExcludedPixel,
-		setPixelExclusion,
+		applyPixelPaint,
 		undo,
 		redo,
 		downloadResult

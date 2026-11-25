@@ -4,6 +4,7 @@
 	import Hint from '#app/components/Hint.svelte';
 	import Typography from '#app/components/Typography.svelte';
 	import { hintsEnabled } from '#app/state/hints.ts';
+	import type { PixelPaintMode } from '#app/state/workflow/paint.ts';
 	import { t } from '#app/text/index.ts';
 	import PixelCanvas from '#app/widgets/PixelCanvas.svelte';
 
@@ -11,15 +12,21 @@
 		imageUrl = null,
 		spriteFile = null,
 		excludedPixels = [],
+		brushSize = $bindable(1),
+		paintMode = $bindable<PixelPaintMode>('toggle'),
+		locked = $bindable(true),
 		onTogglePixel,
-		onSetPixelExclusion,
+		onPaintPixels,
 		onDownload
 	}: {
 		imageUrl?: string | null;
 		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
+		brushSize?: number;
+		paintMode?: PixelPaintMode;
+		locked?: boolean;
 		onTogglePixel?: (pixelIndex: number) => void;
-		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
+		onPaintPixels?: (pixelIndexes: readonly number[], mode: PixelPaintMode) => void;
 		onDownload?: () => void;
 	} = $props();
 
@@ -62,8 +69,24 @@
 		<div
 			class="pointer-events-none absolute inset-0 opacity-35 checker-pattern group-hover/result:animate-[drift_4s_linear_infinite]"
 		></div>
-		<PixelCanvas {imageUrl} {spriteFile} {excludedPixels} {onTogglePixel} {onSetPixelExclusion} />
+		<PixelCanvas
+			{imageUrl}
+			{spriteFile}
+			{excludedPixels}
+			bind:brushSize
+			bind:paintMode
+			bind:locked
+			{onTogglePixel}
+			{onPaintPixels}
+		/>
 
+		{#if imageUrl && locked}
+			<div
+				class="pointer-events-none absolute bottom-1 left-1 z-10 hidden border-2 border-btn-edge bg-panel px-1.5 py-0.5 text-xs text-[var(--sw-red)] shadow-[2px_2px_0_var(--btn-shadow)] pointer-coarse:block"
+			>
+				{t('paint.canvasLocked')}
+			</div>
+		{/if}
 		{#if imageUrl}
 			{#if helpVisible}
 				<div class="absolute top-2 right-2 left-2 z-10">

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+	import type { PixelPaintMode } from '#app/state/workflow/paint.ts';
 	import { t } from '#app/text/index.ts';
 	import {
 		clampImageTransform,
@@ -8,25 +10,34 @@
 		zoomLimits
 	} from '#core/geometry/pixel-coords.ts';
 	import { linePoints } from '#core/geometry/stroke-line.ts';
+	import PixelPaintControls from '#app/widgets/PixelPaintControls.svelte';
 
 	let {
 		imageUrl = null,
 		spriteFile = null,
 		excludedPixels = [],
+		brushSize = $bindable(1),
+		paintMode = $bindable<PixelPaintMode>('toggle'),
+		locked = $bindable(true),
 		onTogglePixel,
-		onSetPixelExclusion,
+		onPaintPixels,
 		onInteract
 	}: {
 		imageUrl?: string | null;
 		spriteFile?: File | null;
 		excludedPixels?: readonly number[];
+		brushSize?: number;
+		paintMode?: PixelPaintMode;
+		locked?: boolean;
 		onTogglePixel?: (pixelIndex: number) => void;
-		onSetPixelExclusion?: (pixelIndexes: readonly number[], excluded: boolean) => void;
+		onPaintPixels?: (pixelIndexes: readonly number[], mode: PixelPaintMode) => void;
 		onInteract?: () => void;
 	} = $props();
 
+	let root = $state<HTMLDivElement | null>(null);
 	let viewport = $state<HTMLButtonElement | null>(null);
 	let canvas = $state<HTMLCanvasElement | null>(null);
+	let hoverCanvas = $state<HTMLCanvasElement | null>(null);
 	let sourceImage = $state<HTMLImageElement | null>(null);
 	let originalSprite = $state<HTMLImageElement | null>(null);
 	let dimensions = $state<{ width: number; height: number } | null>(null);
@@ -37,6 +48,10 @@
 	let viewportHeight = $state(0);
 	let zoom = $state(0);
 	let offset = $state({ x: 0, y: 0 });
+	let menuElement = $state<HTMLDivElement | null>(null);
+	let menuOpen = $state(false);
+	let menuX = $state(0);
+	let menuY = $state(0);
 	let lastImageSize = '';
 	let pan: {
 		pointerId: number;
@@ -49,9 +64,9 @@
 		pointerId: number;
 		lastPixel: { x: number; y: number };
 		indexes: Set<number>;
-		dragging: boolean;
-		excluded: boolean;
 	} | null = null;
+	let lastTap = { time: 0, x: 0, y: 0 };
+	let tapCandidate: { pointerId: number; x: number; y: number } | null = null;
 
 	// One membership structure for the exclusion mask: the pointer-down
 	// check and the paint pass both ask "is this index excluded?", which a
@@ -66,6 +81,29 @@
 			: null
 	);
 	const zoomedIn = $derived(limits !== null && zoom > limits.min);
+
+	// The brush is a discrete disk: every pixel whose center falls inside the
+	// circle, so size 3 is a plus and size 5 reads round instead of square.
+	const brushShape = $derived.by(() => {
+		const size = Math.max(1, Math.round(brushSize));
+		const center = (size - 1) / 2;
+		const anchor = Math.floor(center);
+		const radius = size / 2 - 0.25;
+		const offsets: { dx: number; dy: number }[] = [];
+
+		for (let y = 0; y < size; y++) {
+			for (let x = 0; x < size; x++) {
+				const dx = x - center;
+				const dy = y - center;
+
+				if (dx * dx + dy * dy <= radius * radius) {
+					offsets.push({ dx: x - anchor, dy: y - anchor });
+				}
+			}
+		}
+
+		return offsets;
+	});
 
 	$effect(() => {
 		const file = spriteFile;
@@ -113,6 +151,7 @@
 			zoom = 0;
 			offset = { x: 0, y: 0 };
 			lastImageSize = '';
+			menuOpen = false;
 
 			return;
 		}
@@ -179,6 +218,58 @@
 	});
 
 	$effect(() => {
+		const surface = hoverCanvas;
+		const size = dimensions;
+		const rect = imageRect;
+		const pixel = hoverPixel;
+		const shape = brushShape;
+		const width = viewportWidth;
+		const height = viewportHeight;
+
+		if (!surface || !size || width <= 0 || height <= 0) return;
+
+		const ratio = window.devicePixelRatio || 1;
+		const backingWidth = Math.max(1, Math.round(width * ratio));
+		const backingHeight = Math.max(1, Math.round(height * ratio));
+
+		if (surface.width !== backingWidth || surface.height !== backingHeight) {
+			surface.width = backingWidth;
+			surface.height = backingHeight;
+		}
+
+		const context = surface.getContext('2d');
+
+		if (!context) return;
+
+		context.setTransform(ratio, 0, 0, ratio, 0, 0);
+		context.clearRect(0, 0, width, height);
+
+		if (pixel && rect) drawFootprint(context, size, rect, pixel, shape);
+	});
+
+	$effect(() => {
+		if (!menuOpen) return;
+
+		const closeOnOutsidePointer = (event: PointerEvent) => {
+			if (menuElement?.contains(event.target as Node)) return;
+
+			menuOpen = false;
+		};
+
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') menuOpen = false;
+		};
+
+		window.addEventListener('pointerdown', closeOnOutsidePointer, true);
+		window.addEventListener('keydown', closeOnEscape);
+
+		return () => {
+			window.removeEventListener('pointerdown', closeOnOutsidePointer, true);
+			window.removeEventListener('keydown', closeOnEscape);
+		};
+	});
+
+	$effect(() => {
 		const surface = canvas;
 		const image = sourceImage;
 		const original = originalSprite;
@@ -214,22 +305,93 @@
 		return pixelAtPoint({ x: clientX, y: clientY }, bounds, imageRect, dimensions);
 	}
 
-	function getHoverStyle() {
-		if (!imageRect || !hoverPixel) return '';
+	function brushIndexesAt(center: { x: number; y: number }): number[] {
+		if (!dimensions) return [];
 
-		return `left:${imageRect.left + hoverPixel.x * imageRect.scale}px;top:${imageRect.top + hoverPixel.y * imageRect.scale}px;width:${imageRect.scale}px;height:${imageRect.scale}px`;
+		const indexes: number[] = [];
+
+		for (const { dx, dy } of brushShape) {
+			const x = center.x + dx;
+			const y = center.y + dy;
+
+			if (x < 0 || y < 0 || x >= dimensions.width || y >= dimensions.height) continue;
+
+			indexes.push(y * dimensions.width + x);
+		}
+
+		return indexes;
 	}
 
-	function toggleAt(clientX: number, clientY: number) {
-		const pixel = getPixelAt(clientX, clientY);
+	function targetExcluded(index: number): boolean {
+		if (paintMode === 'disable') return true;
+		if (paintMode === 'enable') return false;
 
-		if (!pixel) return;
+		return !excludedSet.has(index);
+	}
 
-		onInteract?.();
-		onTogglePixel?.(pixel.index);
+	/**
+	 * Paints the brush footprint's border as an opaque mask on the overlay
+	 * canvas. The canvas blends with `difference`, so the border inverts
+	 * whatever sits under it and stays visible over any sprite color.
+	 */
+	function drawFootprint(
+		context: CanvasRenderingContext2D,
+		size: { width: number; height: number },
+		rect: { left: number; top: number; scale: number },
+		center: { x: number; y: number },
+		shape: readonly { dx: number; dy: number }[]
+	) {
+		const cells = shape
+			.map(({ dx, dy }) => ({ x: center.x + dx, y: center.y + dy }))
+			.filter(({ x, y }) => x >= 0 && y >= 0 && x < size.width && y < size.height);
+
+		if (cells.length === 0) return;
+
+		const occupied = new Set(cells.map(({ x, y }) => `${x},${y}`));
+		const filled = (x: number, y: number) => occupied.has(`${x},${y}`);
+		const thickness = rect.scale >= 6 ? 2 : 1;
+
+		context.fillStyle = '#ffffff';
+		context.beginPath();
+
+		for (const { x, y } of cells) {
+			const left = Math.round(rect.left + x * rect.scale);
+			const top = Math.round(rect.top + y * rect.scale);
+			const right = Math.round(rect.left + (x + 1) * rect.scale);
+			const bottom = Math.round(rect.top + (y + 1) * rect.scale);
+
+			if (!filled(x, y - 1)) context.rect(left, top, right - left, thickness);
+			if (!filled(x, y + 1)) context.rect(left, bottom - thickness, right - left, thickness);
+			if (!filled(x - 1, y)) context.rect(left, top, thickness, bottom - top);
+			if (!filled(x + 1, y)) context.rect(right - thickness, top, thickness, bottom - top);
+		}
+
+		context.fill();
 	}
 
 	function onPointerUp(event: PointerEvent) {
+		if (tapCandidate?.pointerId === event.pointerId) {
+			const tapped =
+				Math.abs(event.clientX - tapCandidate.x) <= 10 &&
+				Math.abs(event.clientY - tapCandidate.y) <= 10;
+
+			tapCandidate = null;
+
+			// Locked canvas: a swipe belongs to the page scroll, so only a
+			// double tap (the documented gesture) arms the brush.
+			if (tapped) {
+				const doubleTap =
+					event.timeStamp - lastTap.time <= 350 &&
+					Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <= 24;
+
+				lastTap = { time: event.timeStamp, x: event.clientX, y: event.clientY };
+
+				if (doubleTap) locked = false;
+			}
+
+			return;
+		}
+
 		if (pan?.pointerId === event.pointerId) {
 			pan = null;
 
@@ -243,33 +405,30 @@
 		if (pointerStroke?.pointerId !== event.pointerId) return;
 
 		const lastPixel = getPixelAt(event.clientX, event.clientY);
-		const size = dimensions;
 
-		if (lastPixel && size) {
-			const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
-
-			if (lastPixel.index !== lastIndex) {
-				pointerStroke.dragging = true;
-			}
-			addStrokeSegment(lastPixel);
-		}
+		if (lastPixel) addStrokeSegment(lastPixel);
 
 		const stroke = pointerStroke;
-		const indexes = [...stroke.indexes];
 		pointerStroke = null;
 
-		if (stroke.dragging) {
-			onInteract?.();
-			onSetPixelExclusion?.(indexes, stroke.excluded);
-		} else {
-			toggleAt(event.clientX, event.clientY);
-		}
+		if (!stroke || stroke.indexes.size === 0) return;
+
+		onInteract?.();
+		onPaintPixels?.([...stroke.indexes], paintMode);
 	}
 
 	function onPointerDown(event: PointerEvent) {
 		if (!event.isPrimary || !viewport) return;
 
-		if (event.button === 1 || event.button === 2) {
+		// Touch scrolls the page while the brush is locked: painting needs
+		// `touch-action: none`, and holding that while browsing traps the scroll.
+		if (event.pointerType === 'touch' && locked) {
+			tapCandidate = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+
+			return;
+		}
+
+		if (event.button === 1) {
 			event.preventDefault();
 			pan = {
 				pointerId: event.pointerId,
@@ -290,14 +449,18 @@
 		if (!pixel) return;
 
 		event.preventDefault();
-		const excluded = excludedSet.has(pixel.index);
+
+		const indexes = brushIndexesAt(pixel);
+
 		pointerStroke = {
 			pointerId: event.pointerId,
 			lastPixel: { x: pixel.x, y: pixel.y },
-			indexes: new Set([pixel.index]),
-			dragging: false,
-			excluded: !excluded
+			indexes: new Set(indexes)
 		};
+
+		// The first stamp must show immediately; waiting for the first move
+		// leaves the press area unpainted until the stroke is committed.
+		paintPreview(indexes);
 		viewport.setPointerCapture(event.pointerId);
 	}
 
@@ -321,46 +484,57 @@
 		}
 
 		const pixel = getPixelAt(event.clientX, event.clientY);
-		const size = dimensions;
+
+		if (tapCandidate?.pointerId === event.pointerId) {
+			if (Math.hypot(event.clientX - tapCandidate.x, event.clientY - tapCandidate.y) > 10) {
+				tapCandidate = null;
+			}
+
+			return;
+		}
 
 		if (event.pointerType === 'mouse') {
 			hoverPixel = pixel ? { x: pixel.x, y: pixel.y } : null;
 		}
 
-		if (!pixel || !size || pointerStroke?.pointerId !== event.pointerId) return;
+		if (!pixel || pointerStroke?.pointerId !== event.pointerId) return;
 
-		const lastIndex = pointerStroke.lastPixel.y * size.width + pointerStroke.lastPixel.x;
-
-		if (!pointerStroke.dragging && pixel.index !== lastIndex) {
-			pointerStroke.dragging = true;
-		}
-
-		if (pointerStroke.dragging) addStrokeSegment(pixel);
+		addStrokeSegment(pixel);
 	}
 
-	function addStrokeSegment(pixel: { x: number; y: number; index: number }) {
-		if (!pointerStroke || !dimensions) return;
+	function addStrokeSegment(pixel: { x: number; y: number }) {
+		if (!pointerStroke) return;
 
-		const size = dimensions;
 		const stroke = pointerStroke;
+		const added: number[] = [];
 
 		// Every pixel between the last point and this one, so a fast drag
 		// leaves no gaps in the stroke.
-		const segment = new Set(
-			linePoints(stroke.lastPixel, pixel).map((point) => {
-				const index = point.y * size.width + point.x;
-				stroke.indexes.add(index);
+		for (const point of linePoints(stroke.lastPixel, pixel)) {
+			for (const index of brushIndexesAt(point)) {
+				if (stroke.indexes.has(index)) continue;
 
-				return index;
-			})
-		);
+				stroke.indexes.add(index);
+				added.push(index);
+			}
+		}
 
 		stroke.lastPixel = { x: pixel.x, y: pixel.y };
 
-		if (stroke.dragging) {
-			const image = stroke.excluded ? originalSprite : sourceImage;
-			paintPixels(segment, image);
+		if (added.length > 0) paintPreview(added);
+	}
+
+	function paintPreview(indexes: readonly number[]) {
+		const excluded: number[] = [];
+		const restored: number[] = [];
+
+		for (const index of indexes) {
+			if (targetExcluded(index)) excluded.push(index);
+			else restored.push(index);
 		}
+
+		paintPixels(new Set(excluded), originalSprite);
+		paintPixels(new Set(restored), sourceImage);
 	}
 
 	function paintPixels(indexes: ReadonlySet<number>, image: HTMLImageElement | null) {
@@ -393,6 +567,7 @@
 	function onPointerCancel() {
 		pan = null;
 		pointerStroke = null;
+		tapCandidate = null;
 	}
 
 	function wheelDelta(event: WheelEvent) {
@@ -403,6 +578,7 @@
 	}
 
 	function onWheel(event: WheelEvent) {
+		if (locked) return;
 		if (!viewport || !dimensions || !limits || !imageRect) return;
 
 		event.preventDefault();
@@ -435,8 +611,30 @@
 		offset = { x: 0, y: 0 };
 	}
 
+	async function openMenu(event: MouseEvent) {
+		if (!root || !imageUrl || !dimensions || previewError) return;
+
+		if (window.matchMedia?.('(pointer: coarse)').matches) return;
+
+		const bounds = root.getBoundingClientRect();
+
+		menuX = event.clientX - bounds.left;
+		menuY = event.clientY - bounds.top;
+		menuOpen = true;
+
+		await tick();
+
+		const panel = menuElement;
+
+		if (!panel) return;
+
+		menuX = Math.max(8, Math.min(menuX, bounds.width - panel.offsetWidth - 8));
+		menuY = Math.max(8, Math.min(menuY, bounds.height - panel.offsetHeight - 8));
+	}
+
 	function onContextMenu(event: MouseEvent) {
 		event.preventDefault();
+		void openMenu(event);
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
@@ -473,9 +671,10 @@
 </script>
 
 {#if imageUrl && dimensions && !previewError}
-	<div class="absolute inset-0">
+	<div class="absolute inset-0" bind:this={root}>
 		<button
-			class="absolute inset-0 cursor-crosshair touch-none overflow-hidden border-0 bg-transparent p-0 text-left"
+			class="absolute inset-0 cursor-crosshair overflow-hidden border-0 bg-transparent p-0 text-left"
+			style:touch-action={locked ? 'pan-y pinch-zoom' : 'none'}
 			bind:this={viewport}
 			bind:clientWidth={viewportWidth}
 			bind:clientHeight={viewportHeight}
@@ -500,12 +699,11 @@
 					style:height="{dimensions.height * imageRect.scale}px"
 					aria-hidden="true"
 				></canvas>
-				{#if hoverPixel}
-					<span
-						class="pointer-events-none absolute border border-accent shadow-[inset_0_0_0_1px_var(--panel)] pointer-coarse:hidden [@media(hover:none)]:hidden"
-						style={getHoverStyle()}
-					></span>
-				{/if}
+				<canvas
+					bind:this={hoverCanvas}
+					class="pointer-events-none absolute inset-0 mix-blend-difference pointer-coarse:hidden [@media(hover:none)]:hidden"
+					aria-hidden="true"
+				></canvas>
 			{/if}
 		</button>
 		{#if imageRect && zoomedIn}
@@ -517,6 +715,20 @@
 			>
 				{Math.round(zoom * 100)}%
 			</button>
+		{/if}
+		{#if menuOpen}
+			<div
+				bind:this={menuElement}
+				class="absolute z-30 w-64 animate-[pop_160ms_ease-out] border-2 border-btn-edge bg-panel shadow-[4px_4px_0_var(--btn-shadow)]"
+				style:left="{menuX}px"
+				style:top="{menuY}px"
+				role="dialog"
+				aria-label={t('paint.aria')}
+				tabindex="-1"
+				oncontextmenu={(event) => event.preventDefault()}
+			>
+				<PixelPaintControls bind:brushSize bind:paintMode onClose={() => (menuOpen = false)} />
+			</div>
 		{/if}
 	</div>
 {:else if imageUrl && previewError}
