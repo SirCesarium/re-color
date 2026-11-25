@@ -90,6 +90,14 @@
 		scheduleMeasure(colors.length, adding, hoverCapable, hintVisible);
 	});
 
+	$effect(() => {
+		// A color added while the panel is open can push the swatches into a new
+		// row, which would otherwise stay clipped at the previous height.
+		if (!expanded || colors.length === 0 || !swatchEl) return;
+
+		expandedMax = Math.min(swatchEl.scrollHeight, Math.round(window.innerHeight * 0.55));
+	});
+
 	function scheduleMeasure(
 		_count: number,
 		_adding: boolean,
