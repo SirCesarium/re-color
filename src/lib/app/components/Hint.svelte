@@ -15,7 +15,7 @@
 	}: {
 		text?: string | null;
 		placement?: 'above' | 'flow';
-		arrow?: 'up' | 'down';
+		arrow?: 'up' | 'down' | 'none';
 		error?: boolean;
 		hintsEnabled?: boolean;
 		onDismiss?: () => void;
@@ -48,7 +48,7 @@
 		>
 		{#if onDismiss}
 			<button
-				class="shrink-0 cursor-pointer border-0 bg-transparent px-0.5 py-0 font-[inherit] leading-none text-inherit"
+				class="-mt-1 -mr-1 shrink-0 cursor-pointer border-0 bg-transparent px-1 py-0 font-[inherit] text-2xl leading-none text-pop"
 				type="button"
 				aria-label={t('hint.dismiss')}
 				onclick={onDismiss}
@@ -56,13 +56,15 @@
 				&times;
 			</button>
 		{/if}
-		<span
-			class="absolute border-[6px] border-transparent {tailOffset
-				? ''
-				: 'left-1/2 -translate-x-1/2'} {isDownArrow
-				? 'top-full border-t-btn-edge'
-				: 'bottom-full border-b-btn-edge'}"
-			style={tailOffset ? `left: ${tailOffset}` : ''}
-		></span>
+		{#if arrow !== 'none'}
+			<span
+				class="absolute border-[6px] border-transparent {tailOffset
+					? ''
+					: 'left-1/2 -translate-x-1/2'} {isDownArrow
+					? 'top-full border-t-btn-edge'
+					: 'bottom-full border-b-btn-edge'}"
+				style={tailOffset ? `left: ${tailOffset}` : ''}
+			></span>
+		{/if}
 	</div>
 {/if}

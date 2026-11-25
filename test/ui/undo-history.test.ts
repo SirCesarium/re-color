@@ -40,7 +40,7 @@ describe('workflow undo/redo history', () => {
 
 		// 2. Exclude pixels via toggle and batch stroke
 		workflow.toggleExcludedPixel(4);
-		workflow.setPixelExclusion([5, 6], true);
+		workflow.applyPixelPaint([5, 6], 'disable');
 
 		expect(workflow.canUndo).toBe(true);
 		expect(workflow.state.excludedPixels).toEqual([4, 5, 6]);

@@ -7,6 +7,8 @@
 @import '@fontsource/silkscreen/latin-400.css';
 @import '@fontsource/silkscreen/latin-700.css';
 
+@custom-variant fine-pointer (@media (hover: hover) and (pointer: fine));
+
 @theme inline {
 	--color-bg: var(--bg);
 	--color-panel: var(--panel);
@@ -218,6 +220,12 @@
 
 	:focus {
 		outline: none !important;
+	}
+
+	::selection {
+		background-color: var(--btn-bg);
+		color: var(--btn-fg);
+		text-shadow: none;
 	}
 
 	:focus-visible {

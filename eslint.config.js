@@ -36,7 +36,7 @@ export default defineConfig(
 		}
 	},
 	{
-		files: ['src/lib/app/components/Link.svelte'],
+		files: ['src/lib/app/components/Link.svelte', 'src/lib/app/widgets/TopBar.svelte'],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	},
 	{

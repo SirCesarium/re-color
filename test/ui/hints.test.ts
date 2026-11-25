@@ -92,22 +92,18 @@ describe('pixel help dismissal', () => {
 		});
 	});
 
-	it('keeps the palette hint floating on pointer move and closes it from the dismiss button', async () => {
+	it('keeps the palette hint inside the palette panel and closes it from the dismiss button', async () => {
 		hintsEnabled.set(true);
 
-		const { container } = render(PaletteStrip, { colors: [{ ...color }] });
+		render(PaletteStrip, { colors: [{ ...color }] });
 
 		const dismiss = await screen.findByRole('button', { name: 'Dismiss help' });
 		const bubble = dismiss.closest('[role="status"]');
+		const panel = screen.getByRole('group', { name: 'Palette colors' });
 
-		expect(bubble?.classList.contains('absolute')).toBe(true);
-		expect(bubble?.classList.contains('relative')).toBe(false);
-
-		const wrap = container.querySelector('.wrap');
-		if (wrap) {
-			await fireEvent.pointerMove(wrap, { clientX: 10, clientY: 10 });
-		}
-		expect(screen.queryByRole('button', { name: 'Dismiss help' })).not.toBeNull();
+		expect(bubble?.classList.contains('relative')).toBe(true);
+		expect(bubble?.classList.contains('absolute')).toBe(false);
+		expect(panel.contains(bubble)).toBe(true);
 
 		await fireEvent.click(dismiss);
 

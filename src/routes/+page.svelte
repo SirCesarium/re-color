@@ -1,18 +1,51 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Button from '#app/components/Button.svelte';
 	import Hint from '#app/components/Hint.svelte';
 	import Typography from '#app/components/Typography.svelte';
 	import { absoluteUrl } from '#app/site.ts';
 	import { hintsEnabled } from '#app/state/hints.ts';
 	import { createRecolorWorkflow } from '#app/state/workflow/store.svelte.ts';
+	import type { PixelPaintMode } from '#app/state/workflow/paint.ts';
+	import ContentSections from '#app/widgets/ContentSections.svelte';
 	import Hero from '#app/widgets/Hero.svelte';
 	import ImageInputs from '#app/widgets/ImageInputs.svelte';
+	import PixelPaintControls from '#app/widgets/PixelPaintControls.svelte';
 	import ResultPanel from '#app/widgets/ResultPanel.svelte';
+	import SiteDock from '#app/widgets/SiteDock.svelte';
+	import TopBar from '#app/widgets/TopBar.svelte';
 	import { t } from '#app/text/index.ts';
 	import { MAPPING_OPTIONS } from '#core/recolor.ts';
 	import Dropdown from '#lib/app/components/Dropdown.svelte';
 
 	const workflow = createRecolorWorkflow();
+
+	let workArea = $state<HTMLElement>();
+	let topBarVisible = $state(false);
+	let brushSize = $state(1);
+	let paintMode = $state<PixelPaintMode>('toggle');
+	let brushLocked = $state(true);
+
+	// The brush switch is a touch concern: on a fine pointer the canvas always
+	// paints and zooms, so start unlocked there.
+	onMount(() => {
+		if (window.matchMedia?.('(pointer: coarse)').matches === false) brushLocked = false;
+	});
+
+	$effect(() => {
+		if (!workArea) return;
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				topBarVisible = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+			},
+			{ threshold: 0 }
+		);
+
+		observer.observe(workArea);
+
+		return () => observer.disconnect();
+	});
 
 	const url = absoluteUrl('/');
 
@@ -91,8 +124,11 @@
 	<meta name="twitter:image:alt" content={t('meta.ogAlt')} />
 </svelte:head>
 
+<TopBar visible={topBarVisible} />
+
 <main
-	class="box-border flex w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12 min-[900px]:mx-auto min-[900px]:grid min-[900px]:max-w-260 min-[900px]:grid-cols-[1fr_1fr] min-[900px]:content-center min-[900px]:justify-items-start min-[900px]:gap-x-16 min-[900px]:gap-y-8"
+	bind:this={workArea}
+	class="relative box-border flex min-h-svh w-full flex-1 flex-col items-center justify-center gap-8 px-4 py-12 pb-24 min-[900px]:mx-auto min-[900px]:grid min-[900px]:max-w-260 min-[900px]:grid-cols-[1fr_1fr] min-[900px]:content-center min-[900px]:justify-items-start min-[900px]:gap-x-16 min-[900px]:gap-y-8"
 >
 	<Hero bind:colors={workflow.state.colors} onColorsChange={workflow.recordColorChange} />
 	<ImageInputs bind:palette={workflow.state.palette} bind:sprite={workflow.state.sprite} />
@@ -115,13 +151,15 @@
 		>
 			{t('home.recolor')}
 		</Button>
-		<div class="flex min-h-10 items-start">
-			<Hint
-				error={workflow.buttonHintIsError}
-				hintsEnabled={$hintsEnabled}
-				text={workflow.buttonHint ? t(workflow.buttonHint) : null}
-			/>
-		</div>
+		{#if workflow.buttonHint}
+			<div class="flex items-start">
+				<Hint
+					error={workflow.buttonHintIsError}
+					hintsEnabled={$hintsEnabled}
+					text={t(workflow.buttonHint)}
+				/>
+			</div>
+		{/if}
 	</div>
 	<div
 		class="flex w-full max-w-120 flex-col gap-4 min-[900px]:col-start-2 min-[900px]:row-start-1 min-[900px]:row-end-[span_3] min-[900px]:self-center min-[900px]:justify-self-stretch"
@@ -137,13 +175,27 @@
 				label={t('home.mappingAria')}
 			/>
 		</section>
+		{#if workflow.state.result}
+			<div
+				class="hidden border-2 border-btn-edge bg-panel shadow-[3px_3px_0_var(--btn-shadow)] pointer-coarse:block"
+			>
+				<PixelPaintControls bind:brushSize bind:paintMode bind:locked={brushLocked} />
+			</div>
+		{/if}
 		<ResultPanel
 			imageUrl={workflow.state.result?.previewUrl ?? null}
 			spriteFile={workflow.state.sprite}
 			excludedPixels={workflow.state.excludedPixels}
+			bind:brushSize
+			bind:paintMode
+			bind:locked={brushLocked}
 			onTogglePixel={workflow.toggleExcludedPixel}
-			onSetPixelExclusion={workflow.setPixelExclusion}
+			onPaintPixels={workflow.applyPixelPaint}
 			onDownload={workflow.downloadResult}
 		/>
 	</div>
+
+	<SiteDock />
 </main>
+
+<ContentSections />
