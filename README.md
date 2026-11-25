@@ -1,6 +1,7 @@
 <div align="center">
 
-[![re::color hero](static/og.png)](https://recolor.pages.dev/)
+[![re::color hero](https://github.com/user-attachments/assets/93ef7e53-62e1-4b47-9fdc-6190ad29b162)](https://recolor.pages.dev/)
+
 
 Recolor a pixel art sprite with any image's palette, privately, in your browser.
 
