@@ -60,7 +60,7 @@ export const OUTPUT_EXTENSIONS: Record<RecolorConfig['output']['mimeType'], stri
 };
 
 export const MAPPING_OPTIONS: { value: MappingMode; labelKey: string }[] = [
-	{ value: 'nearest', labelKey: 'mapping.nearest' },
 	{ value: 'luminance', labelKey: 'mapping.luminance' },
+	{ value: 'nearest', labelKey: 'mapping.nearest' },
 	{ value: 'dominant', labelKey: 'mapping.dominant' }
 ];
