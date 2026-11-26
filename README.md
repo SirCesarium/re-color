@@ -2,15 +2,15 @@
 
 [![re::color hero](https://github.com/user-attachments/assets/93ef7e53-62e1-4b47-9fdc-6190ad29b162)](https://recolor.pages.dev/)
 
-Recolor a pixel art sprite with any image's palette, privately, in your browser.
-
-**[Try it at recolor.pages.dev](https://recolor.pages.dev/)**
-
 [![CI](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml/badge.svg)](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml)
 [![License: MPL-2.0](https://img.shields.io/github/license/SirCesarium/re-color?logo=mozilla)](LICENSE)
 [![Built with Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte)](https://svelte.dev/)
 [![Bun](https://img.shields.io/badge/Bun-scripts%20%26%20build-000000?logo=bun)](https://bun.sh/)
 [![Privacy First](https://img.shields.io/badge/Privacy-Local%20only-00C853)](#privacy)
+
+Recolor a pixel art sprite with any image's palette, privately, in your browser.
+
+**[Try it at recolor.pages.dev](https://recolor.pages.dev/)**
 
 </div>
 
@@ -18,7 +18,7 @@ Recolor a pixel art sprite with any image's palette, privately, in your browser.
 
 <div align="center">
 
-https://github.com/user-attachments/assets/7bd850c8-d3ed-44b3-8350-7cd14f139fb0
+https://github.com/user-attachments/assets/a3342c9b-3b56-4470-8efb-a7340e2f74d9
 
 </div>
 
@@ -30,17 +30,25 @@ Extract a color palette from a reference sprite and **re-colorize** another one.
 
 ### Three ways to map colors
 
-- **Nearest color**: direct RGB nearest-neighbor.
 - **Luminance order**: sorts both sprite and palette by brightness and pairs them, so shading survives the swap.
+- **Nearest color**: direct RGB nearest-neighbor.
 - **Dominant color**: finds your sprite's most-used color and pins it to the palette's dominant, then fills in the rest.
 
-<img width="512" alt="image" src="https://github.com/user-attachments/assets/1fcdcf29-0cac-46c4-aee5-4ef3a0cc2003" />
+<div align="center">
+
+<img width="512" alt="Any image is a palette" src="https://github.com/user-attachments/assets/a0a52175-0737-49a2-a27d-0429b5c12085" />
+
+</div>
 
 ### Pixel-level control
 
 Tap any pixel in the live preview to exclude it from the recolor. Zoom with the mouse wheel and pan with the middle or right button.
 
-<img width="1025" alt="image" src="https://github.com/user-attachments/assets/a7baed56-1518-474b-9832-a69773f1d478" />
+<div align="center">
+
+<img width="1159" height="746" alt="Pixel-level control" src="https://github.com/user-attachments/assets/9340673f-097e-4328-9041-686e24a691b0" />
+
+</div>
 
 ### Download the result
 
@@ -50,17 +58,33 @@ Export the recolored sprite as a PNG, same dimensions as your input, named `<nam
 
 The current palette, sprite, mapping mode and pixel exclusions are saved locally (IndexedDB), so a refresh doesn't lose your work. You can turn this off in settings.
 
-<img width="907" alt="image" src="https://github.com/user-attachments/assets/19447af9-8824-4797-9b92-443884635fdc" />
+
+<div align="center">
+
+<img width="907" alt="Your session survives a reload" src="https://github.com/user-attachments/assets/19447af9-8824-4797-9b92-443884635fdc" />
+
+</div>
 
 ### Preferences that stick
 
-Auto-apply the result, maximum palette colors, default mapping mode, animations and help hints, all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
+Auto-apply the result, maximum palette colors, default mapping mode, and animations, all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
 
-<img width="973" alt="image" src="https://github.com/user-attachments/assets/250f99df-8096-4e60-83c5-341a633067b9" />
+
+<div align="center">
+
+<img width="600" alt="settings" src="https://github.com/user-attachments/assets/eecd61b9-339e-4f06-8a6e-b43b5ed77335" />
+
+</div>
 
 ### Install it as an app
 
 re::color is a PWA: install it from your browser and it runs standalone and offline.
+
+<div align="center">
+
+<img width="512" alt="Install as an app" src="https://github.com/user-attachments/assets/1ab845c8-30ec-4659-8d09-41b3c9453a34" />
+
+</div>
 
 ## Limits
 
@@ -72,9 +96,9 @@ re::color is a PWA: install it from your browser and it runs standalone and offl
 
 ## Privacy
 
-No uploads. No accounts. No analytics. Every pixel is processed on-device, and the app works offline after the first load.
+Every pixel is processed on-device, there's not any server processing your images.
 
-Review the [license](./LICENSE) or the [privacy section](https://recolor.pages.dev/privacy).
+Review the [license](./LICENSE) or the [privacy section](https://recolor.pages.dev/privacy) for more info.
 
 ## Under the hood
 
