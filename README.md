@@ -58,7 +58,6 @@ Export the recolored sprite as a PNG, same dimensions as your input, named `<nam
 
 The current palette, sprite, mapping mode and pixel exclusions are saved locally (IndexedDB), so a refresh doesn't lose your work. You can turn this off in settings.
 
-
 <div align="center">
 
 <img width="907" alt="Your session survives a reload" src="https://github.com/user-attachments/assets/19447af9-8824-4797-9b92-443884635fdc" />
@@ -68,7 +67,6 @@ The current palette, sprite, mapping mode and pixel exclusions are saved locally
 ### Preferences that stick
 
 Auto-apply the result, maximum palette colors, default mapping mode, and animations, all in [/settings](https://recolor.pages.dev/settings). Export your preferences as a JSON file and import them on another device, or reset everything to defaults with one click.
-
 
 <div align="center">
 
