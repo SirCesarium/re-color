@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 	import type { PixelPaintMode } from '#app/state/workflow/paint.ts';
 	import { t } from '#app/text/index.ts';
 	import {
 		clampImageTransform,
 		imageRectFor,
+		pinchImageTransform,
 		pixelAtPoint,
 		zoomImageAtPoint,
 		zoomLimits
@@ -67,6 +69,11 @@
 	} | null = null;
 	let lastTap = { time: 0, x: 0, y: 0 };
 	let tapCandidate: { pointerId: number; x: number; y: number } | null = null;
+	const activeTouches = new SvelteMap<number, { x: number; y: number }>();
+	let pinch: {
+		lastDistance: number;
+		lastMidpoint: { x: number; y: number };
+	} | null = null;
 
 	// One membership structure for the exclusion mask: the pointer-down
 	// check and the paint pass both ask "is this index excluded?", which a
@@ -152,6 +159,8 @@
 			offset = { x: 0, y: 0 };
 			lastImageSize = '';
 			menuOpen = false;
+			activeTouches.clear();
+			pinch = null;
 
 			return;
 		}
@@ -269,13 +278,13 @@
 		};
 	});
 
-	$effect(() => {
-		const surface = canvas;
-		const image = sourceImage;
-		const original = originalSprite;
-		const size = dimensions;
-		const mask = excludedSet;
-
+	function redrawCanvas(
+		surface = canvas,
+		image = sourceImage,
+		original = originalSprite,
+		size = dimensions,
+		mask = excludedSet
+	) {
 		if (!surface || !image || !size) return;
 
 		surface.width = size.width;
@@ -295,6 +304,10 @@
 		context.drawImage(image, 0, 0);
 
 		if (original && mask.size > 0) paintPixels(mask, original);
+	}
+
+	$effect(() => {
+		redrawCanvas(canvas, sourceImage, originalSprite, dimensions, excludedSet);
 	});
 
 	function getPixelAt(clientX: number, clientY: number) {
@@ -369,7 +382,90 @@
 		context.fill();
 	}
 
+	function pinchGeometry(): { distance: number; midpoint: { x: number; y: number } } | null {
+		if (!viewport || activeTouches.size !== 2) return null;
+
+		const [first, second] = [...activeTouches.values()];
+		const bounds = viewport.getBoundingClientRect();
+
+		return {
+			distance: Math.hypot(second.x - first.x, second.y - first.y),
+			midpoint: {
+				x: (first.x + second.x) / 2 - bounds.left,
+				y: (first.y + second.y) / 2 - bounds.top
+			}
+		};
+	}
+
+	function cancelPointerStroke() {
+		if (!pointerStroke) return;
+
+		const pointerId = pointerStroke.pointerId;
+
+		pointerStroke = null;
+
+		if (viewport?.hasPointerCapture(pointerId)) {
+			viewport.releasePointerCapture(pointerId);
+		}
+
+		redrawCanvas();
+	}
+
+	function startPinch() {
+		const geometry = pinchGeometry();
+
+		if (!geometry) return;
+
+		pinch = { lastDistance: geometry.distance, lastMidpoint: geometry.midpoint };
+	}
+
+	function updatePinch() {
+		const geometry = pinchGeometry();
+
+		if (!geometry || !pinch) return;
+
+		if (!dimensions || !limits || zoom <= 0 || pinch.lastDistance <= 0 || geometry.distance <= 0) {
+			pinch = {
+				lastDistance: geometry.distance > 0 ? geometry.distance : pinch.lastDistance,
+				lastMidpoint: geometry.midpoint
+			};
+
+			return;
+		}
+
+		const nextZoom = Math.min(
+			Math.max(zoom * (geometry.distance / pinch.lastDistance), limits.min),
+			limits.max
+		);
+		const next = pinchImageTransform(
+			{ width: viewportWidth, height: viewportHeight },
+			dimensions,
+			{ zoom, offsetX: offset.x, offsetY: offset.y },
+			pinch.lastMidpoint,
+			geometry.midpoint,
+			nextZoom
+		);
+
+		zoom = next.zoom;
+		offset = { x: next.offsetX, y: next.offsetY };
+		pinch = { lastDistance: geometry.distance, lastMidpoint: geometry.midpoint };
+	}
+
 	function onPointerUp(event: PointerEvent) {
+		if (event.pointerType === 'touch') {
+			activeTouches.delete(event.pointerId);
+
+			if (pinch) {
+				if (activeTouches.size < 2) pinch = null;
+
+				if (viewport?.hasPointerCapture(event.pointerId)) {
+					viewport.releasePointerCapture(event.pointerId);
+				}
+
+				return;
+			}
+		}
+
 		if (tapCandidate?.pointerId === event.pointerId) {
 			const tapped =
 				Math.abs(event.clientX - tapCandidate.x) <= 10 &&
@@ -418,7 +514,23 @@
 	}
 
 	function onPointerDown(event: PointerEvent) {
-		if (!event.isPrimary || !viewport) return;
+		if (!viewport) return;
+
+		if (event.pointerType === 'touch') {
+			if (activeTouches.size >= 2) return;
+
+			activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+			if (activeTouches.size === 2) {
+				tapCandidate = null;
+				cancelPointerStroke();
+				startPinch();
+
+				return;
+			}
+		}
+
+		if (!event.isPrimary) return;
 
 		// Touch scrolls the page while the brush is locked: painting needs
 		// `touch-action: none`, and holding that while browsing traps the scroll.
@@ -465,6 +577,16 @@
 	}
 
 	function onPointerMove(event: PointerEvent) {
+		if (event.pointerType === 'touch' && activeTouches.has(event.pointerId)) {
+			activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+			if (pinch && activeTouches.size === 2) {
+				updatePinch();
+
+				return;
+			}
+		}
+
 		if (pan?.pointerId === event.pointerId) {
 			if (!dimensions || viewportWidth <= 0 || viewportHeight <= 0) return;
 
@@ -564,9 +686,15 @@
 		if (!pointerStroke) hoverPixel = null;
 	}
 
-	function onPointerCancel() {
+	function onPointerCancel(event: PointerEvent) {
+		if (event.pointerType === 'touch') {
+			activeTouches.delete(event.pointerId);
+
+			if (activeTouches.size < 2) pinch = null;
+		}
+
 		pan = null;
-		pointerStroke = null;
+		cancelPointerStroke();
 		tapCandidate = null;
 	}
 
@@ -674,7 +802,7 @@
 	<div class="absolute inset-0" bind:this={root}>
 		<button
 			class="absolute inset-0 cursor-crosshair overflow-hidden border-0 bg-transparent p-0 text-left"
-			style:touch-action={locked ? 'pan-y pinch-zoom' : 'none'}
+			style:touch-action={locked ? 'pan-y' : 'none'}
 			bind:this={viewport}
 			bind:clientWidth={viewportWidth}
 			bind:clientHeight={viewportHeight}
