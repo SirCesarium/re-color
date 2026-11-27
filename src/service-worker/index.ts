@@ -4,6 +4,25 @@ import { self } from '$app/service-worker';
 
 const CACHE_PREFIX = 'cache-';
 const CACHE = `${CACHE_PREFIX}${version}`;
+const NAVIGATION_TIMEOUT_MS = 2000;
+
+// Platform config, verification, SEO, and large/README-only media must not be
+// precached: Cloudflare Pages returns 404 for /_headers, which aborts cache.addAll.
+const EXCLUDED_PRECACHED_PATHS = new Set([
+	'/_headers',
+	'/robots.txt',
+	'/sitemap.xml',
+	'/og.png',
+	'/google556ec09d3fb7f297.html',
+	'/2ceb1a0f6c6c5472d46c1ac1af27c93e.txt',
+	'/video/demo.mp4',
+	'/img/demo-poster.png',
+	'/img/exclude-pixels.png',
+	'/img/language-switch.png',
+	'/img/mapping-modes.png',
+	'/img/session-restore.png',
+	'/img/settings-panel.png'
+]);
 
 // Paths in $app/manifest are relative to the base path, so they need a
 // leading slash to be comparable with url.pathname.
@@ -13,8 +32,39 @@ const ASSETS = [
 	...immutable.map((file) => toPathname(file.path)),
 	...assets.map((file) => toPathname(file.path)),
 	...prerendered.map((page) => toPathname(page.path))
-];
+].filter((path) => !EXCLUDED_PRECACHED_PATHS.has(path));
+
 const PRECACHED_PATHS = new Set(ASSETS);
+
+const fetchWithTimeout = async (request: Request, timeoutMs: number): Promise<Response> => {
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+	try {
+		return await fetch(request, { signal: controller.signal });
+	} finally {
+		clearTimeout(timer);
+	}
+};
+
+const matchCachedNavigation = async (
+	cache: Cache,
+	request: Request,
+	pathname: string
+): Promise<Response | undefined> => {
+	const exact = await cache.match(request);
+	if (exact) return exact;
+
+	const byPath = await cache.match(pathname, { ignoreSearch: true });
+	if (byPath) return byPath;
+
+	if (!pathname.endsWith('/')) {
+		const withSlash = await cache.match(`${pathname}/`, { ignoreSearch: true });
+		if (withSlash) return withSlash;
+	}
+
+	return cache.match('/');
+};
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
@@ -58,20 +108,27 @@ self.addEventListener('fetch', (event) => {
 				const request = isNavigation
 					? new Request(event.request, { cache: 'no-cache' })
 					: event.request;
-				const response = await fetch(request);
+				const response = isNavigation
+					? await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS)
+					: await fetch(request);
 
 				if (response.ok && !response.headers.get('cache-control')?.includes('no-store')) {
 					await cache.put(event.request, response.clone());
 				}
 
+				if (isNavigation && !response.ok) {
+					const cached = await matchCachedNavigation(cache, event.request, url.pathname);
+					if (cached) return cached;
+				}
+
 				return response;
 			} catch (error) {
-				const cached = await cache.match(event.request);
-				if (cached) return cached;
-
 				if (isNavigation) {
-					const precachedPage = await cache.match(url.pathname);
-					if (precachedPage) return precachedPage;
+					const cached = await matchCachedNavigation(cache, event.request, url.pathname);
+					if (cached) return cached;
+				} else {
+					const cached = await cache.match(event.request);
+					if (cached) return cached;
 				}
 
 				throw error;
