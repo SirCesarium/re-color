@@ -5,8 +5,6 @@
 [![CI](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml/badge.svg)](https://github.com/SirCesarium/re-color/actions/workflows/ci.yml)
 [![License: MPL-2.0](https://img.shields.io/github/license/SirCesarium/re-color?logo=mozilla)](LICENSE)
 [![Built with Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte)](https://svelte.dev/)
-[![Bun](https://img.shields.io/badge/Bun-scripts%20%26%20build-000000?logo=bun)](https://bun.sh/)
-[![Privacy First](https://img.shields.io/badge/Privacy-Local%20only-00C853)](#privacy)
 
 Recolor a pixel art sprite with any image's palette, privately, in your browser.
 
