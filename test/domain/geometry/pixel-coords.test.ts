@@ -4,6 +4,7 @@ import {
 	fitImageInViewport,
 	imageRectFor,
 	MAX_NATIVE_ZOOM,
+	pinchImageTransform,
 	pixelAtPoint,
 	zoomImageAtPoint,
 	zoomLimits
@@ -177,5 +178,52 @@ describe('zoomImageAtPoint', () => {
 
 		expect(after.offsetX).toBe(-50);
 		expect(after.offsetY).toBe(-50);
+	});
+});
+
+describe('pinchImageTransform', () => {
+	test('zooms and pans so the image point under the previous midpoint moves to the new midpoint', () => {
+		const viewport = { width: 100, height: 100 };
+		const image = { width: 10, height: 10 };
+		const before = { zoom: 10, offsetX: 0, offsetY: 0 };
+		const fromPoint = { x: 40, y: 40 };
+		const toPoint = { x: 60, y: 50 };
+		const after = pinchImageTransform(viewport, image, before, fromPoint, toPoint, 20);
+		const beforeRect = imageRectFor(viewport, image, before);
+		const afterRect = imageRectFor(viewport, image, after);
+		const imageX = (fromPoint.x - beforeRect.left) / beforeRect.scale;
+		const imageY = (fromPoint.y - beforeRect.top) / beforeRect.scale;
+
+		expect(afterRect.left + imageX * afterRect.scale).toBeCloseTo(toPoint.x);
+		expect(afterRect.top + imageY * afterRect.scale).toBeCloseTo(toPoint.y);
+	});
+
+	test('pans without changing zoom when fingers move together', () => {
+		const viewport = { width: 100, height: 100 };
+		const image = { width: 10, height: 10 };
+		const before = { zoom: 20, offsetX: 0, offsetY: 0 };
+		const after = pinchImageTransform(
+			viewport,
+			image,
+			before,
+			{ x: 50, y: 50 },
+			{ x: 65, y: 35 },
+			20
+		);
+
+		expect(after).toEqual({ zoom: 20, offsetX: 15, offsetY: -15 });
+	});
+
+	test('clamps pan to viewport edges', () => {
+		const after = pinchImageTransform(
+			{ width: 100, height: 100 },
+			{ width: 10, height: 10 },
+			{ zoom: 20, offsetX: 0, offsetY: 0 },
+			{ x: 50, y: 50 },
+			{ x: 250, y: -250 },
+			20
+		);
+
+		expect(after).toEqual({ zoom: 20, offsetX: 50, offsetY: -50 });
 	});
 });

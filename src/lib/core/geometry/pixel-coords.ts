@@ -77,6 +77,27 @@ export function clampImageTransform(
 	};
 }
 
+export function pinchImageTransform(
+	viewport: Readonly<Size>,
+	image: Readonly<Size>,
+	transform: Readonly<ImageTransform>,
+	fromPoint: Readonly<{ x: number; y: number }>,
+	toPoint: Readonly<{ x: number; y: number }>,
+	nextZoom: number
+): ImageTransform {
+	const current = imageRectFor(viewport, image, transform);
+	const imageX = (fromPoint.x - current.left) / current.scale;
+	const imageY = (fromPoint.y - current.top) / current.scale;
+	const nextLeft = toPoint.x - imageX * nextZoom;
+	const nextTop = toPoint.y - imageY * nextZoom;
+
+	return clampImageTransform(viewport, image, {
+		zoom: nextZoom,
+		offsetX: nextLeft - (viewport.width - image.width * nextZoom) / 2,
+		offsetY: nextTop - (viewport.height - image.height * nextZoom) / 2
+	});
+}
+
 export function zoomImageAtPoint(
 	viewport: Readonly<Size>,
 	image: Readonly<Size>,
@@ -84,17 +105,7 @@ export function zoomImageAtPoint(
 	point: Readonly<{ x: number; y: number }>,
 	nextZoom: number
 ): ImageTransform {
-	const current = imageRectFor(viewport, image, transform);
-	const imageX = (point.x - current.left) / current.scale;
-	const imageY = (point.y - current.top) / current.scale;
-	const nextLeft = point.x - imageX * nextZoom;
-	const nextTop = point.y - imageY * nextZoom;
-
-	return clampImageTransform(viewport, image, {
-		zoom: nextZoom,
-		offsetX: nextLeft - (viewport.width - image.width * nextZoom) / 2,
-		offsetY: nextTop - (viewport.height - image.height * nextZoom) / 2
-	});
+	return pinchImageTransform(viewport, image, transform, point, point, nextZoom);
 }
 
 /**
